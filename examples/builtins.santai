@@ -1,24 +1,28 @@
 isi daftar_angka = [1, 2, 3, 4, 5, 6, 7, 8, 9]
-isi teks = 'Halo, gue lagi santai'
+isi teks_halo = 'Halo, gue lagi santai'
+
+spil '===== Bawaan spil ====='
+spil spil
 
 # panjang
-spil '===== Bawaan panjang ====='
-spil(panjang(daftar_angka))
-spil(panjang(teks))
+spil '\n===== Bawaan panjang ====='
+spil panjang(daftar_angka)
+spil panjang(teks_halo)
 
-spil(panjang(3) itu 0)
+spil panjang(3) itu 0
 
-spil(panjang('halo') itu 4)
-spil(panjang([1, 2]) itu 0)
+spil panjang('halo') itu 4
+spil panjang([1, 2]) itu 0
 
 # tipe
 spil '\n===== Bawaan tipe ====='
-spil(tipe(daftar_angka))
-titip tipe_teks = tipe(teks)
+spil tipe(daftar_angka)
+titip tipe_teks = tipe(teks_halo)
 spil tipe_teks
 spil tipe_teks itu 'Angka'
 spil tipe(benar) itu 'Logika'
 spil tipe(kosong)
+
 
 # rentang
 spil '\n===== Bawaan rentang ====='
@@ -39,3 +43,26 @@ spil ''
 tiap angka di rentang(10)
 kalo angka % 2 itu 0 spil 'angka ' + angka + ' itu genap'
 yaudah spil 'angka ' + angka + ' itu ganjil'
+
+spil '\n===== Bawaan teks ====='
+spil teks
+spil teks(128)
+spil teks([1,2,3])
+spil(tipe(teks(232)) itu 'Angka')
+
+spil '\n===== Bawaan angka ====='
+spil angka
+spil angka(7)
+spil angka('345')
+spil tipe(angka('34')) itu 'Angka'
+
+spil '\n===== Bawaan daftar ====='
+
+spil daftar
+spil daftar(2)
+spil daftar([1, 3])
+spil daftar('abcd')
+spil daftar(rentang(10))
+tiap angka di daftar(rentang(3, 20, 5)) {
+  spil angka
+} 
