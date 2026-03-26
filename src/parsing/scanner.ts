@@ -341,6 +341,21 @@ export class Scanner {
     return this.getNext().token;
   }
 
+  peekAhead(): TokenValue {
+    if (this.getNextNext().token !== TokenValue.kUninitialized) {
+      return this.getNextNext().token;
+    }
+
+    const tempIdx = this.nextIdx;
+    this.nextIdx = this.nextNextIdx;
+    this.getNext().afterLineTerminator = false;
+    this.scan(this.nextIdx);
+    this.nextNextIdx = this.nextIdx;
+    this.nextIdx = tempIdx;
+
+    return this.getNextNext().token;
+  }
+
   peekLocation(): ScannerLocation {
     return this.getNext().location;
   }
