@@ -1,0 +1,108 @@
+# Bahasa pemrograman Santai
+# dengan sintaks bahasa Indonesia
+
+# titik koma ; di akhir opsional
+
+# 1. VERSI PERTAMA
+
+# Operator: *, +, -, %, /, <, >, <=, >=, ==, !=
+# Lainnya: atau, dan, itu, gak
+
+# Variable (titip[mutable] | isi[constant])
+titip kamu = 'Stella', umur = 26;
+
+# Conditonal
+kalo kamu itu gak 'Stella' {
+  spil 'Halo, ' + kamu;
+} yaudah {
+  spil 'Halo Stella sayanggggg';
+}
+
+# List/Array
+isi pacar_gua = ['Amelia', 'Riani', 'Tasya']
+
+# Looping
+tiap pacar di pacar_gua {
+  kalo pacar itu 'Amelia' atau pacar itu 'Tasya' {
+    spil 'Kita putus ' + pacar
+  } yaudah {
+    spil 'Hi ' + pacar + ', balikan yuk'
+  }
+}
+
+# Function (aksi) parameter=bawa|ambil
+# misalnya: aksi kalikan bawa a, b { balikin a * b }
+aksi lamar bawa nama, bunga, cincin, uang {
+  kalo uang itu kosong {
+    uang = 0
+  }
+  
+  kalo bunga itu 'mawar' dan cincin itu 'emas' dan uang >= 1_000_000_000 {
+    balikin 'Lamaran anda langsung diterima oleh ' + nama + ' dengan senang hati'
+  } yaudah kalo uang >= 1_000_000 {
+    balikin 'Lamaran anda diterima oleh ' + nama + ' dengan berat hati'
+  } yaudah {
+    balikin 'Hisss, minimal punya uang banyak untuk lamar ' + nama
+  }
+}
+
+# Call
+# Spil adalah aksi bawaan untuk menampilkan output
+# jika hanya 1 argumen bisa tanpa () jika lebih dari 1 maka wajib menggunakan ()
+# misalnya spil 2 atau spil (1, 2, 3)
+
+spil '' # Baris baru: bisa tanpa () karena hanya 1 argument atau bisa juga denan spil('')
+
+spil lamar('Amelia') # Tanpa bawa apa apa
+spil lamar('Tasya', 'mawar', 'perak', 1_000_000)
+spil lamar('Riani', 'mawar', 'emas', 1_000_000_000_000)
+
+spil ''
+
+# 2. VERSI KEDUA
+
+# Variable (titip[mutable] | isi[constant])
+titip kamu = 'Stella'
+
+# Conditonal
+kalo kamu itu gak 'Stella' spil 'Halo, ' + kamu
+yaudah spil 'Halo Stella sayanggggg'
+
+# List/Array
+isi pacar_gua = ['Amelia', 'Riani', 'Tasya']
+
+# Looping
+tiap pacar di pacar_gua
+kalo pacar itu 'Amelia' atau pacar itu 'Tasya'
+spil 'Kita putus ' + pacar
+yaudah spil 'Hi ' + pacar + ', balikan yuk'
+
+# Function (aksi) parameter=bawa|ambil
+# misalnya: aksi kalikan bawa a, b { balikin a * b }
+aksi lamar bawa nama, bunga, cincin, uang {
+  kalo uang itu kosong uang = 0
+  kalo bunga itu 'mawar' dan cincin itu 'emas' dan uang >= 1_000_000_000
+  balikin 'Lamaran anda langsung diterima oleh ' + nama + ' dengan senang hati'
+  yaudah kalo uang >= 1_000_000
+  balikin 'Lamaran anda diterima oleh ' + nama + ' dengan berat hati'
+  yaudah balikin 'Hisss, minimal punya uang banyak untuk lamar ' + nama
+}
+
+# Call
+# Spil adalah aksi bawaan untuk menampilkan output
+# jika hanya 1 argumen bisa tanpa () jika lebih dari 1 maka wajib menggunakan ()
+# misalnya spil 2 atau spil (1, 2, 3)
+
+spil '' # Baris baru: bisa tanpa () karena hanya 1 argument atau bisa juga denan spil('')
+
+spil lamar('Amelia') # Tanpa bawa apa apa
+spil lamar('Tasya', 'mawar', 'perak', 1_000_000)
+spil lamar('Riani', 'mawar', 'emas', 1_000_000_000_000)
+
+spil ''
+
+# Contoh lain
+isi int = 1234
+isi hex = 0xff
+isi binari = 0b01010
+isi octal = 0o121

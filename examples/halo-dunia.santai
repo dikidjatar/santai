@@ -1,0 +1,7 @@
+# Halo Dunia
+
+spil 'Halo, Dunia!'
+
+# Atau
+
+spil('Halo, Dunia!')

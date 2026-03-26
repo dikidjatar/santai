@@ -1,0 +1,39 @@
+// Copyright (c) [2026] [Diki Djatar]
+// SPDX-License-Identifier: MIT
+
+import fs from "fs";
+import path from "path";
+import { isError } from "../base/types";
+
+export class SourceFile {
+  private constructor(
+    readonly buffer: Uint8Array,
+    readonly displayName: string
+  ) {}
+
+  static fromFile(filepath: string): SourceFile {
+    const resolved = path.resolve(filepath);
+
+    if (!fs.existsSync(resolved)) {
+      throw new Error(`File tidak ditemukan: '${filepath}'`);
+    }
+
+    const stat = fs.statSync(resolved);
+    if (!stat.isFile()) {
+      throw new Error(`'${filepath}' bukan sebuah file`);
+    }
+
+    try {
+      const buffer: Uint8Array = fs.readFileSync(resolved);
+      return new SourceFile(buffer, path.basename(filepath));
+    } catch (error) {
+      throw new Error(
+        `Gagal membaca file: ${isError(error) ? error.message : String(error)}`
+      );
+    }
+  }
+
+  static fromString(code: string, label = "<eval>"): SourceFile {
+    return new SourceFile(Buffer.from(code, "utf-8"), label);
+  }
+}

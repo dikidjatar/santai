@@ -1,0 +1,7 @@
+# folders
+/dist
+/node_modules
+/testing
+
+# files
+yarn.lock

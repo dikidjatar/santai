@@ -1,0 +1,23 @@
+aksi kalikan ambil a, b {
+  isi hasil = 0
+
+  aksi tambah {
+    aksi tambah_3 ambil n {
+      isi x = o
+      balikin n + x
+    }
+
+    ii
+
+    balikin (tambah_3(a, b))
+  }
+
+  aksi kurang ambil n {
+    balikin n - 1
+  }
+
+  balikin kurang(tambah())
+}
+
+isi hasil = kalikan(3, 4)
+spil hasil
