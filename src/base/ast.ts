@@ -615,6 +615,9 @@ export abstract class AstVisitor<R = void> {
   abstract visit(node: AstNode): R;
   abstract visitVariableDeclaration(node: VariableDeclaration): R;
   abstract visitFunctionDeclaration(node: FunctionDeclaration): R;
+  abstract visitClassDeclaration(node: ClassDeclaration): R;
+  abstract visitProperty(node: Property): R;
+  abstract visitThisExpression(node: ThisExpression): R;
   abstract visitForInStatement(node: ForInStatement): R;
   abstract visitWhileStatement(node: WhileStatement): R;
   abstract visitBlock(node: Block): R;
