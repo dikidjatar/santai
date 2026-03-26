@@ -390,6 +390,10 @@ class ListIterator extends SantaiIterator {
 export class SantaiList extends SantaiObject {
   override typeName: string = "Daftar";
 
+  get length(): number {
+    return this.elements.length;
+  }
+
   constructor(readonly elements: readonly SantaiObject[]) {
     super(SantaiType.kList);
   }

@@ -6,3 +6,4 @@
 // different name. BuiltinRegistry will throw an error if there are duplicates.
 
 export * from "./io";
+export * from "./inspect";

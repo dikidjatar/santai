@@ -1,0 +1,21 @@
+isi daftar_angka = [1, 2, 3, 4, 5, 6, 7, 8, 9]
+isi teks = 'Halo, gue lagi santai'
+
+# panjang
+spil '===== Bawaan panjang ====='
+spil(panjang(daftar_angka))
+spil(panjang(teks))
+
+spil(panjang(3) itu 0)
+
+spil(panjang('halo') itu 4)
+spil(panjang([1, 2]) itu 0)
+
+# tipe
+spil '\n===== Bawaan tipe ====='
+spil(tipe(daftar_angka))
+titip tipe_teks = tipe(teks)
+spil tipe_teks
+spil tipe_teks itu 'Angka'
+spil tipe(benar) itu 'Logika'
+spil tipe(kosong)
