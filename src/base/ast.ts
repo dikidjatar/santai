@@ -41,6 +41,7 @@ export const enum NodeType {
   kUnaryOp,
   kVariableExpression,
   kProperty,
+  kThisExpression,
 }
 
 export abstract class AstNode {
@@ -112,6 +113,9 @@ export abstract class AstNode {
   }
   isProperty(): this is Property {
     return this.nodeType === NodeType.kProperty;
+  }
+  isThisExpression(): this is ThisExpression {
+    return this.nodeType === NodeType.kThisExpression;
   }
 }
 
@@ -310,6 +314,12 @@ export class Property extends Expression {
   }
 }
 
+export class ThisExpression extends Expression {
+  constructor(position: number) {
+    super(NodeType.kThisExpression, position);
+  }
+}
+
 export abstract class IterationStatement extends Statement {
   constructor(
     nodeType: NodeType,
@@ -492,6 +502,10 @@ export class AstNodeFactory {
     position: number
   ): Property {
     return new Property(object, property, position);
+  }
+
+  newThisExpression(position: number): ThisExpression {
+    return new ThisExpression(position);
   }
 
   newReturnStatement(

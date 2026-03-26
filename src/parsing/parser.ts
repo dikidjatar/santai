@@ -179,8 +179,16 @@ export class Parser {
         return this.parseVariableDeclaration();
       case TokenValue.kAksi:
         return this.parseFunctionDeclaration();
-      case TokenValue.kGue:
+      case TokenValue.kGue: {
+        if (
+          this.scanner.peekAhead() !== TokenValue.kIdentifier &&
+          this.scanner.peekAhead() !== TokenValue.kLeftBrace
+        ) {
+          return this.parseExpressionStatement();
+        }
+
         return this.parseClassDeclaration();
+      }
       case TokenValue.kBalikin:
         return this.parseReturnStatement();
       case TokenValue.kStop:
@@ -777,7 +785,10 @@ export class Parser {
       }
       case TokenValue.kLeftBracket:
         return this.parseList();
-
+      case TokenValue.kGue:
+        const position = this.position();
+        this.next();
+        return this.factory.newThisExpression(position);
       default:
         break;
     }
