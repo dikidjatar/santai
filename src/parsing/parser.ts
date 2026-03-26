@@ -547,7 +547,10 @@ export class Parser {
         return undefined;
       }
 
-      if (!leftExpression.isVariableExpression()) {
+      if (
+        !leftExpression.isVariableExpression() &&
+        !leftExpression.isProperty()
+      ) {
         this.reportErrorAt(
           makeLocation(leftExpression.position, leftExpression.position + 1),
           MessageTemplate.kInvalidAssignmentTarget
