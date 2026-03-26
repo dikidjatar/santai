@@ -19,3 +19,23 @@ spil tipe_teks
 spil tipe_teks itu 'Angka'
 spil tipe(benar) itu 'Logika'
 spil tipe(kosong)
+
+# rentang
+spil '\n===== Bawaan rentang ====='
+spil(rentang(5))
+isi r = rentang(2, 10, 3)
+spil r
+
+tiap angka di rentang(5) spil angka
+
+spil ''
+
+tiap angka di rentang(2, 10, 4) {
+  spil angka  
+}
+
+spil ''
+
+tiap angka di rentang(10)
+kalo angka % 2 itu 0 spil 'angka ' + angka + ' itu genap'
+yaudah spil 'angka ' + angka + ' itu ganjil'

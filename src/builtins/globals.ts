@@ -7,3 +7,4 @@
 
 export * from "./io";
 export * from "./inspect";
+export * from "./range";

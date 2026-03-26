@@ -27,6 +27,13 @@ export function isError(obj: unknown): obj is Error {
 }
 
 /**
+ * @returns whether the provided parameter is undefined.
+ */
+export function isUndefined(obj: unknown): obj is undefined {
+  return typeof obj === "undefined";
+}
+
+/**
  * Abstract base class for signals that wrap a node of type T.
  * @template T The type of the node being wrapped by this signal.
  * @param node The node instance to be stored and accessed through this signal.

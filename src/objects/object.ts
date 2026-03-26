@@ -37,6 +37,7 @@ export const enum SantaiType {
   kFunction,
   kBuiltinFunction,
   kList,
+  kRange,
 }
 
 export abstract class SantaiObject {
@@ -67,6 +68,9 @@ export abstract class SantaiObject {
   }
   isList(): this is SantaiList {
     return this.type === SantaiType.kList;
+  }
+  isRange(): this is SantaiRange {
+    return this.type === SantaiType.kRange;
   }
 
   /**
@@ -429,5 +433,86 @@ export class SantaiList extends SantaiObject {
 
   override iterate(): SantaiIterator {
     return new ListIterator(this);
+  }
+}
+
+class RangeIterator extends SantaiIterator {
+  private current: number;
+
+  constructor(
+    start: number,
+    private readonly stop: number,
+    private readonly step: number
+  ) {
+    super();
+    this.current = start;
+  }
+
+  override hasNext(): boolean {
+    return this.step > 0 ? this.current < this.stop : this.current > this.stop;
+  }
+
+  override next(): IteratorResult<SantaiNumber> {
+    if (!this.hasNext()) {
+      return { value: undefined as never, done: true };
+    }
+
+    const value = new SantaiNumber(this.current);
+    this.current += this.step;
+    return { value, done: false };
+  }
+}
+
+export class SantaiRange extends SantaiObject {
+  override readonly typeName = "Rentang";
+
+  readonly start: number;
+  readonly stop: number;
+  readonly step: number;
+
+  constructor(start: number, stop: number, step: number) {
+    super(SantaiType.kRange);
+    this.start = start;
+    this.stop = stop;
+    this.step = step;
+  }
+
+  get size(): number {
+    if (this.step > 0) {
+      return Math.max(0, Math.ceil((this.stop - this.start) / this.step));
+    }
+
+    return Math.max(0, Math.ceil((this.start - this.stop) / -this.step));
+  }
+
+  override isTruthy(): boolean {
+    return this.size > 0;
+  }
+
+  override inspect(): string {
+    if (this.step === 1) {
+      return this.start === 0
+        ? `rentang(${this.stop})`
+        : `rentang(${this.start}, ${this.stop})`;
+    }
+
+    return `rentang(${this.start}, ${this.stop}, ${this.step})`;
+  }
+
+  override isIterable(): boolean {
+    return true;
+  }
+
+  override iterate(): SantaiIterator {
+    return new RangeIterator(this.start, this.stop, this.step);
+  }
+
+  override opEquals(other: SantaiObject): OperationResult {
+    if (!other.isRange()) return SantaiBoolean.FALSE;
+    return SantaiBoolean.of(
+      this.start === other.start &&
+        this.stop === other.stop &&
+        this.step === other.step
+    );
   }
 }
