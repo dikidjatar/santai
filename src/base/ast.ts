@@ -21,6 +21,7 @@ export const enum NodeType {
   // Declarations
   kVariableDeclaration,
   kFunctionDeclaration,
+  kClassDeclaration,
   // Statements
   kForInStatement,
   kWhileStatement,
@@ -39,7 +40,7 @@ export const enum NodeType {
   kLiteral,
   kUnaryOp,
   kVariableExpression,
-  kFunctionLiteral,
+  kProperty,
 }
 
 export abstract class AstNode {
@@ -57,6 +58,9 @@ export abstract class AstNode {
   }
   isFunctionDeclaration(): this is FunctionDeclaration {
     return this.nodeType === NodeType.kFunctionDeclaration;
+  }
+  isClassDeclaration(): this is ClassDeclaration {
+    return this.nodeType === NodeType.kClassDeclaration;
   }
   isForInStatement(): this is ForInStatement {
     return this.nodeType === NodeType.kForInStatement;
@@ -105,6 +109,9 @@ export abstract class AstNode {
   }
   isVariableExpression(): this is VariableExpression {
     return this.nodeType === NodeType.kVariableExpression;
+  }
+  isProperty(): this is Property {
+    return this.nodeType === NodeType.kProperty;
   }
 }
 
@@ -260,6 +267,46 @@ export class FunctionDeclaration extends Declaration {
     position: number
   ) {
     super(NodeType.kFunctionDeclaration, position);
+  }
+}
+
+/**
+ * One method in the class.
+ * Not a separate AstNode. Stored directly in {@link ClassDeclaration}
+ */
+export interface ClassMethod {
+  readonly name: string;
+  readonly params: readonly Variable[];
+  readonly body: Block;
+  readonly isConstructor: boolean;
+  readonly position: number;
+}
+
+export class ClassDeclaration extends Declaration {
+  constructor(
+    readonly className: string,
+    readonly methods: readonly ClassMethod[],
+    position: number
+  ) {
+    super(NodeType.kClassDeclaration, position);
+  }
+
+  getConstructor(): ClassMethod | undefined {
+    return this.methods.find((method) => method.isConstructor);
+  }
+
+  getInstanceMethods(): ClassMethod[] {
+    return this.methods.filter((method) => !method.isConstructor);
+  }
+}
+
+export class Property extends Expression {
+  constructor(
+    readonly object: Expression,
+    readonly property: Expression, // Literal(string) for dot/arrow, any Expression for bracket
+    position: number
+  ) {
+    super(NodeType.kProperty, position);
   }
 }
 
@@ -429,6 +476,22 @@ export class AstNodeFactory {
     const declaration = new FunctionDeclaration(params, body, position);
     declaration.setVariable(variable);
     return declaration;
+  }
+
+  newClassDeclaration(
+    className: string,
+    methods: readonly ClassMethod[],
+    position: number
+  ): ClassDeclaration {
+    return new ClassDeclaration(className, methods, position);
+  }
+
+  newProperty(
+    object: Expression,
+    property: Expression,
+    position: number
+  ): Property {
+    return new Property(object, property, position);
   }
 
   newReturnStatement(

@@ -1,10 +1,11 @@
 // Copyright (c) [2025-2026] [Diki Djatar]
 // SPDX-License-Identifier: MIT
 
-import { assert, assertDefined } from "../base/asserts";
+import { assert, assertDefined, unreachable } from "../base/asserts";
 import {
   AstNodeFactory,
   Block,
+  ClassMethod,
   Declaration,
   Expression,
   Statement,
@@ -178,6 +179,8 @@ export class Parser {
         return this.parseVariableDeclaration();
       case TokenValue.kAksi:
         return this.parseFunctionDeclaration();
+      case TokenValue.kGue:
+        return this.parseClassDeclaration();
       case TokenValue.kBalikin:
         return this.parseReturnStatement();
       case TokenValue.kStop:
@@ -347,8 +350,12 @@ export class Parser {
   parseFunctionDeclaration(): Statement | undefined {
     this.next();
     const position = this.peekPosition();
+    const nextToken = this.next();
 
-    if (this.next() !== TokenValue.kIdentifier) {
+    if (
+      nextToken !== TokenValue.kIdentifier &&
+      nextToken !== TokenValue.kAwal
+    ) {
       this.reportUnexpectedToken(this.peek());
       return undefined;
     }
@@ -401,6 +408,49 @@ export class Parser {
       body as Block,
       position
     );
+  }
+
+  parseClassDeclaration(): Statement | undefined {
+    const position = this.peekPosition();
+    this.next();
+    this.expect(TokenValue.kIdentifier);
+
+    const className = this.currentLiteral();
+
+    this.expect(TokenValue.kLeftBrace);
+
+    const methods: ClassMethod[] = [];
+
+    while (
+      this.peek() !== TokenValue.kRightBrace &&
+      this.peek() !== TokenValue.kEos
+    ) {
+      if (this.peek() !== TokenValue.kAksi) {
+        this.reportUnexpectedTokenAt(this.scanner.peekLocation(), this.peek());
+        return undefined;
+      }
+
+      const ahead = this.scanner.peekAhead();
+      const isConstructor = ahead === TokenValue.kAwal;
+
+      const fn = this.parseFunctionDeclaration();
+      if (!fn || !fn.isFunctionDeclaration()) {
+        return undefined;
+      }
+
+      const method = {
+        name: fn.variable()!.name,
+        isConstructor,
+        body: fn.body,
+        params: fn.params,
+        position: fn.position,
+      } satisfies ClassMethod;
+
+      methods.push(method);
+    }
+
+    this.expect(TokenValue.kRightBrace);
+    return this.factory.newClassDeclaration(className, methods, position);
   }
 
   parseReturnStatement(): Statement | undefined {
@@ -601,8 +651,48 @@ export class Parser {
   private parseMemberExpressionContinuation(
     expression: Expression
   ): Expression | undefined {
+    let expr: Expression = expression;
+
     do {
       switch (this.peek()) {
+        // Property '.'
+        case TokenValue.kPeriod: {
+          this.next();
+          const namePosition = this.position();
+
+          if (this.peek() === TokenValue.kIdentifier) {
+            this.next();
+            const position = this.position();
+            const property = this.factory.newStringLiteral(
+              this.currentLiteral(),
+              namePosition
+            );
+
+            expr = this.factory.newProperty(expr, property, position);
+          } else {
+            this.reportUnexpectedTokenAt(
+              this.scanner.peekLocation(),
+              this.peek()
+            );
+          }
+          break;
+        }
+
+        // Index '[]'
+        case TokenValue.kLeftBracket: {
+          this.next();
+          const position = this.position();
+          const indexProperty = this.parseExpression();
+
+          if (!indexProperty) {
+            break;
+          }
+
+          expr = this.factory.newProperty(expr, indexProperty, position);
+          this.expect(TokenValue.kRightBracket);
+          break;
+        }
+
         // Arguments
         case TokenValue.kLeftParen: {
           this.next();
@@ -615,7 +705,7 @@ export class Parser {
             const expression = this.parseExpression();
 
             if (!expression) {
-              return undefined;
+              break;
             }
 
             arguments_.push(expression);
@@ -629,13 +719,16 @@ export class Parser {
           }
 
           this.expect(closingToken);
-          return this.factory.newCall(expression, arguments_, position);
+          expr = this.factory.newCall(expr, arguments_, position);
+          break;
         }
 
         default:
-          return undefined;
+          unreachable();
       }
     } while (Token.isPropertyOrCall(this.peek()));
+
+    return expr;
   }
 
   parsePrimaryExpression(): Expression | undefined {
@@ -686,7 +779,7 @@ export class Parser {
         break;
     }
 
-    this.reportUnexpectedToken(this.next());
+    this.reportUnexpectedTokenAt(this.scanner.peekLocation(), this.peek());
     return undefined;
   }
 
