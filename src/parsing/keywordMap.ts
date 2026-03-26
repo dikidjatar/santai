@@ -23,6 +23,7 @@ interface KeywordSpec {
 const KEYWORD_SPECS: readonly KeywordSpec[] = [
   { canonical: "ambil", token: TokenValue.kAmbil, aliases: ["bawa"] },
   { canonical: "atau", token: TokenValue.kAtau },
+  { canonical: "awal", token: TokenValue.kAwal },
   { canonical: "aksi", token: TokenValue.kAksi, aliases: ["jurus"] },
   { canonical: "balikin", token: TokenValue.kBalikin },
   { canonical: "benar", token: TokenValue.kBenarLiteral, aliases: ["bener"] },
@@ -30,6 +31,7 @@ const KEYWORD_SPECS: readonly KeywordSpec[] = [
   { canonical: "dan", token: TokenValue.kDan },
   { canonical: "di", token: TokenValue.kDi },
   { canonical: "gak", token: TokenValue.kNot },
+  { canonical: "gue", token: TokenValue.kGue },
   { canonical: "isi", token: TokenValue.kIsi },
   { canonical: "itu", token: TokenValue.kItu },
   { canonical: "kalo", token: TokenValue.kKalo },

@@ -63,6 +63,8 @@ const TOKEN_LIST: TokenDef[] = [
   ["kBalikin", "balikin", 0, true],
   ["kTitip", "titip", 0, true],
   ["kMumpung", "mumpung", 0, true],
+  ["kGue", "gue", 0, true],
+  ["kAwal", "awal", 0, true],
   ["kIsi", "isi", 0, true],
 
   // Literals
@@ -127,6 +129,8 @@ export enum TokenValue {
   kBalikin,
   kTitip,
   kMumpung,
+  kGue,
+  kAwal,
   kIsi,
   kKosongLiteral,
   kBenarLiteral,
