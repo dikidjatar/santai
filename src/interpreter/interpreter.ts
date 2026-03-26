@@ -36,10 +36,10 @@ import "../builtins/globals";
 import { SantaiIterator } from "../objects/iterator";
 import {
   isOperationError,
+  santaiKosong,
   OperationResult,
   SantaiBoolean,
   SantaiFunction,
-  SantaiKosong,
   SantaiList,
   SantaiNumber,
   SantaiObject,
@@ -48,8 +48,6 @@ import {
 import { makeLocation, ScannerLocation } from "../parsing/scanner";
 import { Token, TokenValue } from "../parsing/token";
 import { Environment, VariableSlot } from "./environment";
-
-const kosong: SantaiKosong = SantaiKosong.INSTANCE;
 
 class ReturnSignal extends Signal<ReturnStatement> {
   constructor(
@@ -146,7 +144,7 @@ export class Interpreter extends AstVisitor<SantaiObject> {
     assertDefined(node);
 
     if (this.errorHandler.hasErrors()) {
-      return kosong;
+      return santaiKosong;
     }
 
     switch (true) {
@@ -194,21 +192,21 @@ export class Interpreter extends AstVisitor<SantaiObject> {
   override visitVariableDeclaration(node: VariableDeclaration): SantaiObject {
     const variable: Variable | undefined = node.variable();
     assertDefined(variable);
-    let value: SantaiObject = kosong;
+    let value: SantaiObject = santaiKosong;
     const initializer = node.initializer();
 
     if (initializer) {
       value = this.evaluate(initializer);
     } else if (variable.isConst()) {
       this.report(node, MessageTemplate.kConstDeclMissingInitialize);
-      return kosong;
+      return santaiKosong;
     }
 
     if (!this.env.declare(variable, value)) {
       this.report(node, MessageTemplate.kVarRedeclaration, variable.name);
     }
 
-    return kosong;
+    return santaiKosong;
   }
 
   override visitFunctionDeclaration(node: FunctionDeclaration): SantaiObject {
@@ -226,7 +224,7 @@ export class Interpreter extends AstVisitor<SantaiObject> {
       this.report(node, MessageTemplate.kVarRedeclaration, functionObj.name);
     }
 
-    return kosong;
+    return santaiKosong;
   }
 
   override visitForInStatement(node: ForInStatement): SantaiObject {
@@ -239,7 +237,7 @@ export class Interpreter extends AstVisitor<SantaiObject> {
         MessageTemplate.kNotIterable,
         iterable.typeName
       );
-      return kosong;
+      return santaiKosong;
     }
 
     const iterator: SantaiIterator = iterable.iterate();
@@ -254,9 +252,9 @@ export class Interpreter extends AstVisitor<SantaiObject> {
 
     // Declare iteration variable in loop env with initial value kosong.
     // Value will be updated each iteration through loopEnv.update().
-    if (!loopEnv.declare(variable, kosong)) {
+    if (!loopEnv.declare(variable, santaiKosong)) {
       this.report(node, MessageTemplate.kVarRedeclaration, variable.name);
-      return kosong;
+      return santaiKosong;
     }
 
     try {
@@ -284,7 +282,7 @@ export class Interpreter extends AstVisitor<SantaiObject> {
       this.env = previousEnv;
     }
 
-    return kosong;
+    return santaiKosong;
   }
 
   override visitWhileStatement(node: WhileStatement): SantaiObject {
@@ -313,7 +311,7 @@ export class Interpreter extends AstVisitor<SantaiObject> {
       }
     }
 
-    return kosong;
+    return santaiKosong;
   }
 
   override visitBlock(node: Block): SantaiObject {
@@ -323,7 +321,7 @@ export class Interpreter extends AstVisitor<SantaiObject> {
 
   override visitReturnStatement(node: ReturnStatement): SantaiObject {
     const expression = node.expression;
-    const value = expression ? this.evaluate(expression) : kosong;
+    const value = expression ? this.evaluate(expression) : santaiKosong;
     throw new ReturnSignal(node, value);
   }
 
@@ -336,14 +334,14 @@ export class Interpreter extends AstVisitor<SantaiObject> {
   }
 
   override visitEmptyStatement(_node: EmptyStatement): SantaiObject {
-    return kosong;
+    return santaiKosong;
   }
 
   override visitIfStatement(node: IfStatement): SantaiObject {
     const condition: SantaiObject = this.evaluate(node.condition);
 
     if (!condition) {
-      return kosong;
+      return santaiKosong;
     }
 
     if (condition.isTruthy()) {
@@ -351,7 +349,7 @@ export class Interpreter extends AstVisitor<SantaiObject> {
     } else if (node.hasElseStatement()) {
       return this.evaluate(node.orelse);
     } else {
-      return kosong;
+      return santaiKosong;
     }
   }
 
@@ -361,14 +359,14 @@ export class Interpreter extends AstVisitor<SantaiObject> {
       this.visitVariableDeclaration(declaration);
     }
 
-    return kosong;
+    return santaiKosong;
   }
 
   override visitAssignment(node: Assignment): SantaiObject {
     const value = this.evaluate(node.value);
 
     if (!this.assignToTarget(node.target, value)) {
-      return kosong;
+      return santaiKosong;
     }
 
     return value;
@@ -408,7 +406,7 @@ export class Interpreter extends AstVisitor<SantaiObject> {
       const element: SantaiObject = this.evaluate(value);
 
       if (!element) {
-        return kosong;
+        return santaiKosong;
       }
 
       elements.push(element);
@@ -432,7 +430,7 @@ export class Interpreter extends AstVisitor<SantaiObject> {
             Token.string(op),
             right.typeName
           );
-          return kosong;
+          return santaiKosong;
         }
         return new SantaiNumber(-right.value);
       }
@@ -444,7 +442,7 @@ export class Interpreter extends AstVisitor<SantaiObject> {
             Token.string(op),
             right.typeName
           );
-          return kosong;
+          return santaiKosong;
         }
         return right;
       }
@@ -505,7 +503,7 @@ export class Interpreter extends AstVisitor<SantaiObject> {
         return resolve(left.opEquals(right));
       case TokenValue.kNotEq: {
         const eq = resolve(left.opEquals(right));
-        return eq.isBoolean() ? SantaiBoolean.of(!eq.value) : kosong;
+        return eq.isBoolean() ? SantaiBoolean.of(!eq.value) : santaiKosong;
       }
 
       case TokenValue.kLessThan:
@@ -515,12 +513,12 @@ export class Interpreter extends AstVisitor<SantaiObject> {
       case TokenValue.kLessThanEq: {
         // a <= b  =  !(a > b)
         const gt = resolve(left.opGreaterThan(right));
-        return gt.isBoolean() ? SantaiBoolean.of(!gt.value) : kosong;
+        return gt.isBoolean() ? SantaiBoolean.of(!gt.value) : santaiKosong;
       }
       case TokenValue.kGreaterThanEq: {
         // a >= b  =  !(a < b)
         const lt = resolve(left.opLessThan(right));
-        return lt.isBoolean() ? SantaiBoolean.of(!lt.value) : kosong;
+        return lt.isBoolean() ? SantaiBoolean.of(!lt.value) : santaiKosong;
       }
 
       default:
@@ -531,7 +529,7 @@ export class Interpreter extends AstVisitor<SantaiObject> {
           left.typeName,
           right.typeName
         );
-        return kosong;
+        return santaiKosong;
     }
   }
 
@@ -553,7 +551,7 @@ export class Interpreter extends AstVisitor<SantaiObject> {
           result.left.typeName
         );
       }
-      return kosong;
+      return santaiKosong;
     }
     return result;
   }
@@ -569,7 +567,7 @@ export class Interpreter extends AstVisitor<SantaiObject> {
       const parameters = fn.parameters;
 
       for (let i = 0; i < parameters.length; i++) {
-        if (!fnEnv.declare(parameters[i], args[i] ?? kosong)) {
+        if (!fnEnv.declare(parameters[i], args[i] ?? santaiKosong)) {
           this.report(
             node,
             MessageTemplate.kVarRedeclaration,
@@ -603,14 +601,14 @@ export class Interpreter extends AstVisitor<SantaiObject> {
       return callable(self, args);
     } else {
       this.report(node, MessageTemplate.kCalledNoCallable, fn.typeName);
-      return kosong;
+      return santaiKosong;
     }
   }
 
   override visitLiteral(node: Literal): SantaiObject {
     switch (node.type) {
       case LiteralType.kEmpty:
-        return kosong;
+        return santaiKosong;
       case LiteralType.kBoolean:
         return SantaiBoolean.of(node.asBooleanLiteral());
       case LiteralType.kNumber:
@@ -628,7 +626,7 @@ export class Interpreter extends AstVisitor<SantaiObject> {
     }
 
     this.report(node, MessageTemplate.kNotDefined, node.name);
-    return kosong;
+    return santaiKosong;
   }
 
   private evaluateStatements(
@@ -637,7 +635,7 @@ export class Interpreter extends AstVisitor<SantaiObject> {
   ): SantaiObject {
     const previousEnv = this.env;
     this.env = env;
-    let result: SantaiObject = kosong;
+    let result: SantaiObject = santaiKosong;
 
     try {
       for (const statement of statements) {

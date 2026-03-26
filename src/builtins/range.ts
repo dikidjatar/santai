@@ -1,6 +1,6 @@
 import { assert } from "../base/asserts";
 import { isUndefined } from "../base/types";
-import { SantaiKosong, SantaiObject, SantaiRange } from "../objects/object";
+import { santaiKosong, SantaiObject, SantaiRange } from "../objects/object";
 import { defineGlobalFunction } from "./builtin";
 
 function intArg(args: SantaiObject[], idx: number): number | undefined {
@@ -37,7 +37,7 @@ defineGlobalFunction("rentang", (self, args) => {
   if (step === 0) {
     // Step zero is infinite loop, reject by returning empty
     // an error will be thrown by the interpreter via kNotIterable if attempted
-    return SantaiKosong.INSTANCE;
+    return santaiKosong;
   }
 
   return new SantaiRange(start, stop, step);

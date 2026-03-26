@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT
 
 import { assert } from "../base/asserts";
-import { BuiltinFunction, SantaiKosong, SantaiObject } from "../objects/object";
+import { BuiltinFunction, santaiKosong, SantaiObject } from "../objects/object";
 
 export type BuiltinCallable = (
   self: SantaiObject | undefined,
@@ -15,7 +15,7 @@ export interface BuiltinDefinition {
 }
 
 export function arg(args: SantaiObject[], index: number): SantaiObject {
-  return args[index] ?? SantaiKosong.INSTANCE;
+  return args[index] ?? santaiKosong;
 }
 
 export function arg0(args: SantaiObject[]): SantaiObject {

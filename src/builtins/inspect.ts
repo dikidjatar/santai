@@ -1,6 +1,6 @@
 import { assert } from "../base/asserts";
 import {
-  SantaiKosong,
+  santaiKosong,
   SantaiList,
   SantaiNumber,
   SantaiObject,
@@ -21,7 +21,7 @@ import { arg0, defineGlobalFunction } from "./builtin";
  */
 defineGlobalFunction("panjang", (self, args) => {
   assert(!self);
-  const obj: SantaiObject = args[0] ?? SantaiKosong.INSTANCE;
+  const obj: SantaiObject = args[0] ?? santaiKosong;
 
   if (obj.isString()) {
     return new SantaiNumber([...obj.value].length);
@@ -34,14 +34,14 @@ defineGlobalFunction("panjang", (self, args) => {
 
 defineGlobalFunction("tipe", (self, args) => {
   assert(!self);
-  const obj: SantaiObject = args[0] ?? SantaiKosong.INSTANCE;
+  const obj: SantaiObject = args[0] ?? santaiKosong;
   return new SantaiString(obj.typeName);
 });
 
 defineGlobalFunction("angka", (_self, args) => {
   const obj = arg0(args);
   if (!obj.isString()) {
-    return SantaiKosong.INSTANCE;
+    return santaiKosong;
   }
 
   return new SantaiNumber(Number(obj.value));

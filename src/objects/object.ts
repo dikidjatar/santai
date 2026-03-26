@@ -119,7 +119,7 @@ export abstract class SantaiObject {
 }
 
 export class SantaiKosong extends SantaiObject {
-  static readonly INSTANCE = new SantaiKosong();
+  static readonly instance = new SantaiKosong();
   override readonly typeName = "Kosong";
 
   constructor() {
@@ -139,6 +139,8 @@ export class SantaiKosong extends SantaiObject {
     return other.isKosong() ? SantaiBoolean.TRUE : SantaiBoolean.FALSE;
   }
 }
+
+export const santaiKosong: SantaiKosong = SantaiKosong.instance;
 
 export class SantaiBoolean extends SantaiObject {
   static readonly TRUE = new SantaiBoolean(true);
