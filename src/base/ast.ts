@@ -493,7 +493,10 @@ export class AstNodeFactory {
     methods: readonly ClassMethod[],
     position: number
   ): ClassDeclaration {
-    return new ClassDeclaration(className, methods, position);
+    const variable = new Variable(className, VariableMode.kVar);
+    const declaration = new ClassDeclaration(className, methods, position);
+    declaration.setVariable(variable);
+    return declaration;
   }
 
   newProperty(
