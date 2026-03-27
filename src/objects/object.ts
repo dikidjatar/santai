@@ -688,4 +688,8 @@ export class SantaiInstance extends SantaiObject {
       _inspectingInstances.delete(this);
     }
   }
+
+  override opEquals(other: SantaiObject): OperationResult {
+    return SantaiBoolean.of(this === other);
+  }
 }
