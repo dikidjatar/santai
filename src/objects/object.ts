@@ -40,7 +40,7 @@ export const enum SantaiType {
   kList,
   kRange,
   kClass,
-  KInstance,
+  Kinstance,
 }
 
 export abstract class SantaiObject {
@@ -79,7 +79,7 @@ export abstract class SantaiObject {
     return this.type === SantaiType.kClass;
   }
   isInstance(): this is SantaiInstance {
-    return this.type === SantaiType.KInstance;
+    return this.type === SantaiType.Kinstance;
   }
 
   /**
@@ -616,7 +616,7 @@ export class SantaiInstance extends SantaiObject {
   private readonly _properties: Map<string, SantaiObject> = new Map();
 
   constructor(private readonly clazz: SantaiClass) {
-    super(SantaiType.KInstance);
+    super(SantaiType.Kinstance);
     this.typeName = clazz.name;
   }
 
