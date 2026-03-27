@@ -12,7 +12,9 @@ export class OperationError {
   constructor(
     readonly op: string,
     readonly left: SantaiObject,
-    readonly right: SantaiObject | undefined = undefined
+    readonly right?: SantaiObject,
+    readonly isDivideByZero?: boolean,
+    readonly isModuleByZero?: boolean
   ) {}
 }
 
@@ -21,9 +23,11 @@ export type OperationResult = SantaiObject | OperationError;
 function operationError(
   op: string,
   left: SantaiObject,
-  right?: SantaiObject
+  right?: SantaiObject,
+  isDivideByZero?: boolean,
+  isModuleByZero?: boolean
 ): OperationError {
-  return new OperationError(op, left, right);
+  return new OperationError(op, left, right, isDivideByZero, isModuleByZero);
 }
 
 export function isOperationError(r: OperationResult): r is OperationError {
@@ -222,6 +226,11 @@ export class SantaiNumber extends SantaiObject {
     if (!other.isNumber()) {
       return operationError(op, this, other);
     }
+
+    if ((op === "/" || op === "%") && other.value === 0) {
+      return operationError(op, this, other, op === "/", op === "%");
+    }
+
     return new SantaiNumber(fn(this.value, other.value));
   }
 

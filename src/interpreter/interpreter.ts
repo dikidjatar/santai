@@ -658,13 +658,19 @@ export class Interpreter extends AstVisitor<SantaiObject> {
   private resolveOp(result: OperationResult, node: AstNode): SantaiObject {
     if (isOperationError(result)) {
       if (result.right) {
-        this.report(
-          node,
-          MessageTemplate.kUnsupportedBinaryOperation,
-          result.op,
-          result.left.typeName,
-          result.right.typeName
-        );
+        if (result.isDivideByZero) {
+          this.report(node, MessageTemplate.kDivisionByZero);
+        } else if (result.isModuleByZero) {
+          this.report(node, MessageTemplate.kIntegerModuleByZero);
+        } else {
+          this.report(
+            node,
+            MessageTemplate.kUnsupportedBinaryOperation,
+            result.op,
+            result.left.typeName,
+            result.right.typeName
+          );
+        }
       } else {
         this.report(
           node,
