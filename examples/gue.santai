@@ -1,0 +1,69 @@
+# class dibuat menggunakan keyword 'gue'
+
+gue Orang {
+  aksi awal bawa nama, umur, hobi {
+    gue.nama = nama # Gue disini merujuk ke Orang (seperti 'this')
+    gue.umur = umur
+    gue.hobi = hobi
+    gue.pasangan = kosong
+  }
+
+  aksi ulang_tahun {
+    gue.umur = gue.umur + 1
+  }
+
+  aksi nikahi bawa pasangan {
+    gue.pasangan = pasangan
+    pasangan.pasangan = gue
+  }
+}
+
+aksi spil_nikah bawa orang {
+  isi nama = orang.nama;
+  isi pasangan = orang.pasangan
+
+  kalo pasangan itu gak kosong
+    spil nama + ' sudah menikah dengan ' + pasangan.nama + '.'
+  yaudah spil nama + ' masih jomblo.'
+}
+
+isi Tilly = Orang('Tilly', 26, 'Memasak')
+isi Budi = Orang('Budi', 28, 'Volly')
+
+spil_nikah(Tilly)
+spil_nikah(Budi)
+Budi.nikahi(Tilly)
+
+spil 'umur budi sebelum nikah adalah ' + Budi.umur + ' tahun'
+
+spil_nikah(Budi)
+spil_nikah(Tilly)
+
+Budi.ulang_tahun()
+spil 'umur budi setelah nikah adalah ' + Budi.umur + ' tahun'
+
+# HASIL OUTPUT:
+#
+# Tilly masih jomblo.
+# Budi masih jomblo.
+# umur budi sebelum nikah adalah 28 tahun
+# Budi sudah menikah dengan Tilly.
+# Tilly sudah menikah dengan Budi.
+# umur budi setelah nikah adalah 29 tahun
+
+spil ''
+
+gue Kucing {
+
+  aksi awal bawa nama {
+    gue.nama = nama
+    gue.anak = kosong
+  }
+
+  aksi ngeong {
+    spil 'Woiii! Gue kucing ' + gue.nama + '. Ngeonggg😸'
+  }
+}
+
+titip Oyen = Kucing('Oyen')
+Oyen.ngeong() # Woiii! Gue kucing Oyen. Ngeonggg😸
