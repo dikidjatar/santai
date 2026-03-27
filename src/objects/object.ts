@@ -41,6 +41,7 @@ export const enum SantaiType {
   kRange,
   kClass,
   Kinstance,
+  kBuiltinClass,
 }
 
 export abstract class SantaiObject {
@@ -80,6 +81,9 @@ export abstract class SantaiObject {
   }
   isInstance(): this is SantaiInstance {
     return this.type === SantaiType.Kinstance;
+  }
+  isBuiltinClass(): this is SantaiBuiltinClass {
+    return this.type === SantaiType.kBuiltinClass;
   }
 
   /**
@@ -608,6 +612,10 @@ export class SantaiClass extends SantaiObject {
   override inspect(): string {
     return `<gue ${this.name}>`;
   }
+
+  override opEquals(other: SantaiObject): OperationResult {
+    return SantaiBoolean.of(this === other);
+  }
 }
 
 export class SantaiInstance extends SantaiObject {
@@ -618,6 +626,10 @@ export class SantaiInstance extends SantaiObject {
   constructor(private readonly clazz: SantaiClass) {
     super(SantaiType.Kinstance);
     this.typeName = clazz.name;
+  }
+
+  getClass(): SantaiClass {
+    return this.clazz;
   }
 
   setProperty(name: string, value: SantaiObject): void {
@@ -687,6 +699,34 @@ export class SantaiInstance extends SantaiObject {
     } finally {
       _inspectingInstances.delete(this);
     }
+  }
+
+  override opEquals(other: SantaiObject): OperationResult {
+    return SantaiBoolean.of(this === other);
+  }
+}
+
+export class SantaiBuiltinClass extends SantaiObject {
+  override readonly typeName: string = "Type";
+
+  constructor(
+    readonly name: string,
+    readonly santaiType: SantaiType,
+    private readonly _construct: (args: SantaiObject[]) => SantaiObject
+  ) {
+    super(SantaiType.kBuiltinClass);
+  }
+
+  construct(args: SantaiObject[]): SantaiObject {
+    return this._construct(args);
+  }
+
+  override isTruthy(): boolean {
+    return true;
+  }
+
+  override inspect(): string {
+    return `<gue ${this.name}>`;
   }
 
   override opEquals(other: SantaiObject): OperationResult {
