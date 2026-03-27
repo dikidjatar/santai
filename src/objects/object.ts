@@ -543,6 +543,18 @@ export class SantaiRange extends SantaiObject {
 }
 
 /**
+ * Sets the instance that is being inspected in the current call stack.
+ *
+ * Prevent infinite recursion when there are circular references between instances
+ * (e.g. `oyen.child = micha` and `micha.parent = oyen`).
+ *
+ * Use module-level `Set` (not a field in a class) for one guard
+ * applies to the entire call stack — no need to pass to each
+ * recursive call.
+ */
+const _inspectingInstances: Set<SantaiInstance> = new Set();
+
+/**
  * Santai class representation defined with `gue ClassName { ... }`.
  *
  * `SantaiClass` is the first object of the class (callable) and it can be called
@@ -659,9 +671,21 @@ export class SantaiInstance extends SantaiObject {
   }
 
   override inspect(): string {
-    const props = [...this._properties.entries()]
-      .map(([k, v]) => `${k}: ${v.inspect()}`)
-      .join(", ");
-    return `${this.clazz.name} { ${props} }`;
+    if (_inspectingInstances.has(this)) {
+      return `${this.clazz.name} { ... }`;
+    }
+
+    _inspectingInstances.add(this);
+
+    try {
+      const props = [...this._properties.entries()]
+        .map(([k, v]) => `${k}: ${v.inspect()}`)
+        .join(", ");
+      return props.length > 0
+        ? `${this.clazz.name} { ${props} }`
+        : `${this.clazz.name} {}`;
+    } finally {
+      _inspectingInstances.delete(this);
+    }
   }
 }
