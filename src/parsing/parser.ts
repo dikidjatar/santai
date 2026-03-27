@@ -12,6 +12,7 @@ import {
 } from "../base/ast";
 import { ErrorHandler } from "../base/errorHandler";
 import { MessageTemplate } from "../base/messageTemplate";
+import { isUndefined } from "../base/types";
 import { Variable, VariableMode } from "../base/variable";
 import { makeLocation, Scanner, ScannerLocation } from "./scanner";
 import { Token, TokenValue } from "./token";
@@ -44,8 +45,26 @@ function isNoParenArgStart(token: TokenValue): boolean {
   }
 }
 
+interface ClassParseContext {
+  /**
+   * The name of the class being parsed.
+   */
+  readonly className: string;
+
+  /**
+   * Position of the keyword `gue` in the source.
+   */
+  readonly position: number;
+}
+
 export class Parser {
   private accept_IN = true;
+
+  private readonly classContextStack: ClassParseContext[] = [];
+
+  private get currentClassContext(): ClassParseContext | undefined {
+    return this.classContextStack[this.classContextStack.length - 1];
+  }
 
   constructor(
     private readonly scanner: Scanner,
@@ -180,10 +199,9 @@ export class Parser {
       case TokenValue.kAksi:
         return this.parseFunctionDeclaration();
       case TokenValue.kGue: {
-        if (
-          this.scanner.peekAhead() !== TokenValue.kIdentifier &&
-          this.scanner.peekAhead() !== TokenValue.kLeftBrace
-        ) {
+        // Check whether this is a class declaration
+        // or this-expression as a statement
+        if (this.scanner.peekAhead() !== TokenValue.kIdentifier) {
           return this.parseExpressionStatement();
         }
 
@@ -427,6 +445,12 @@ export class Parser {
 
     this.expect(TokenValue.kLeftBrace);
 
+    // Push class context before parsing body
+    // From here on, the parser knows that it is inside the class `className`.
+    // All `gue` found in the body will result
+    // ThisExpression { className: className }.
+    this.classContextStack.push({ className, position });
+
     const methods: ClassMethod[] = [];
 
     while (
@@ -458,6 +482,10 @@ export class Parser {
     }
 
     this.expect(TokenValue.kRightBrace);
+
+    // Pop the class context when finished (including if there are errors)
+    this.classContextStack.pop();
+
     return this.factory.newClassDeclaration(className, methods, position);
   }
 
@@ -785,10 +813,20 @@ export class Parser {
       }
       case TokenValue.kLeftBracket:
         return this.parseList();
-      case TokenValue.kGue:
+      case TokenValue.kGue: {
         const position = this.position();
+        const context = this.currentClassContext;
+
         this.next();
-        return this.factory.newThisExpression(position);
+
+        if (isUndefined(context)) {
+          // `gue` used outside of class
+          this.reportError(MessageTemplate.kGueOutsideClass);
+          return undefined;
+        }
+
+        return this.factory.newThisExpression(context.className, position);
+      }
       default:
         break;
     }

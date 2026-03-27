@@ -32,6 +32,10 @@ export const enum MessageTemplate {
   kIllegalContinueStatement,
   // Iteration
   kNotIterable,
+  // Class and property
+  kGueOutsideClass,
+  kPropertyNotFound,
+  kCannotSetProperty,
 }
 
 /**
@@ -113,6 +117,14 @@ export const MessageTemplateString: Record<MessageTemplate, string> = {
   // Iteration
   [MessageTemplate.kNotIterable]:
     "%s itu gak bisa diiterasi — bukan Daftar atau Teks",
+
+  // Class and property
+  [MessageTemplate.kGueOutsideClass]:
+    "'gue' dipake di luar kelas? lah kamu siapa 😭 'gue' cuma valid di dalam aksi milik kelas",
+  [MessageTemplate.kPropertyNotFound]:
+    "'%s' gak ada di %s — salah panggil atau belum lo bikin?",
+  [MessageTemplate.kCannotSetProperty]:
+    "gak bisa ngubah '%s' di %s — ini bukan objek kelas, jangan maksa dong",
 };
 
 export const MessageTemplateNote: Partial<Record<MessageTemplate, string>> = {
@@ -165,4 +177,7 @@ export const MessageTemplateMood: Record<MessageTemplate, Mood> = {
   [MessageTemplate.kIllegalBreakStatement]:        Mood.Panik,
   [MessageTemplate.kIllegalContinueStatement]:     Mood.Panik,
   [MessageTemplate.kNotIterable]:                  Mood.Bingung,
+  [MessageTemplate.kGueOutsideClass]:              Mood.Panik,
+  [MessageTemplate.kPropertyNotFound]:             Mood.Sedih,
+  [MessageTemplate.kCannotSetProperty]:            Mood.Marah,
 };

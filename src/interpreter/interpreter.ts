@@ -10,6 +10,7 @@ import {
   Block,
   BreakStatement,
   Call,
+  ClassDeclaration,
   ContinueStatement,
   DeclarationList,
   EmptyStatement,
@@ -20,8 +21,10 @@ import {
   ListLiteral,
   Literal,
   LiteralType,
+  Property,
   ReturnStatement,
   Statement,
+  ThisExpression,
   UnaryOp,
   VariableDeclaration,
   VariableExpression,
@@ -29,17 +32,19 @@ import {
 } from "../base/ast";
 import { ErrorHandler, StackFrame } from "../base/errorHandler";
 import { MessageTemplate } from "../base/messageTemplate";
-import { isNumber, isObject, Signal } from "../base/types";
+import { isNumber, isObject, isUndefined, Signal } from "../base/types";
 import { Variable, VariableMode } from "../base/variable";
 import { BuiltinCallable, BuiltinRegistry } from "../builtins/builtin";
 import "../builtins/globals";
 import { SantaiIterator } from "../objects/iterator";
 import {
   isOperationError,
-  santaiKosong,
   OperationResult,
   SantaiBoolean,
+  SantaiClass,
   SantaiFunction,
+  SantaiInstance,
+  santaiKosong,
   SantaiList,
   SantaiNumber,
   SantaiObject,
@@ -48,6 +53,17 @@ import {
 import { makeLocation, ScannerLocation } from "../parsing/scanner";
 import { Token, TokenValue } from "../parsing/token";
 import { Environment, VariableSlot } from "./environment";
+
+/**
+ * The implicit slot name in the Environment for the receiver (`gue`).
+ * Declared by `callFunction` when the class method is called.
+ *
+ * The parser already guarantees that `ThisExpression` only appears inside
+ * class method — so that `visitThisExpression` can be looked up directly
+ * without needing to check context. `GUE_SLOT` is still needed because of the interpreter
+ * which places the value in the environment, not the parser.
+ */
+const GUE_SLOT = "__gue__" as const;
 
 class ReturnSignal extends Signal<ReturnStatement> {
   constructor(
@@ -152,6 +168,12 @@ export class Interpreter extends AstVisitor<SantaiObject> {
         return this.visitVariableDeclaration(node);
       case node.isFunctionDeclaration():
         return this.visitFunctionDeclaration(node);
+      case node.isClassDeclaration():
+        return this.visitClassDeclaration(node);
+      case node.isProperty():
+        return this.visitProperty(node);
+      case node.isThisExpression():
+        return this.visitThisExpression(node);
       case node.isForInStatement():
         return this.visitForInStatement(node);
       case node.isWhileStatement():
@@ -285,6 +307,66 @@ export class Interpreter extends AstVisitor<SantaiObject> {
     return santaiKosong;
   }
 
+  override visitClassDeclaration(node: ClassDeclaration): SantaiObject {
+    const variable: Variable | undefined = node.variable();
+    assertDefined(variable);
+
+    const methods: SantaiFunction[] = node.methods.map((method) => {
+      return new SantaiFunction(
+        method.name,
+        method.params,
+        method.body,
+        this.env
+      );
+    });
+
+    const klass = new SantaiClass(node.className, methods);
+
+    if (!this.env.declare(variable, klass)) {
+      this.report(node, MessageTemplate.kVarRedeclaration, node.className);
+    }
+
+    return santaiKosong;
+  }
+
+  override visitProperty(node: Property): SantaiObject {
+    const obj = this.evaluate(node.object);
+    const name = this.resolvePropertyName(node);
+
+    const prop = obj.getProperty(name);
+    if (!isUndefined(prop)) {
+      return prop;
+    }
+
+    this.report(node, MessageTemplate.kPropertyNotFound, name, obj.typeName);
+    return santaiKosong;
+  }
+
+  override visitThisExpression(_node: ThisExpression): SantaiObject {
+    const receiver = this.env.get(GUE_SLOT);
+
+    if (receiver !== undefined) {
+      return receiver;
+    }
+
+    // It should never have gotten here
+    // if the parser was working correctly.
+    unreachable();
+  }
+
+  /**
+   * Extracts property names from `Property` as strings.
+   */
+  private resolvePropertyName(node: Property): string {
+    const property = node.property;
+
+    if (property.isLiteral() && property.isStringLiteral()) {
+      return property.asStringLiteral();
+    }
+
+    return this.evaluate(node).inspect();
+  }
+
   override visitWhileStatement(node: WhileStatement): SantaiObject {
     const conditionExpression: Expression = node.condition;
     assertDefined(conditionExpression);
@@ -392,6 +474,22 @@ export class Interpreter extends AstVisitor<SantaiObject> {
         return false;
       }
 
+      return true;
+    } else if (target.isProperty()) {
+      const obj = this.evaluate(target.object);
+
+      if (!obj.isInstance()) {
+        this.report(
+          target,
+          MessageTemplate.kCannotSetProperty,
+          this.resolvePropertyName(target),
+          obj.typeName
+        );
+        return false;
+      }
+
+      const propName = this.resolvePropertyName(target);
+      obj.setProperty(propName, value);
       return true;
     } else {
       this.report(target, MessageTemplate.kInvalidAssignmentTarget);
@@ -562,46 +660,82 @@ export class Interpreter extends AstVisitor<SantaiObject> {
       .arguments()
       .map((arg) => this.evaluate(arg));
 
+    if (fn.isCLass()) {
+      return this.instantiateClass(fn, args, node);
+    }
+
     if (fn.isFunction()) {
-      const fnEnv = Environment.new(fn.closure);
-      const parameters = fn.parameters;
+      return this.callFunction(fn, args, node);
+    }
 
-      for (let i = 0; i < parameters.length; i++) {
-        if (!fnEnv.declare(parameters[i], args[i] ?? santaiKosong)) {
-          this.report(
-            node,
-            MessageTemplate.kVarRedeclaration,
-            parameters[i].name
-          );
-        }
-      }
-
-      // Push frame before body execution to record *call site* location
-      // (not the declaration location), so the stack trace shows where
-      // the function is called, not where it is defined.
-      this.callStack.push({
-        functionName: fn.name,
-        location: getLocationForNode(node),
-      });
-
-      try {
-        return this.evaluateStatements(fn.body.statements(), fnEnv);
-      } catch (signal) {
-        if (isReturnSignal(signal)) {
-          return signal.value;
-        }
-
-        throw signal;
-      } finally {
-        this.callStack.pop();
-      }
-    } else if (fn.isBuiltinFunction()) {
+    if (fn.isBuiltinFunction()) {
       const callable: BuiltinCallable = fn.callable();
       const self: SantaiObject | undefined = fn.self();
       return callable(self, args);
-    } else {
-      this.report(node, MessageTemplate.kCalledNoCallable, fn.typeName);
-      return santaiKosong;
+    }
+
+    this.report(node, MessageTemplate.kCalledNoCallable, fn.typeName);
+    return santaiKosong;
+  }
+
+  private instantiateClass(
+    klass: SantaiClass,
+    args: SantaiObject[],
+    node: AstNode
+  ): SantaiObject {
+    const instance = new SantaiInstance(klass);
+
+    const ctor = klass.constructorFn;
+    if (ctor) {
+      const bound = new SantaiFunction(
+        ctor.name,
+        ctor.parameters,
+        ctor.body,
+        ctor.closure,
+        instance
+      );
+      this.callFunction(bound, args, node);
+    }
+
+    return instance;
+  }
+
+  private callFunction(
+    fn: SantaiFunction,
+    args: SantaiObject[],
+    node: AstNode
+  ): SantaiObject {
+    const fnEnv = Environment.new(fn.closure);
+    const params = fn.parameters;
+
+    for (let i = 0; i < params.length; i++) {
+      if (!fnEnv.declare(params[i]!, args[i] ?? santaiKosong)) {
+        this.report(node, MessageTemplate.kVarRedeclaration, params[i]!.name);
+      }
+    }
+
+    // If method boundThis exists, declare `__gue__` in this frame.
+    // The variable is created by kConst so that it cannot be reassigned from Santai code.
+    if (!isUndefined(fn.boundThis)) {
+      const gueVar = new Variable(GUE_SLOT, VariableMode.kConst);
+      fnEnv.declare(gueVar, fn.boundThis);
+    }
+
+    this.callStack.push({
+      functionName: fn.name,
+      location: getLocationForNode(node),
+    });
+
+    try {
+      return this.evaluateStatements(fn.body.statements(), fnEnv);
+    } catch (signal) {
+      if (isReturnSignal(signal)) {
+        return signal.value;
+      }
+
+      throw signal;
+    } finally {
+      this.callStack.pop();
     }
   }
 

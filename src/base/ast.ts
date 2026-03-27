@@ -307,7 +307,7 @@ export class ClassDeclaration extends Declaration {
 export class Property extends Expression {
   constructor(
     readonly object: Expression,
-    readonly property: Expression, // Literal(string) for dot/arrow, any Expression for bracket
+    readonly property: Expression,
     position: number
   ) {
     super(NodeType.kProperty, position);
@@ -315,7 +315,10 @@ export class Property extends Expression {
 }
 
 export class ThisExpression extends Expression {
-  constructor(position: number) {
+  constructor(
+    readonly className: string,
+    position: number
+  ) {
     super(NodeType.kThisExpression, position);
   }
 }
@@ -507,8 +510,8 @@ export class AstNodeFactory {
     return new Property(object, property, position);
   }
 
-  newThisExpression(position: number): ThisExpression {
-    return new ThisExpression(position);
+  newThisExpression(className: string, position: number): ThisExpression {
+    return new ThisExpression(className, position);
   }
 
   newReturnStatement(

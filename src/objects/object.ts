@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: MIT
 
 import { Block } from "../base/ast";
+import { isUndefined } from "../base/types";
 import { Variable } from "../base/variable";
 import { BuiltinCallable } from "../builtins/builtin";
 import { Environment } from "../interpreter/environment";
@@ -38,6 +39,8 @@ export const enum SantaiType {
   kBuiltinFunction,
   kList,
   kRange,
+  kClass,
+  KInstance,
 }
 
 export abstract class SantaiObject {
@@ -72,12 +75,25 @@ export abstract class SantaiObject {
   isRange(): this is SantaiRange {
     return this.type === SantaiType.kRange;
   }
+  isCLass(): this is SantaiClass {
+    return this.type === SantaiType.kClass;
+  }
+  isInstance(): this is SantaiInstance {
+    return this.type === SantaiType.KInstance;
+  }
 
   /**
    * Returns `true` if the object can be iterated over.
    */
   isIterable(): boolean {
     return false;
+  }
+
+  /**
+   * Returns properties or methods by name
+   */
+  getProperty(_name: string): SantaiObject | undefined {
+    return undefined;
   }
 
   /**
@@ -329,7 +345,14 @@ export class SantaiFunction extends SantaiObject {
     readonly name: string,
     readonly parameters: readonly Variable[],
     readonly body: Block,
-    readonly closure: Environment
+    readonly closure: Environment,
+    /**
+     * If this is a method bound to an instance, this field contains
+     * the instance. The interpreter will set `this = boundThis`
+     * before executing body.
+     * `undefined` for regular functions (not methods).
+     */
+    readonly boundThis?: SantaiObject
   ) {
     super(SantaiType.kFunction);
   }
@@ -516,5 +539,129 @@ export class SantaiRange extends SantaiObject {
         this.stop === other.stop &&
         this.step === other.step
     );
+  }
+}
+
+/**
+ * Santai class representation defined with `gue ClassName { ... }`.
+ *
+ * `SantaiClass` is the first object of the class (callable) and it can be called
+ * to create a new instance, stored in a variable, and passed to the 'aksi'.
+ */
+export class SantaiClass extends SantaiObject {
+  override readonly typeName: string;
+
+  /**
+   * All 'SantaiFunction' methods that are not yet bound to the instance.
+   */
+  private readonly _methods: ReadonlyMap<string, SantaiFunction>;
+
+  readonly constructorFn: SantaiFunction | undefined;
+
+  constructor(
+    readonly name: string,
+    methods: readonly SantaiFunction[]
+  ) {
+    super(SantaiType.kClass);
+    this.typeName = name;
+
+    const map = new Map<string, SantaiFunction>();
+    let ctor: SantaiFunction | undefined;
+
+    for (const method of methods) {
+      map.set(method.name, method);
+      //TODO: check constructor automatically
+      if (method.name === "awal") {
+        ctor = method;
+      }
+    }
+
+    this._methods = map;
+    this.constructorFn = ctor;
+  }
+
+  /**
+   * Searches for method by name and returns `SantaiFunction`
+   * which has not been bound (boundThis = undefined). The interpreter will
+   * binds to the instance when accessed via the instance.
+   */
+  getMethod(name: string): SantaiFunction | undefined {
+    return this._methods.get(name);
+  }
+
+  override isTruthy(): boolean {
+    return true;
+  }
+
+  override inspect(): string {
+    return `<gue ${this.name}>`;
+  }
+}
+
+export class SantaiInstance extends SantaiObject {
+  override readonly typeName: string;
+
+  private readonly _properties: Map<string, SantaiObject> = new Map();
+
+  constructor(private readonly clazz: SantaiClass) {
+    super(SantaiType.KInstance);
+    this.typeName = clazz.name;
+  }
+
+  setProperty(name: string, value: SantaiObject): void {
+    this._properties.set(name, value);
+  }
+
+  /**
+   * Reads properties belonging to this instance (excluding class methods)
+   */
+  getOwnProperty(name: string): SantaiObject | undefined {
+    return this._properties.get(name);
+  }
+
+  /**
+   * Search for properties or methods.
+   *
+   * Priority:
+   *    1. Own properties (`_properties`) — result of assignment `gue.x = v`
+   *    2. Class method (`_class`) — returned as `SantaiFunction`
+   *       with `boundThis = this` so that `gue` in the method refers to here
+   *
+   * Returns `undefined` if not found in both.
+   */
+  override getProperty(name: string): SantaiObject | undefined {
+    // 1. Check own property first
+    const ownProperty = this.getOwnProperty(name);
+    if (!isUndefined(ownProperty)) {
+      return ownProperty;
+    }
+
+    // 2. Look in the class method, bind it to this instance
+    const method = this.clazz.getMethod(name);
+    if (!isUndefined(method)) {
+      // Create a new RelaxFunction with boundThis = this instance.
+      // Each access creates a new object
+      // TODO: caching
+      return new SantaiFunction(
+        method.name,
+        method.parameters,
+        method.body,
+        method.closure,
+        this // boundThis
+      );
+    }
+
+    return undefined;
+  }
+
+  override isTruthy(): boolean {
+    return true;
+  }
+
+  override inspect(): string {
+    const props = [...this._properties.entries()]
+      .map(([k, v]) => `${k}: ${v.inspect()}`)
+      .join(", ");
+    return `${this.clazz.name} { ${props} }`;
   }
 }
