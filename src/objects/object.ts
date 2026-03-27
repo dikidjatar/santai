@@ -448,7 +448,11 @@ export class SantaiList extends SantaiObject {
     return this.elements.length;
   }
 
-  constructor(readonly elements: readonly SantaiObject[]) {
+  get elements(): readonly SantaiObject[] {
+    return this._elements;
+  }
+
+  constructor(private _elements: SantaiObject[]) {
     super(SantaiType.kList);
   }
 
@@ -491,6 +495,15 @@ export class SantaiList extends SantaiObject {
     }
 
     return this.elements[obj.value];
+  }
+
+  override setSubscript(obj: SantaiObject, value: SantaiObject): boolean {
+    if (!obj.isNumber()) {
+      return false;
+    }
+
+    this._elements[obj.value] = value;
+    return true;
   }
 }
 
