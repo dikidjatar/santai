@@ -1,16 +1,22 @@
-import { assert } from "../base/asserts";
+// Copyright (c) [2026] [Diki Djatar]
+// SPDX-License-Identifier: MIT
+
 import { isUndefined } from "../base/types";
-import { santaiKosong, SantaiObject, SantaiRange } from "../objects/object";
-import { defineGlobalFunction } from "./builtin";
+import {
+  SantaiBuiltinClass,
+  santaiKosong,
+  SantaiObject,
+  SantaiRange,
+  SantaiType,
+} from "../objects/object";
+import { defineAndRegisterGlobalClass } from "./builtin";
 
 function intArg(args: SantaiObject[], idx: number): number | undefined {
   const v = args[idx];
   return v?.isNumber() ? Math.trunc(v.value) : undefined;
 }
 
-defineGlobalFunction("rentang", (self, args) => {
-  assert(!self);
-
+function toRange(args: SantaiObject[]): SantaiObject {
   let start: number;
   let stop: number;
   let step: number;
@@ -41,4 +47,8 @@ defineGlobalFunction("rentang", (self, args) => {
   }
 
   return new SantaiRange(start, stop, step);
-});
+}
+
+defineAndRegisterGlobalClass(
+  new SantaiBuiltinClass("rentang", SantaiType.kRange, toRange)
+);

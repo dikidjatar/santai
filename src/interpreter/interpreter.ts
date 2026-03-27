@@ -660,6 +660,10 @@ export class Interpreter extends AstVisitor<SantaiObject> {
       .arguments()
       .map((arg) => this.evaluate(arg));
 
+    if (fn.isBuiltinClass()) {
+      return fn.construct(args);
+    }
+
     if (fn.isCLass()) {
       return this.instantiateClass(fn, args, node);
     }

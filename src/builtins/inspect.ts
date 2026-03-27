@@ -1,12 +1,23 @@
+// Copyright (c) [2026] [Diki Djatar]
+// SPDX-License-Identifier: MIT
+
 import { assert } from "../base/asserts";
+import { isUndefined } from "../base/types";
 import {
+  SantaiBoolean,
+  SantaiBuiltinClass,
   santaiKosong,
-  SantaiList,
   SantaiNumber,
   SantaiObject,
   SantaiString,
+  SantaiType,
 } from "../objects/object";
-import { arg0, defineGlobalFunction } from "./builtin";
+import { getBuiltinClassOf } from "../objects/typeRegistry";
+import {
+  arg0,
+  defineAndRegisterGlobalClass,
+  defineGlobalFunction,
+} from "./builtin";
 
 /**
  * `panjang(value)` — the number of elements or characters of a value.
@@ -32,39 +43,70 @@ defineGlobalFunction("panjang", (self, args) => {
   return new SantaiNumber(0);
 });
 
-defineGlobalFunction("tipe", (self, args) => {
-  assert(!self);
-  const obj: SantaiObject = args[0] ?? santaiKosong;
-  return new SantaiString(obj.typeName);
-});
+defineAndRegisterGlobalClass(
+  new SantaiBuiltinClass("tipe", SantaiType.kBuiltinClass, (args) => {
+    const obj: SantaiObject = arg0(args);
 
-defineGlobalFunction("angka", (_self, args) => {
+    if (obj.isInstance()) {
+      return obj.getClass();
+    }
+
+    const cls = getBuiltinClassOf(obj);
+    if (!isUndefined(cls)) {
+      return cls;
+    }
+
+    console.log("sampai sini");
+
+    return new SantaiBuiltinClass(
+      "tipe",
+      SantaiType.kBuiltinClass,
+      () => santaiKosong
+    );
+  })
+);
+
+function toNumber(args: SantaiObject[]): SantaiObject {
   const obj = arg0(args);
-  if (!obj.isString()) {
-    return santaiKosong;
+
+  if (obj.isNumber()) {
+    return obj;
   }
 
-  return new SantaiNumber(Number(obj.value));
-});
-
-defineGlobalFunction("teks", (_self, args) => {
-  const obj = arg0(args);
-  return new SantaiString(obj.inspect());
-});
-
-defineGlobalFunction("daftar", (_self, args) => {
-  const obj = arg0(args);
-  if (!obj.isIterable()) {
-    return new SantaiList([obj]);
+  if (obj.isBoolean()) {
+    return new SantaiNumber(obj.value ? 1 : 0);
   }
 
-  const iterator = obj.iterate();
-  const elements: SantaiObject[] = [];
-
-  while (iterator.hasNext()) {
-    const element = iterator.next();
-    elements.push(element.value);
+  if (obj.isString()) {
+    const n = Number(obj.value.trim());
+    return new SantaiNumber(isNaN(n) ? 0 : n);
   }
 
-  return new SantaiList(elements);
-});
+  return new SantaiNumber(0);
+}
+
+function toText(args: SantaiObject[]): SantaiObject {
+  const val = arg0(args);
+
+  if (val.isString()) {
+    return val;
+  }
+
+  return new SantaiString(val.inspect());
+}
+
+function toBoolean(args: SantaiObject[]): SantaiObject {
+  return SantaiBoolean.of(arg0(args).isTruthy());
+}
+
+defineAndRegisterGlobalClass(
+  new SantaiBuiltinClass("angka", SantaiType.kNumber, toNumber)
+);
+
+defineAndRegisterGlobalClass(
+  new SantaiBuiltinClass("teks", SantaiType.kString, toText)
+);
+
+defineAndRegisterGlobalClass(
+  new SantaiBuiltinClass("logika", SantaiType.kBoolen, toBoolean)
+);

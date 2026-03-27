@@ -2,7 +2,13 @@
 // SPDX-License-Identifier: MIT
 
 import { assert } from "../base/asserts";
-import { BuiltinFunction, santaiKosong, SantaiObject } from "../objects/object";
+import {
+  BuiltinFunction,
+  SantaiBuiltinClass,
+  santaiKosong,
+  SantaiObject,
+} from "../objects/object";
+import { register } from "../objects/typeRegistry";
 
 export type BuiltinCallable = (
   self: SantaiObject | undefined,
@@ -31,7 +37,8 @@ export function arg0(args: SantaiObject[]): SantaiObject {
  */
 export class BuiltinRegistry {
   private static _instance: BuiltinRegistry | undefined = undefined;
-  private readonly globals: Map<string, BuiltinFunction> = new Map();
+  private readonly globals: Map<string, BuiltinFunction | SantaiBuiltinClass> =
+    new Map();
 
   /**
    * The singleton instance of the BuiltinRegistry.
@@ -55,12 +62,17 @@ export class BuiltinRegistry {
     this.globals.set(name, builtin);
   }
 
+  public registerClass(clazz: SantaiBuiltinClass): void {
+    assert(!this.globals.has(clazz.name), "cannot redeclare: " + clazz.name);
+    this.globals.set(clazz.name, clazz);
+  }
+
   /**
    * Get all registered built-in functions dan variables.
    *
-   * @returns {readonly BuiltinFunction[]} An immutable array of all registered built-in functions
+   * @returns An immutable array of all registered built-in functions
    */
-  public getAllBuiltins(): readonly BuiltinFunction[] {
+  public getAllBuiltins(): readonly (BuiltinFunction | SantaiBuiltinClass)[] {
     return Array.from(this.globals.values());
   }
 }
@@ -75,4 +87,12 @@ export function defineGlobalFunction(
   callable: BuiltinCallable
 ): void {
   BuiltinRegistry.getInstance().registerFunction(name, callable);
+}
+
+export function defineGlobalClass(clazz: SantaiBuiltinClass): void {
+  BuiltinRegistry.getInstance().registerClass(clazz);
+}
+
+export function defineAndRegisterGlobalClass(clazz: SantaiBuiltinClass): void {
+  defineGlobalClass(register(clazz));
 }
