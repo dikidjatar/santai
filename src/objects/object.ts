@@ -460,7 +460,7 @@ export class SantaiList extends SantaiObject {
     let str: string = "[";
 
     for (let i = 0; i < this.elements.length; i++) {
-      const element = this.elements[i];
+      const element = this.elements[i] ?? santaiKosong;
 
       if (element.isString()) {
         str += "'" + element.inspect() + "'";
