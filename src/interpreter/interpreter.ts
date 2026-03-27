@@ -331,14 +331,31 @@ export class Interpreter extends AstVisitor<SantaiObject> {
 
   override visitProperty(node: Property): SantaiObject {
     const obj = this.evaluate(node.object);
-    const name = this.resolvePropertyName(node);
+    const propertyNode: Expression = node.property;
 
-    const prop = obj.getProperty(name);
-    if (!isUndefined(prop)) {
-      return prop;
+    if (propertyNode.isLiteral() && propertyNode.isStringLiteral()) {
+      const propertyName = propertyNode.asStringLiteral();
+      const property = obj.getProperty(propertyName);
+
+      if (!isUndefined(property)) {
+        return property;
+      }
+
+      this.report(
+        node,
+        MessageTemplate.kPropertyNotFound,
+        propertyName,
+        obj.typeName
+      );
+    } else {
+      const keyObj: SantaiObject = this.evaluate(propertyNode);
+      const result = obj.getSubscript(keyObj);
+
+      if (!isUndefined(result)) {
+        return result;
+      }
     }
 
-    this.report(node, MessageTemplate.kPropertyNotFound, name, obj.typeName);
     return santaiKosong;
   }
 
@@ -357,15 +374,15 @@ export class Interpreter extends AstVisitor<SantaiObject> {
   /**
    * Extracts property names from `Property` as strings.
    */
-  private resolvePropertyName(node: Property): string {
-    const property = node.property;
+  // private resolvePropertyName(node: Property): string {
+  //   const property = node.property;
 
-    if (property.isLiteral() && property.isStringLiteral()) {
-      return property.asStringLiteral();
-    }
+  //   if (property.isLiteral() && property.isStringLiteral()) {
+  //     return property.asStringLiteral();
+  //   }
 
-    return this.evaluate(node).inspect();
-  }
+  //   return this.evaluate(node).inspect();
+  // }
 
   override visitWhileStatement(node: WhileStatement): SantaiObject {
     const conditionExpression: Expression = node.condition;
@@ -477,20 +494,27 @@ export class Interpreter extends AstVisitor<SantaiObject> {
       return true;
     } else if (target.isProperty()) {
       const obj = this.evaluate(target.object);
+      const propertyKey: Expression = target.property;
 
-      if (!obj.isInstance()) {
-        this.report(
-          target,
-          MessageTemplate.kCannotSetProperty,
-          this.resolvePropertyName(target),
-          obj.typeName
-        );
-        return false;
+      if (propertyKey.isLiteral() && propertyKey.isStringLiteral()) {
+        const propertyName = propertyKey.asStringLiteral();
+
+        if (!obj.isInstance()) {
+          this.report(
+            target,
+            MessageTemplate.kCannotSetProperty,
+            propertyName,
+            obj.typeName
+          );
+          return false;
+        }
+
+        obj.setProperty(propertyName, value);
+        return true;
+      } else {
+        const keyObj = this.evaluate(propertyKey);
+        return obj.setSubscript(keyObj, value);
       }
-
-      const propName = this.resolvePropertyName(target);
-      obj.setProperty(propName, value);
-      return true;
     } else {
       this.report(target, MessageTemplate.kInvalidAssignmentTarget);
       return false;

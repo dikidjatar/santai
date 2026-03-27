@@ -100,6 +100,14 @@ export abstract class SantaiObject {
     return undefined;
   }
 
+  getSubscript(_obj: SantaiObject): SantaiObject | undefined {
+    return undefined;
+  }
+
+  setSubscript(_obj: SantaiObject, _value: SantaiObject): boolean {
+    return false;
+  }
+
   /**
    * Creates a new iterator for this object.
    *
@@ -340,6 +348,19 @@ export class SantaiString extends SantaiObject {
 
     return SantaiBoolean.of(this.value > other.value);
   }
+
+  override getSubscript(obj: SantaiObject): SantaiObject | undefined {
+    if (!obj.isNumber()) {
+      return undefined;
+    }
+
+    const value = this.value[obj.value];
+    if (!value) {
+      return santaiKosong;
+    }
+
+    return new SantaiString(value);
+  }
 }
 
 export class SantaiFunction extends SantaiObject {
@@ -463,6 +484,14 @@ export class SantaiList extends SantaiObject {
   override iterate(): SantaiIterator {
     return new ListIterator(this);
   }
+
+  override getSubscript(obj: SantaiObject): SantaiObject | undefined {
+    if (!obj.isNumber()) {
+      return undefined;
+    }
+
+    return this.elements[obj.value];
+  }
 }
 
 class RangeIterator extends SantaiIterator {
@@ -543,6 +572,26 @@ export class SantaiRange extends SantaiObject {
         this.stop === other.stop &&
         this.step === other.step
     );
+  }
+
+  override getSubscript(obj: SantaiObject): SantaiObject | undefined {
+    if (!obj.isNumber()) {
+      return undefined;
+    }
+
+    const potentialValue: number = this.start + obj.value * this.step;
+
+    if (this.step > 0) {
+      if (potentialValue < this.start || potentialValue >= this.stop) {
+        return undefined;
+      }
+    } else {
+      if (potentialValue > this.start || potentialValue <= this.stop) {
+        return undefined;
+      }
+    }
+
+    return new SantaiNumber(potentialValue);
   }
 }
 
