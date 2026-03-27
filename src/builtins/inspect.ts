@@ -7,6 +7,7 @@ import {
   SantaiBoolean,
   SantaiBuiltinClass,
   santaiKosong,
+  SantaiList,
   SantaiNumber,
   SantaiObject,
   SantaiString,
@@ -99,6 +100,30 @@ function toBoolean(args: SantaiObject[]): SantaiObject {
   return SantaiBoolean.of(arg0(args).isTruthy());
 }
 
+function toList(args: SantaiObject[]): SantaiObject {
+  const val = args[0] ?? santaiKosong;
+
+  if (val.isList()) {
+    return val;
+  }
+
+  if (val.isIterable()) {
+    const iterator = val.iterate();
+    const elements: SantaiObject[] = [];
+
+    let result = iterator.next();
+
+    while (!result.done) {
+      elements.push(result.value);
+      result = iterator.next();
+    }
+
+    return new SantaiList(elements);
+  }
+
+  return new SantaiList([val]);
+}
+
 defineAndRegisterGlobalClass(
   new SantaiBuiltinClass("angka", SantaiType.kNumber, toNumber)
 );
@@ -109,4 +134,8 @@ defineAndRegisterGlobalClass(
 
 defineAndRegisterGlobalClass(
   new SantaiBuiltinClass("logika", SantaiType.kBoolen, toBoolean)
+);
+
+defineAndRegisterGlobalClass(
+  new SantaiBuiltinClass("daftar", SantaiType.kList, toList)
 );
