@@ -420,7 +420,7 @@ export class Parser {
         );
         declatarions.push(variableDeclaration);
       } else {
-        this.reportUnexpectedTokenAt(this.scanner.location(), this.peek());
+        this.reportUnexpectedTokenAt(this.scanner.peekLocation(), this.peek());
         return undefined;
       }
     } while (this.check(TokenValue.kComma));
