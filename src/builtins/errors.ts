@@ -11,8 +11,8 @@ function constructError(args: SantaiObject[]): SantaiObject {
   const name = arg(args, 1);
 
   return new SantaiError(
-    message.isString() ? message.value : message.inspect(),
-    name.isString() ? name.value : name.inspect()
+    message.isString() ? message.value : "masalah tidak diketahui",
+    name.isString() ? name.value : "Masalah"
   );
 }
 

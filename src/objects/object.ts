@@ -822,7 +822,7 @@ export class SantaiError extends SantaiObject {
   }
 
   override inspect(): string {
-    return `${this.name}: ${this.name}`;
+    return `${this.name}: ${this.message}`;
   }
 
   override getProperty(name: string): SantaiObject | undefined {
