@@ -46,6 +46,7 @@ export const enum SantaiType {
   kClass,
   Kinstance,
   kBuiltinClass,
+  kError,
 }
 
 export abstract class SantaiObject {
@@ -798,6 +799,41 @@ export class SantaiBuiltinClass extends SantaiObject {
 
   override inspect(): string {
     return `<gue ${this.name}>`;
+  }
+
+  override opEquals(other: SantaiObject): OperationResult {
+    return SantaiBoolean.of(this === other);
+  }
+}
+
+export class SantaiError extends SantaiObject {
+  override typeName: string;
+
+  constructor(
+    readonly message: string,
+    readonly name: string = "Masalah"
+  ) {
+    super(SantaiType.kError);
+    this.typeName = name;
+  }
+
+  override isTruthy(): boolean {
+    return true;
+  }
+
+  override inspect(): string {
+    return `${this.name}: ${this.name}`;
+  }
+
+  override getProperty(name: string): SantaiObject | undefined {
+    switch (name) {
+      case "pesan":
+        return new SantaiString(this.message);
+      case "nama":
+        return new SantaiString(this.name);
+      default:
+        return undefined;
+    }
   }
 
   override opEquals(other: SantaiObject): OperationResult {

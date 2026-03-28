@@ -8,3 +8,4 @@
 export * from "./io";
 export * from "./inspect";
 export * from "./range";
+export * from "./errors";
