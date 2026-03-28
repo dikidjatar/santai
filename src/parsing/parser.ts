@@ -189,6 +189,10 @@ export class Parser {
         return this.parseBlock();
       case TokenValue.kKalo:
         return this.parseIfStatement();
+      case TokenValue.kCoba:
+        return this.parseTryStatement();
+      case TokenValue.kLempar:
+        return this.parseThrowStatement();
       case TokenValue.kTiap:
         return this.parseForInStatement();
       case TokenValue.kMumpung:
@@ -272,6 +276,67 @@ export class Parser {
       elseBranch,
       position
     );
+  }
+
+  parseTryStatement(): Statement | undefined {
+    this.next();
+    const position = this.position();
+
+    const body = this.parseStatement();
+    if (!body) {
+      return undefined;
+    }
+
+    let catchVariable: Variable | undefined;
+    let catchBody: Statement | undefined;
+    let finallyBody: Statement | undefined;
+
+    if (this.check(TokenValue.kTangkap)) {
+      const next = this.next();
+      if (next !== TokenValue.kIdentifier) {
+        this.reportUnexpectedToken(next);
+      }
+
+      catchVariable = new Variable(this.currentLiteral(), VariableMode.kVar);
+      catchBody = this.parseStatement();
+
+      if (!catchBody) {
+        return undefined;
+      }
+    }
+
+    if (this.check(TokenValue.kYaudah)) {
+      finallyBody = this.parseStatement();
+      if (!finallyBody) {
+        return undefined;
+      }
+    }
+
+    if (!catchBody && !finallyBody) {
+      this.reportError(MessageTemplate.kUnexpectedEOS);
+      return undefined;
+    }
+
+    return this.factory.newTryStatement(
+      body,
+      catchVariable,
+      catchBody,
+      finallyBody,
+      position
+    );
+  }
+
+  parseThrowStatement(): Statement | undefined {
+    this.next();
+    const position = this.position();
+
+    const expression = this.parseExpression();
+    if (!expression) {
+      return undefined;
+    }
+
+    this.expectSemicolon();
+    return this.factory.newThrowStatement(expression, position);
   }
 
   parseForInStatement(): Statement | undefined {

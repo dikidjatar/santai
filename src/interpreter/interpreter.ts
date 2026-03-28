@@ -25,6 +25,8 @@ import {
   ReturnStatement,
   Statement,
   ThisExpression,
+  ThrowStatement,
+  TryStatement,
   UnaryOp,
   VariableDeclaration,
   VariableExpression,
@@ -32,7 +34,13 @@ import {
 } from "../base/ast";
 import { ErrorHandler, StackFrame } from "../base/errorHandler";
 import { MessageTemplate } from "../base/messageTemplate";
-import { isNumber, isObject, isUndefined, Signal } from "../base/types";
+import {
+  isNumber,
+  isObject,
+  isUndefined,
+  isUndefinedOrNull,
+  Signal,
+} from "../base/types";
 import { Variable, VariableMode } from "../base/variable";
 import { BuiltinCallable, BuiltinRegistry } from "../builtins/builtin";
 import "../builtins/globals";
@@ -76,6 +84,14 @@ class ReturnSignal extends Signal<ReturnStatement> {
 
 class BreakSignal extends Signal<BreakStatement> {}
 class ContinueSignal extends Signal<ContinueStatement> {}
+class ThrowSignal extends Signal<ThrowStatement> {
+  constructor(
+    node: ThrowStatement,
+    readonly value: SantaiObject
+  ) {
+    super(node);
+  }
+}
 
 function isReturnSignal(signal: unknown): signal is ReturnSignal {
   return signal instanceof ReturnSignal;
@@ -87,6 +103,10 @@ function isBreakSignal(signal: unknown): signal is BreakSignal {
 
 function isContinueSignal(signal: unknown): signal is ContinueSignal {
   return signal instanceof ContinueSignal;
+}
+
+function isThrowSignal(signal: unknown): signal is ThrowSignal {
+  return signal instanceof ThrowSignal;
 }
 
 function getLocationForNode(node: AstNode): ScannerLocation {
@@ -146,6 +166,10 @@ export class Interpreter extends AstVisitor<SantaiObject> {
         this.report(error.node, MessageTemplate.kIllegalBreakStatement);
       } else if (isContinueSignal(error)) {
         this.report(error.node, MessageTemplate.kIllegalContinueStatement);
+      } else if (isThrowSignal(error)) {
+        const message = error.value.inspect();
+        const location = makeLocation(error.node.position, error.node.position);
+        this.errorHandler.reportError(location, message, "dilempar disini");
       } else {
         throw error;
       }
@@ -190,6 +214,10 @@ export class Interpreter extends AstVisitor<SantaiObject> {
         return this.visitEmptyStatement(node);
       case node.isIfStatement():
         return this.visitIfStatement(node);
+      case node.isTryStatement():
+        return this.visitTryStatement(node);
+      case node.isThrowStatement():
+        return this.visitThrowStatement(node);
       case node.isDeclarationList():
         return this.visitDeclarationList(node);
       case node.isAssignment():
@@ -450,6 +478,48 @@ export class Interpreter extends AstVisitor<SantaiObject> {
     } else {
       return santaiKosong;
     }
+  }
+
+  override visitTryStatement(node: TryStatement): SantaiObject {
+    let pendingSignal: unknown = null;
+
+    try {
+      this.evaluate(node.body);
+    } catch (signal) {
+      if (isThrowSignal(signal) && !isUndefined(node.catchBody)) {
+        const catchEnv = Environment.new(this.env);
+
+        if (!isUndefined(node.catchVariable)) {
+          catchEnv.declare(node.catchVariable, signal.value);
+        }
+
+        const previousEnv = this.env;
+        this.env = catchEnv;
+
+        try {
+          this.evaluate(node.catchBody);
+        } catch {
+          this.env = previousEnv;
+        }
+      } else {
+        pendingSignal = signal;
+      }
+    } finally {
+      if (!isUndefined(node.finallyBody)) {
+        this.evaluate(node.finallyBody);
+      }
+    }
+
+    if (!isUndefinedOrNull(pendingSignal)) {
+      throw pendingSignal;
+    }
+
+    return santaiKosong;
+  }
+
+  override visitThrowStatement(node: ThrowStatement): SantaiObject {
+    const value = this.evaluate(node.expression);
+    throw new ThrowSignal(node, value);
   }
 
   override visitDeclarationList(node: DeclarationList): SantaiObject {

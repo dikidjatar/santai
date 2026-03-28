@@ -15,6 +15,7 @@
 
 import { TokenValue } from "../parsing/token";
 import { assert } from "./asserts";
+import { isUndefined } from "./types";
 import { Variable, VariableMode } from "./variable";
 
 export const enum NodeType {
@@ -32,6 +33,8 @@ export const enum NodeType {
   kReturnStatement,
   kEmptyStatement,
   kDeclarationList,
+  kTryStatement,
+  kThrowStatement,
   // Expressions
   kAssignment,
   kListLiteral,
@@ -86,6 +89,12 @@ export abstract class AstNode {
   }
   isIfStatement(): this is IfStatement {
     return this.nodeType === NodeType.kIfStatement;
+  }
+  isTryStatement(): this is TryStatement {
+    return this.nodeType === NodeType.kTryStatement;
+  }
+  isThrowStatement(): this is ThrowStatement {
+    return this.nodeType === NodeType.kThrowStatement;
   }
   isDeclarationList(): this is DeclarationList {
     return this.nodeType === NodeType.kDeclarationList;
@@ -415,6 +424,35 @@ export class IfStatement extends Statement {
   }
 }
 
+export class TryStatement extends Statement {
+  constructor(
+    readonly body: Statement,
+    readonly catchVariable: Variable | undefined,
+    readonly catchBody: Statement | undefined,
+    readonly finallyBody: Statement | undefined,
+    position: number
+  ) {
+    super(NodeType.kTryStatement, position);
+  }
+
+  hasCatch(): boolean {
+    return !isUndefined(this.catchBody);
+  }
+
+  hasFinally(): boolean {
+    return !isUndefined(this.catchBody);
+  }
+}
+
+export class ThrowStatement extends Statement {
+  constructor(
+    readonly expression: Expression,
+    position: number
+  ) {
+    super(NodeType.kThrowStatement, position);
+  }
+}
+
 export class BinaryOp extends Expression {
   constructor(
     readonly op: TokenValue,
@@ -559,6 +597,26 @@ export class AstNodeFactory {
     return new IfStatement(condition, thenBranch, elseBranch, position);
   }
 
+  newTryStatement(
+    body: Statement,
+    catchVariable: Variable | undefined,
+    catchBody: Statement | undefined,
+    finallyBody: Statement | undefined,
+    position: number
+  ): TryStatement {
+    return new TryStatement(
+      body,
+      catchVariable,
+      catchBody,
+      finallyBody,
+      position
+    );
+  }
+
+  newThrowStatement(expression: Expression, position: number): ThrowStatement {
+    return new ThrowStatement(expression, position);
+  }
+
   newAssignment(
     target: Expression,
     value: Expression,
@@ -632,6 +690,8 @@ export abstract class AstVisitor<R = void> {
   abstract visitContinueStatement(node: ContinueStatement): R;
   abstract visitEmptyStatement(node: EmptyStatement): R;
   abstract visitIfStatement(node: IfStatement): R;
+  abstract visitTryStatement(node: TryStatement): R;
+  abstract visitThrowStatement(node: ThrowStatement): R;
   abstract visitDeclarationList(node: DeclarationList): R;
   abstract visitAssignment(node: Assignment): R;
   abstract visitListLiteral(node: ListLiteral): R;

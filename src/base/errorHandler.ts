@@ -603,6 +603,24 @@ export class ErrorHandler {
     });
   }
 
+  reportError(
+    location: ScannerLocation,
+    message: string,
+    primaryMessage?: string,
+    labels?: DiagnosticLabel[],
+    note?: string,
+    stackFrames?: StackFrame[]
+  ): void {
+    this.emit({
+      severity: Severity.Error,
+      message,
+      primaryLabel: { location, message: primaryMessage ?? "di sini" },
+      secondaryLabels: labels,
+      note,
+      stackFrames,
+    });
+  }
+
   /**
    * Like `reportErrorAt` but includes the call stack of the interpreter.
    * Used by `Interpreter.report()` when a function is running.

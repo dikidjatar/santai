@@ -34,6 +34,13 @@ export function isUndefined(obj: unknown): obj is undefined {
 }
 
 /**
+ * @returns whether the provided parameter is undefined or null.
+ */
+export function isUndefinedOrNull(obj: unknown): obj is undefined | null {
+  return isUndefined(obj) || obj === null;
+}
+
+/**
  * Abstract base class for signals that wrap a node of type T.
  * @template T The type of the node being wrapped by this signal.
  * @param node The node instance to be stored and accessed through this signal.
