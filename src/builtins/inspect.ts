@@ -57,8 +57,6 @@ defineAndRegisterGlobalClass(
       return cls;
     }
 
-    console.log("sampai sini");
-
     return new SantaiBuiltinClass(
       "tipe",
       SantaiType.kBuiltinClass,
