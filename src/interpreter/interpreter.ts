@@ -42,7 +42,7 @@ import {
   Signal,
 } from "../base/types";
 import { Variable, VariableMode } from "../base/variable";
-import { BuiltinCallable, BuiltinRegistry } from "../builtins/builtin";
+import { BuiltinRegistry, CallSite } from "../builtins/builtin";
 import "../builtins/globals";
 import { SantaiIterator } from "../objects/iterator";
 import {
@@ -124,9 +124,13 @@ function getLocationForNode(node: AstNode): ScannerLocation {
   }
 }
 
-export class Interpreter extends AstVisitor<SantaiObject> {
+export class Interpreter extends AstVisitor<SantaiObject> implements CallSite {
   private readonly globalEnv: Environment;
   private env: Environment;
+
+  // Save the currently active node for callbacks from the builtin
+  // still have location context for error reporting.
+  private currentCallNode: AstNode | undefined;
 
   /**
    * Call stack for runtime one entry per active user-defined function.
@@ -758,32 +762,41 @@ export class Interpreter extends AstVisitor<SantaiObject> {
     return result.value;
   }
 
+  infoke(fn: SantaiObject, args: SantaiObject[]): SantaiObject {
+    const node = this.currentCallNode;
+
+    if (fn.isBuiltinClass()) return fn.construct(args);
+    if (fn.isCLass() && node) return this.instantiateClass(fn, args, node);
+    if (fn.isFunction() && node) return this.callFunction(fn, args, node);
+    if (fn.isBuiltinFunction()) {
+      return fn.callable()(fn.self(), args, this);
+    }
+
+    return Factory.Kosong;
+  }
+
   override visitCall(node: Call): SantaiObject {
     const fn = this.evaluate(node.expression);
     const args: SantaiObject[] = node
       .arguments()
       .map((arg) => this.evaluate(arg));
 
-    if (fn.isBuiltinClass()) {
-      return fn.construct(args);
-    }
+    const previousCallNode = this.currentCallNode;
+    this.currentCallNode = node;
 
-    if (fn.isCLass()) {
-      return this.instantiateClass(fn, args, node);
-    }
+    try {
+      if (fn.isBuiltinClass()) return fn.construct(args);
+      if (fn.isCLass()) return this.instantiateClass(fn, args, node);
+      if (fn.isFunction()) return this.callFunction(fn, args, node);
+      if (fn.isBuiltinFunction()) {
+        return fn.callable()(fn.self(), args, this);
+      }
 
-    if (fn.isFunction()) {
-      return this.callFunction(fn, args, node);
+      this.report(node, MessageTemplate.kCalledNoCallable, fn.typeName);
+      return Factory.Kosong;
+    } finally {
+      this.currentCallNode = previousCallNode;
     }
-
-    if (fn.isBuiltinFunction()) {
-      const callable: BuiltinCallable = fn.callable();
-      const self: SantaiObject | undefined = fn.self();
-      return callable(self, args);
-    }
-
-    this.report(node, MessageTemplate.kCalledNoCallable, fn.typeName);
-    return Factory.Kosong;
   }
 
   private instantiateClass(

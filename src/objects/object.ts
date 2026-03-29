@@ -724,4 +724,13 @@ export namespace Factory {
   ): SantaiBuiltinClass {
     return new SantaiBuiltinClass(name, santaiType, construct);
   }
+
+  export function IsCallable(obj: SantaiObject): boolean {
+    return (
+      obj.isFunction() ||
+      obj.isBuiltinFunction() ||
+      obj.isCLass() ||
+      obj.isBuiltinClass()
+    );
+  }
 }

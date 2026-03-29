@@ -10,9 +10,14 @@ import {
 } from "../objects/object";
 import { register } from "../objects/typeRegistry";
 
+export interface CallSite {
+  infoke(fn: SantaiObject, args: SantaiObject[]): SantaiObject;
+}
+
 export type BuiltinCallable = (
   self: SantaiObject | undefined,
-  args: SantaiObject[]
+  args: SantaiObject[],
+  callsite: CallSite
 ) => SantaiObject;
 
 export interface BuiltinDefinition {
