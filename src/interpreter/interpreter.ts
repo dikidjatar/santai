@@ -781,7 +781,7 @@ export class Interpreter extends AstVisitor<SantaiObject> implements CallSite {
     return result.value;
   }
 
-  infoke(fn: SantaiObject, args: SantaiObject[]): SantaiObject {
+  invoke(fn: SantaiObject, args: SantaiObject[]): SantaiObject {
     const node = this.currentCallNode;
 
     if (fn.isBuiltinClass()) return fn.construct(args);

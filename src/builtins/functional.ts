@@ -18,7 +18,7 @@ defineGlobalFunction("saring", (_, args, callsite) => {
   let next = iter.next();
   while (!next.done) {
     const item = next.value;
-    const keep = callsite.infoke(fn, [item]);
+    const keep = callsite.invoke(fn, [item]);
     if (keep.isTruthy()) {
       result.push(item);
     }

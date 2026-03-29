@@ -10,8 +10,35 @@ import {
 } from "../objects/object";
 import { register } from "../objects/typeRegistry";
 
+/**
+ * Interface to call back the Santai function from within the builtin.
+ * ```
+ * ┌─────────────────────────────────────────────────────┐
+ * │                   builtin.ts                        │
+ * │                                                     │
+ * │  interface Callsite {                               │
+ * │    invoke(fn, args): SantaiObject                   │
+ * │  }                                ▲                 │
+ * │                                   │ implements      │
+ * │  type BuiltinCallable =           │                 │
+ * │    (self, args, callsite) =>  ────┘                 │
+ * │      SantaiObject                                   │
+ * └─────────────────────────────────────────────────────┘
+ *          ↑ depend on                ↑ depend on
+ * ┌────────┴──────┐          ┌────────┴──────────────┐
+ * │ functional.ts │          │    interpreter.ts     │
+ * │               │          │                       │
+ * │ fn(...)       │          │ class Interpreter     │
+ * │  callsite     │          │   implements Callsite │
+ * │   .invoke(fn) │          │                       │
+ * │               │          │  invoke(fn, args) {   │
+ * │               │          │    callFunction(fn)   │
+ * │               │          │  }                    │
+ * └───────────────┘          └───────────────────────┘
+ * ```
+ */
 export interface CallSite {
-  infoke(fn: SantaiObject, args: SantaiObject[]): SantaiObject;
+  invoke(fn: SantaiObject, args: SantaiObject[]): SantaiObject;
 }
 
 export type BuiltinCallable = (
