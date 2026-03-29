@@ -1,9 +1,5 @@
-import {
-  Factory,
-  SantaiError,
-  SantaiObject,
-  SantaiType,
-} from "../objects/object";
+import { Factory, SantaiError, SantaiObject } from "../objects/object";
+import { SantaiType } from "../objects/st-type";
 import { arg, defineAndRegisterGlobalClass } from "./builtin";
 
 function constructError(args: SantaiObject[]): SantaiObject {

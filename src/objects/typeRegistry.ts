@@ -1,7 +1,8 @@
 // Copyright (c) [2026] [Diki Djatar]
 // SPDX-License-Identifier: MIT
 
-import { SantaiBuiltinClass, SantaiObject, SantaiType } from "./object";
+import { SantaiBuiltinClass, SantaiObject } from "./object";
+import { SantaiType } from "./st-type";
 
 const typeRegistry = new Map<SantaiType, SantaiBuiltinClass>();
 

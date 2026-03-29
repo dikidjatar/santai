@@ -3,7 +3,8 @@
 
 import { assert } from "../base/asserts";
 import { isUndefined } from "../base/types";
-import { Factory, SantaiObject, SantaiType } from "../objects/object";
+import { Factory, SantaiObject } from "../objects/object";
+import { SantaiType } from "../objects/st-type";
 import { getBuiltinClassOf } from "../objects/typeRegistry";
 import {
   arg0,

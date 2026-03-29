@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: MIT
 
 import { isUndefined } from "../base/types";
-import { Factory, SantaiObject, SantaiType } from "../objects/object";
+import { Factory, SantaiObject } from "../objects/object";
+import { SantaiType } from "../objects/st-type";
 import { defineAndRegisterGlobalClass } from "./builtin";
 
 function intArg(args: SantaiObject[], idx: number): number | undefined {

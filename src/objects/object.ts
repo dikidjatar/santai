@@ -7,21 +7,7 @@ import { Variable } from "../base/variable";
 import { BuiltinCallable } from "../builtins/builtin";
 import { Environment } from "../interpreter/environment";
 import { SantaiIterator } from "./iterator";
-
-export const enum SantaiType {
-  kKosong,
-  kBoolen,
-  kNumber,
-  kString,
-  kFunction,
-  kBuiltinFunction,
-  kList,
-  kRange,
-  kClass,
-  Kinstance,
-  kBuiltinClass,
-  kError,
-}
+import { SantaiType } from "./st-type";
 
 export abstract class SantaiObject {
   abstract readonly typeName: string;
