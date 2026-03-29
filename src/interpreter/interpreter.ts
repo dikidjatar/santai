@@ -17,6 +17,7 @@ import {
   Expression,
   ForInStatement,
   FunctionDeclaration,
+  FunctionLiteral,
   IfStatement,
   ListLiteral,
   Literal,
@@ -200,6 +201,8 @@ export class Interpreter extends AstVisitor<SantaiObject> implements CallSite {
         return this.visitProperty(node);
       case node.isThisExpression():
         return this.visitThisExpression(node);
+      case node.isFunctionLiteral():
+        return this.visitFunctionLiteral(node);
       case node.isForInStatement():
         return this.visitForInStatement(node);
       case node.isWhileStatement():
@@ -399,6 +402,15 @@ export class Interpreter extends AstVisitor<SantaiObject> implements CallSite {
     // It should never have gotten here
     // if the parser was working correctly.
     unreachable();
+  }
+
+  override visitFunctionLiteral(node: FunctionLiteral): SantaiObject {
+    return Factory.NewFunction(
+      "<aksi anonim>",
+      node.params,
+      node.body,
+      this.env
+    );
   }
 
   /**

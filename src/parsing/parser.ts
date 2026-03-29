@@ -872,8 +872,68 @@ export class Parser {
     switch (token) {
       case TokenValue.kLeftParen: {
         this.next();
-        const expression = this.parseExpression();
+        const position = this.position();
+
+        if (this.peek() === TokenValue.kRightParen) {
+          this.next();
+          if (this.peek() === TokenValue.kArrow) {
+            return this.parseFunctionLiteralBody([], position);
+          }
+          this.reportError(MessageTemplate.kInvalidOrUnexpectedToken);
+          return undefined;
+        }
+
+        const firstExpr = this.parseExpression();
+        if (!firstExpr) {
+          return undefined;
+        }
+
+        if (this.peek() === TokenValue.kComma) {
+          if (!firstExpr.isVariableExpression()) {
+            this.reportErrorAt(
+              makeLocation(firstExpr.position, firstExpr.position + 1),
+              MessageTemplate.kInvalidOrUnexpectedToken
+            );
+            return undefined;
+          }
+
+          const params: Variable[] = [
+            this.factory.newVariable(firstExpr.name, VariableMode.kVar),
+          ];
+
+          while (this.check(TokenValue.kComma)) {
+            if (this.peek() !== TokenValue.kIdentifier) {
+              this.reportUnexpectedToken(this.peek());
+              return undefined;
+            }
+            this.next();
+            params.push(
+              this.factory.newVariable(this.currentLiteral(), VariableMode.kVar)
+            );
+          }
+
+          this.expect(TokenValue.kRightParen);
+          return this.parseFunctionLiteralBody(params, position);
+        }
+
         this.expect(TokenValue.kRightParen);
+
+        if (this.peek() === TokenValue.kArrow) {
+          // (x) -> ...
+          if (!firstExpr.isVariableExpression()) {
+            this.reportErrorAt(
+              makeLocation(firstExpr.position, firstExpr.position + 1),
+              MessageTemplate.kInvalidOrUnexpectedToken
+            );
+            return undefined;
+          }
+          const params = [
+            this.factory.newVariable(firstExpr.name, VariableMode.kVar),
+          ];
+          return this.parseFunctionLiteralBody(params, position);
+        }
+
+        const expression = this.parseExpression();
         return expression;
       }
       case TokenValue.kLeftBracket:
@@ -898,6 +958,36 @@ export class Parser {
 
     this.reportUnexpectedToken(this.next());
     return undefined;
+  }
+
+  private parseFunctionLiteralBody(
+    params: readonly Variable[],
+    position: number
+  ): Expression | undefined {
+    this.expect(TokenValue.kArrow);
+    let body: Block;
+
+    if (this.peek() === TokenValue.kLeftBrace) {
+      const block = this.parseBlock();
+      if (!block) {
+        return undefined;
+      }
+      body = block;
+    } else {
+      const expression = this.parseAssignmentExpression();
+      if (!expression) {
+        return expression;
+      }
+
+      const returnStatement = this.factory.newReturnStatement(
+        expression,
+        expression.position
+      );
+      body = this.factory.newBlock();
+      body.initializeStatements([returnStatement]);
+    }
+
+    return this.factory.newFunctionLiteral(params, body, position);
   }
 
   private parseList(): Expression | undefined {
@@ -976,7 +1066,7 @@ export class Parser {
         }
       }
 
-      prec1--;
+      --prec1;
     } while (prec1 >= prec);
 
     return expression;

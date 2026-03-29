@@ -14,7 +14,6 @@ type TokenDef = [
 const TOKEN_LIST: TokenDef[] = [
   // BEGIN Property
   ["kPeriod", ".", 0, false],
-  ["kArrow", "->", 0, false],
   ["kLeftBracket", "[", 0, false],
   // END Property
   ["kLeftParen", "(", 0, false],
@@ -25,6 +24,8 @@ const TOKEN_LIST: TokenDef[] = [
   ["kRightBrace", "}", 0, false],
   // End of source indicator
   ["kEos", "EOS", 0, false],
+
+  ["kArrow", "->", 0, false],
 
   ["kAssign", "=", 2, false],
   ["kComma", ",", 1, false],
@@ -93,7 +94,6 @@ const TOKEN_LIST: TokenDef[] = [
 
 export enum TokenValue {
   kPeriod,
-  kArrow,
   kLeftBracket,
   kLeftParen,
   kRightParen,
@@ -102,6 +102,7 @@ export enum TokenValue {
   kSemicolon,
   kRightBrace,
   kEos,
+  kArrow,
   kAssign,
   kComma,
   kMul,

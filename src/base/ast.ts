@@ -45,6 +45,7 @@ export const enum NodeType {
   kVariableExpression,
   kProperty,
   kThisExpression,
+  kFunctionLiteral,
 }
 
 export abstract class AstNode {
@@ -125,6 +126,9 @@ export abstract class AstNode {
   }
   isThisExpression(): this is ThisExpression {
     return this.nodeType === NodeType.kThisExpression;
+  }
+  isFunctionLiteral(): this is FunctionLiteral {
+    return this.nodeType === NodeType.kFunctionLiteral;
   }
 }
 
@@ -329,6 +333,16 @@ export class ThisExpression extends Expression {
     position: number
   ) {
     super(NodeType.kThisExpression, position);
+  }
+}
+
+export class FunctionLiteral extends Expression {
+  constructor(
+    readonly params: readonly Variable[],
+    readonly body: Block,
+    position: number
+  ) {
+    super(NodeType.kFunctionLiteral, position);
   }
 }
 
@@ -552,6 +566,14 @@ export class AstNodeFactory {
     return new ThisExpression(className, position);
   }
 
+  newFunctionLiteral(
+    params: readonly Variable[],
+    body: Block,
+    position: number
+  ): FunctionLiteral {
+    return new FunctionLiteral(params, body, position);
+  }
+
   newReturnStatement(
     expression: Expression | undefined,
     position: number
@@ -682,6 +704,7 @@ export abstract class AstVisitor<R = void> {
   abstract visitClassDeclaration(node: ClassDeclaration): R;
   abstract visitProperty(node: Property): R;
   abstract visitThisExpression(node: ThisExpression): R;
+  abstract visitFunctionLiteral(node: FunctionLiteral): R;
   abstract visitForInStatement(node: ForInStatement): R;
   abstract visitWhileStatement(node: WhileStatement): R;
   abstract visitBlock(node: Block): R;

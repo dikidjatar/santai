@@ -457,11 +457,18 @@ export class Scanner {
           case TokenValue.kSemicolon:
           case TokenValue.kComma:
           case TokenValue.kAdd:
-          case TokenValue.kSub:
           case TokenValue.kDiv:
           case TokenValue.kMod:
           case TokenValue.kIllegal:
             return this.select(token);
+
+          case TokenValue.kSub: {
+            return this.select(
+              Chars.GreaterThan,
+              TokenValue.kArrow,
+              TokenValue.kSub
+            );
+          }
 
           case TokenValue.kLessThan:
             return this.select(
