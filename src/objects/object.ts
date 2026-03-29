@@ -134,7 +134,7 @@ export class SantaiBoolean extends SantaiObject {
   }
 
   override inspect(): string {
-    return this.value ? "bener" : "hoaks";
+    return this.value ? "benar" : "salah";
   }
 }
 
