@@ -896,7 +896,7 @@ export class Parser {
         break;
     }
 
-    this.reportUnexpectedTokenAt(this.scanner.peekLocation(), this.peek());
+    this.reportUnexpectedToken(this.next());
     return undefined;
   }
 
