@@ -658,3 +658,70 @@ export class SantaiError extends SantaiObject {
     }
   }
 }
+
+export namespace Factory {
+  export const Empty: SantaiKosong = SantaiKosong.instance;
+  export const True: SantaiBoolean = SantaiBoolean.TRUE;
+  export const False: SantaiBoolean = SantaiBoolean.FALSE;
+
+  export function NewNumber(value: number): SantaiNumber {
+    return new SantaiNumber(value);
+  }
+
+  export function NewString(value: string): SantaiString {
+    return new SantaiString(value);
+  }
+
+  export function Boolean(value: boolean): SantaiBoolean {
+    return SantaiBoolean.of(value);
+  }
+
+  export function NewList(elements: SantaiObject[]): SantaiList {
+    return new SantaiList(elements);
+  }
+
+  export function NewRange(
+    start: number,
+    stop: number,
+    step: number
+  ): SantaiRange {
+    return new SantaiRange(start, stop, step);
+  }
+
+  export function NewFunction(
+    name: string,
+    parameters: readonly Variable[],
+    body: Block,
+    closure: Environment,
+    boundThis?: SantaiObject | undefined
+  ): SantaiFunction {
+    return new SantaiFunction(name, parameters, body, closure, boundThis);
+  }
+
+  export function NewBuiltinFunction(
+    name: string,
+    callable: BuiltinCallable,
+    self?: SantaiObject | undefined
+  ): BuiltinFunction {
+    return new BuiltinFunction(name, callable, self);
+  }
+
+  export function NewClas(
+    name: string,
+    methods: readonly SantaiFunction[]
+  ): SantaiClass {
+    return new SantaiClass(name, methods);
+  }
+
+  export function NewInstance(clazz: SantaiClass): SantaiInstance {
+    return new SantaiInstance(clazz);
+  }
+
+  export function NewBuiltinClass(
+    name: string,
+    santaiType: SantaiType,
+    construct: (args: SantaiObject[]) => SantaiObject
+  ): SantaiBuiltinClass {
+    return new SantaiBuiltinClass(name, santaiType, construct);
+  }
+}

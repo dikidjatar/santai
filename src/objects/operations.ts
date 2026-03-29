@@ -1,12 +1,7 @@
 // Copyright (c) [2025-2026] [Diki Djatar]
 // SPDX-License-Identifier: MIT
 
-import {
-  SantaiBoolean,
-  SantaiNumber,
-  SantaiObject,
-  SantaiString,
-} from "./object";
+import { Factory, SantaiObject } from "./object";
 
 export interface OperationError {
   readonly op: string;
@@ -27,15 +22,15 @@ export const Operation = {
   // Arithmetic
   Add: (left: SantaiObject, right: SantaiObject): OperationResult => {
     if (left.isNumber() && right.isNumber()) {
-      return ok(new SantaiNumber(left.value + right.value));
+      return ok(Factory.NewNumber(left.value + right.value));
     }
 
     if (left.isString()) {
       if (right.isString()) {
-        return ok(new SantaiString(left.value + right.value));
+        return ok(Factory.NewString(left.value + right.value));
       }
       if (right.isNumber() || right.isBoolean()) {
-        return ok(new SantaiString(left.value + right.value));
+        return ok(Factory.NewString(left.value + right.value));
       }
     }
 
@@ -43,14 +38,14 @@ export const Operation = {
   },
   Sub: (left: SantaiObject, right: SantaiObject): OperationResult => {
     if (left.isNumber() && right.isNumber()) {
-      return ok(new SantaiNumber(left.value - right.value));
+      return ok(Factory.NewNumber(left.value - right.value));
     }
 
     return err({ op: "-", left, right });
   },
   Mul: (left: SantaiObject, right: SantaiObject): OperationResult => {
     if (left.isNumber() && right.isNumber()) {
-      return ok(new SantaiNumber(left.value * right.value));
+      return ok(Factory.NewNumber(left.value * right.value));
     }
 
     return err({ op: "*", left, right });
@@ -64,7 +59,7 @@ export const Operation = {
       return err({ op: "/", left, right, isDivideByZero: true });
     }
 
-    return ok(new SantaiNumber(left.value / right.value));
+    return ok(Factory.NewNumber(left.value / right.value));
   },
   Mod: (left: SantaiObject, right: SantaiObject): OperationResult => {
     if (!left.isNumber() || !right.isNumber()) {
@@ -75,11 +70,11 @@ export const Operation = {
       return err({ op: "%", left, right, isModuleByZero: true });
     }
 
-    return ok(new SantaiNumber(left.value % right.value));
+    return ok(Factory.NewNumber(left.value % right.value));
   },
   Exp: (left: SantaiObject, right: SantaiObject): OperationResult => {
     if (left.isNumber() && right.isNumber()) {
-      return ok(new SantaiNumber(left.value ** right.value));
+      return ok(Factory.NewNumber(left.value ** right.value));
     }
 
     return err({ op: "**", left, right });
@@ -87,26 +82,26 @@ export const Operation = {
 
   // Comparison
   Eq: (left: SantaiObject, right: SantaiObject): OperationResult => {
-    if (left.isKosong()) return ok(SantaiBoolean.of(right.isKosong()));
+    if (left.isKosong()) return ok(Factory.Boolean(right.isKosong()));
 
     if (left.isBoolean()) {
-      if (!right.isBoolean()) return ok(SantaiBoolean.FALSE);
-      return ok(SantaiBoolean.of(left.value === right.value));
+      if (!right.isBoolean()) return ok(Factory.False);
+      return ok(Factory.Boolean(left.value === right.value));
     }
 
     if (left.isNumber()) {
-      if (!right.isNumber()) return ok(SantaiBoolean.FALSE);
-      return ok(SantaiBoolean.of(left.value === right.value));
+      if (!right.isNumber()) return ok(Factory.False);
+      return ok(Factory.Boolean(left.value === right.value));
     }
 
     if (left.isString()) {
-      if (!right.isString()) return ok(SantaiBoolean.FALSE);
-      return ok(SantaiBoolean.of(left.value === right.value));
+      if (!right.isString()) return ok(Factory.False);
+      return ok(Factory.Boolean(left.value === right.value));
     }
 
     if (left.isRange() && right.isRange()) {
       return ok(
-        SantaiBoolean.of(
+        Factory.Boolean(
           left.start === right.start &&
             left.stop === right.stop &&
             left.step === right.step
@@ -114,25 +109,25 @@ export const Operation = {
       );
     }
 
-    return ok(SantaiBoolean.of(left === right));
+    return ok(Factory.Boolean(left === right));
   },
   Lt: (left: SantaiObject, right: SantaiObject): OperationResult => {
     if (left.isNumber() && right.isNumber()) {
-      return ok(SantaiBoolean.of(left.value < right.value));
+      return ok(Factory.Boolean(left.value < right.value));
     }
 
     if (left.isString() && right.isString()) {
-      return ok(SantaiBoolean.of(left.value < right.value));
+      return ok(Factory.Boolean(left.value < right.value));
     }
 
     return err({ op: "<", left, right });
   },
   Gt: (left: SantaiObject, right: SantaiObject): OperationResult => {
     if (left.isNumber() && right.isNumber()) {
-      return ok(SantaiBoolean.of(left.value > right.value));
+      return ok(Factory.Boolean(left.value > right.value));
     }
     if (left.isString() && right.isString()) {
-      return ok(SantaiBoolean.of(left.value > right.value));
+      return ok(Factory.Boolean(left.value > right.value));
     }
     return err({ op: ">", left, right });
   },
