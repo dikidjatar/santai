@@ -225,6 +225,8 @@ function getOneCharToken(c: number): TokenValue {
       return TokenValue.kLeftBrace;
     case Chars.BraceRight:
       return TokenValue.kRightBrace;
+    case Chars.Colon:
+      return TokenValue.kColon;
     case Chars.BracketLeft:
       return TokenValue.kLeftBracket;
     case Chars.BracketRight:
@@ -454,6 +456,7 @@ export class Scanner {
           case TokenValue.kRightBrace:
           case TokenValue.kLeftBracket:
           case TokenValue.kRightBracket:
+          case TokenValue.kColon:
           case TokenValue.kSemicolon:
           case TokenValue.kComma:
           case TokenValue.kAdd:

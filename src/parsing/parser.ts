@@ -870,72 +870,8 @@ export class Parser {
     }
 
     switch (token) {
-      case TokenValue.kLeftParen: {
-        this.next();
-        const position = this.position();
-
-        if (this.peek() === TokenValue.kRightParen) {
-          this.next();
-          if (this.peek() === TokenValue.kArrow) {
-            return this.parseFunctionLiteralBody([], position);
-          }
-          this.reportError(MessageTemplate.kInvalidOrUnexpectedToken);
-          return undefined;
-        }
-
-        const firstExpr = this.parseExpression();
-        if (!firstExpr) {
-          return undefined;
-        }
-
-        if (this.peek() === TokenValue.kComma) {
-          if (!firstExpr.isVariableExpression()) {
-            this.reportErrorAt(
-              makeLocation(firstExpr.position, firstExpr.position + 1),
-              MessageTemplate.kInvalidOrUnexpectedToken
-            );
-            return undefined;
-          }
-
-          const params: Variable[] = [
-            this.factory.newVariable(firstExpr.name, VariableMode.kVar),
-          ];
-
-          while (this.check(TokenValue.kComma)) {
-            if (this.peek() !== TokenValue.kIdentifier) {
-              this.reportUnexpectedToken(this.peek());
-              return undefined;
-            }
-            this.next();
-            params.push(
-              this.factory.newVariable(this.currentLiteral(), VariableMode.kVar)
-            );
-          }
-
-          this.expect(TokenValue.kRightParen);
-          return this.parseFunctionLiteralBody(params, position);
-        }
-
-        this.expect(TokenValue.kRightParen);
-
-        if (this.peek() === TokenValue.kArrow) {
-          // (x) -> ...
-          if (!firstExpr.isVariableExpression()) {
-            this.reportErrorAt(
-              makeLocation(firstExpr.position, firstExpr.position + 1),
-              MessageTemplate.kInvalidOrUnexpectedToken
-            );
-            return undefined;
-          }
-          const params = [
-            this.factory.newVariable(firstExpr.name, VariableMode.kVar),
-          ];
-          return this.parseFunctionLiteralBody(params, position);
-        }
-
-        const expression = this.parseExpression();
-        return expression;
-      }
+      case TokenValue.kLeftParen:
+        return this.parseParenOrArrowFunctionLiteral();
       case TokenValue.kLeftBracket:
         return this.parseList();
       case TokenValue.kGue: {
@@ -952,6 +888,29 @@ export class Parser {
 
         return this.factory.newThisExpression(context.className, position);
       }
+      // FuncionLiteral :
+      //    'ambil' Identifier ':' Expression
+      case TokenValue.kAmbil: {
+        this.next();
+        const position = this.position();
+        const params: Variable[] = [];
+
+        do {
+          if (this.peek() !== TokenValue.kIdentifier) {
+            this.reportUnexpectedTokenAt(
+              this.scanner.peekLocation(),
+              this.peek()
+            );
+            return undefined;
+          }
+          this.next();
+          params.push(
+            this.factory.newVariable(this.currentLiteral(), VariableMode.kVar)
+          );
+        } while (this.check(TokenValue.kComma));
+
+        return this.parseFunctionLiteralBody(params, position, false);
+      }
       default:
         break;
     }
@@ -960,33 +919,101 @@ export class Parser {
     return undefined;
   }
 
+  private parseParenOrArrowFunctionLiteral(): Expression | undefined {
+    this.next();
+    const position = this.position();
+
+    if (this.peek() === TokenValue.kRightParen) {
+      this.next();
+      if (this.peek() === TokenValue.kArrow) {
+        return this.parseFunctionLiteralBody([], position, true);
+      }
+      this.reportError(MessageTemplate.kInvalidOrUnexpectedToken);
+      return undefined;
+    }
+
+    const firstExpr = this.parseExpression();
+    if (!firstExpr) {
+      return undefined;
+    }
+
+    const params = this.tryParseFunctionParamsFromFirstExpression(firstExpr);
+    if (!params) {
+      return undefined;
+    }
+
+    this.expect(TokenValue.kRightParen);
+
+    if (this.peek() === TokenValue.kArrow) {
+      return this.parseFunctionLiteralBody(params, position, true);
+    }
+
+    return firstExpr;
+  }
+
+  private tryParseFunctionParamsFromFirstExpression(
+    firstExpression: Expression
+  ): Variable[] | undefined {
+    if (!firstExpression.isVariableExpression()) {
+      return undefined;
+    }
+
+    if (
+      this.peek() !== TokenValue.kComma &&
+      this.peek() !== TokenValue.kRightParen
+    ) {
+      return undefined;
+    }
+
+    const params: Variable[] = [
+      this.factory.newVariable(firstExpression.name, VariableMode.kVar),
+    ];
+
+    while (this.check(TokenValue.kComma)) {
+      if (this.peek() !== TokenValue.kIdentifier) {
+        this.reportUnexpectedToken(this.peek());
+        return undefined;
+      }
+
+      this.next();
+      params.push(
+        this.factory.newVariable(this.currentLiteral(), VariableMode.kVar)
+      );
+    }
+
+    return params;
+  }
+
   private parseFunctionLiteralBody(
     params: readonly Variable[],
-    position: number
+    position: number,
+    allowBlockBody: boolean
   ): Expression | undefined {
-    this.expect(TokenValue.kArrow);
-    let body: Block;
+    const delimiter = this.next();
+    if (delimiter !== TokenValue.kArrow && delimiter !== TokenValue.kColon) {
+      this.reportUnexpectedToken(delimiter);
+      return undefined;
+    }
 
-    if (this.peek() === TokenValue.kLeftBrace) {
+    if (allowBlockBody && this.peek() === TokenValue.kLeftBrace) {
       const block = this.parseBlock();
       if (!block) {
         return undefined;
       }
-      body = block;
-    } else {
-      const expression = this.parseAssignmentExpression();
-      if (!expression) {
-        return expression;
-      }
-
-      const returnStatement = this.factory.newReturnStatement(
-        expression,
-        expression.position
-      );
-      body = this.factory.newBlock();
-      body.initializeStatements([returnStatement]);
+      return this.factory.newFunctionLiteral(params, block, position);
     }
 
+    const expression = this.parseAssignmentExpression();
+    if (!expression) {
+      return expression;
+    }
+
+    const returnStatement = this.factory.newReturnStatement(
+      expression,
+      expression.position
+    );
+    const body = this.factory.newBlock();
+    body.initializeStatements([returnStatement]);
     return this.factory.newFunctionLiteral(params, body, position);
   }
 

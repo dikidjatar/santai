@@ -20,6 +20,7 @@ const TOKEN_LIST: TokenDef[] = [
   ["kRightParen", ")", 0, false],
   ["kRightBracket", "]", 0, false],
   ["kLeftBrace", "{", 0, false],
+  ["kColon", ":", 0, false],
   ["kSemicolon", ";", 0, false],
   ["kRightBrace", "}", 0, false],
   // End of source indicator
@@ -99,6 +100,7 @@ export enum TokenValue {
   kRightParen,
   kRightBracket,
   kLeftBrace,
+  kColon,
   kSemicolon,
   kRightBrace,
   kEos,
