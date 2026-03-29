@@ -27,3 +27,23 @@ defineGlobalFunction("saring", (_, args, callsite) => {
 
   return Factory.NewList(result);
 });
+
+defineGlobalFunction("olah", (_, args, callsite) => {
+  const iterable = arg(args, 0);
+  const fn = arg(args, 1);
+
+  if (!iterable.isIterable() || !Factory.IsCallable(fn)) {
+    return Factory.NewList([]);
+  }
+
+  const result: SantaiObject[] = [];
+  const iter = iterable.iterate();
+
+  let next = iter.next();
+  while (!next.done) {
+    result.push(callsite.invoke(fn, [next.value]));
+    next = iter.next();
+  }
+
+  return Factory.NewList(result);
+});
