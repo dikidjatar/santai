@@ -114,7 +114,7 @@ export class SantaiKosong extends SantaiObject {
   }
 }
 
-export const santaiKosong: SantaiKosong = SantaiKosong.instance;
+const santaiKosong: SantaiKosong = SantaiKosong.instance;
 
 export class SantaiBoolean extends SantaiObject {
   static readonly TRUE = new SantaiBoolean(true);
