@@ -46,15 +46,11 @@ import { BuiltinCallable, BuiltinRegistry } from "../builtins/builtin";
 import "../builtins/globals";
 import { SantaiIterator } from "../objects/iterator";
 import {
-  SantaiBoolean,
+  Factory,
   SantaiClass,
   SantaiFunction,
-  SantaiInstance,
   santaiKosong,
-  SantaiList,
-  SantaiNumber,
   SantaiObject,
-  SantaiString,
 } from "../objects/object";
 import {
   Operation,
@@ -267,7 +263,7 @@ export class Interpreter extends AstVisitor<SantaiObject> {
     assertDefined(variable);
     assert(variable.isFunction());
 
-    const functionObj: SantaiFunction = new SantaiFunction(
+    const functionObj: SantaiFunction = Factory.NewFunction(
       variable.name,
       node.params,
       node.body,
@@ -343,7 +339,7 @@ export class Interpreter extends AstVisitor<SantaiObject> {
     assertDefined(variable);
 
     const methods: SantaiFunction[] = node.methods.map((method) => {
-      return new SantaiFunction(
+      return Factory.NewFunction(
         method.name,
         method.params,
         method.body,
@@ -351,7 +347,7 @@ export class Interpreter extends AstVisitor<SantaiObject> {
       );
     });
 
-    const klass = new SantaiClass(node.className, methods);
+    const klass = Factory.NewClas(node.className, methods);
 
     if (!this.env.declare(variable, klass)) {
       this.report(node, MessageTemplate.kVarRedeclaration, node.className);
@@ -607,7 +603,7 @@ export class Interpreter extends AstVisitor<SantaiObject> {
       elements.push(element);
     }
 
-    return new SantaiList(elements);
+    return Factory.NewList(elements);
   }
 
   override visitUnaryOp(node: UnaryOp): SantaiObject {
@@ -616,7 +612,7 @@ export class Interpreter extends AstVisitor<SantaiObject> {
 
     switch (op) {
       case TokenValue.kNot:
-        return SantaiBoolean.of(!right.isTruthy());
+        return Factory.Boolean(!right.isTruthy());
       case TokenValue.kSub: {
         if (!right.isNumber()) {
           this.report(
@@ -627,7 +623,7 @@ export class Interpreter extends AstVisitor<SantaiObject> {
           );
           return santaiKosong;
         }
-        return new SantaiNumber(-right.value);
+        return Factory.NewNumber(-right.value);
       }
       case TokenValue.kAdd: {
         if (!right.isNumber()) {
@@ -652,19 +648,19 @@ export class Interpreter extends AstVisitor<SantaiObject> {
 
     if (op === TokenValue.kDan) {
       if (!left.isTruthy()) {
-        return SantaiBoolean.FALSE;
+        return Factory.False;
       } else {
         const right: SantaiObject = this.evaluate(node.right);
-        return SantaiBoolean.of(right.isTruthy());
+        return Factory.Boolean(right.isTruthy());
       }
     }
 
     if (op === TokenValue.kAtau) {
       if (left.isTruthy()) {
-        return SantaiBoolean.TRUE;
+        return Factory.True;
       } else {
         const right = this.evaluate(node.right);
-        return SantaiBoolean.of(right.isTruthy());
+        return Factory.Boolean(right.isTruthy());
       }
     }
 
@@ -699,7 +695,7 @@ export class Interpreter extends AstVisitor<SantaiObject> {
       case TokenValue.kNotEq: {
         const eq = resolve(Operation.Eq(left, right));
         assert(eq.isBoolean());
-        return SantaiBoolean.of(!eq.value);
+        return Factory.Boolean(!eq.value);
       }
 
       case TokenValue.kLessThan:
@@ -710,13 +706,13 @@ export class Interpreter extends AstVisitor<SantaiObject> {
         // a <= b  =  !(a > b)
         const gt = resolve(Operation.Gt(left, right));
         assert(gt.isBoolean());
-        return SantaiBoolean.of(!gt.value);
+        return Factory.Boolean(!gt.value);
       }
       case TokenValue.kGreaterThanEq: {
         // a >= b  =  !(a < b)
         const lt = resolve(Operation.Lt(left, right));
         assert(lt.isBoolean());
-        return SantaiBoolean.of(!lt.value);
+        return Factory.Boolean(!lt.value);
       }
 
       default:
@@ -796,11 +792,11 @@ export class Interpreter extends AstVisitor<SantaiObject> {
     args: SantaiObject[],
     node: AstNode
   ): SantaiObject {
-    const instance = new SantaiInstance(klass);
+    const instance = Factory.NewInstance(klass);
 
     const ctor = klass.constructorFn;
     if (ctor) {
-      const bound = new SantaiFunction(
+      const bound = Factory.NewFunction(
         ctor.name,
         ctor.parameters,
         ctor.body,
@@ -857,11 +853,11 @@ export class Interpreter extends AstVisitor<SantaiObject> {
       case LiteralType.kEmpty:
         return santaiKosong;
       case LiteralType.kBoolean:
-        return SantaiBoolean.of(node.asBooleanLiteral());
+        return Factory.Boolean(node.asBooleanLiteral());
       case LiteralType.kNumber:
-        return new SantaiNumber(node.asNumber());
+        return Factory.NewNumber(node.asNumber());
       case LiteralType.kString:
-        return new SantaiString(node.asStringLiteral());
+        return Factory.NewString(node.asStringLiteral());
     }
   }
 
