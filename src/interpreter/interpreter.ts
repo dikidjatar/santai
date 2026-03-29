@@ -13,6 +13,7 @@ import {
   ClassDeclaration,
   ContinueStatement,
   DeclarationList,
+  EmptyParentheses,
   EmptyStatement,
   Expression,
   ForInStatement,
@@ -203,6 +204,8 @@ export class Interpreter extends AstVisitor<SantaiObject> implements CallSite {
         return this.visitThisExpression(node);
       case node.isFunctionLiteral():
         return this.visitFunctionLiteral(node);
+      case node.isEmptyParentheses():
+        return this.visitEmptyParentheses(node);
       case node.isForInStatement():
         return this.visitForInStatement(node);
       case node.isWhileStatement():
@@ -411,6 +414,10 @@ export class Interpreter extends AstVisitor<SantaiObject> implements CallSite {
       node.body,
       this.env
     );
+  }
+
+  override visitEmptyParentheses(_node: EmptyParentheses): SantaiObject {
+    return Factory.Kosong;
   }
 
   /**

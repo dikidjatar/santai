@@ -928,8 +928,7 @@ export class Parser {
       if (this.peek() === TokenValue.kArrow) {
         return this.parseFunctionLiteralBody([], position, true);
       }
-      this.reportError(MessageTemplate.kInvalidOrUnexpectedToken);
-      return undefined;
+      return this.factory.newEmptyParentheses(position);
     }
 
     const firstExpr = this.parseExpression();
