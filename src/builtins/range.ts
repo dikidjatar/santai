@@ -2,13 +2,7 @@
 // SPDX-License-Identifier: MIT
 
 import { isUndefined } from "../base/types";
-import {
-  SantaiBuiltinClass,
-  santaiKosong,
-  SantaiObject,
-  SantaiRange,
-  SantaiType,
-} from "../objects/object";
+import { Factory, SantaiObject, SantaiType } from "../objects/object";
 import { defineAndRegisterGlobalClass } from "./builtin";
 
 function intArg(args: SantaiObject[], idx: number): number | undefined {
@@ -26,7 +20,7 @@ function toRange(args: SantaiObject[]): SantaiObject {
   const a2 = intArg(args, 2);
 
   if (isUndefined(a0)) {
-    return new SantaiRange(0, 0, 1);
+    return Factory.NewRange(0, 0, 1);
   }
 
   if (isUndefined(a1)) {
@@ -43,12 +37,12 @@ function toRange(args: SantaiObject[]): SantaiObject {
   if (step === 0) {
     // Step zero is infinite loop, reject by returning empty
     // an error will be thrown by the interpreter via kNotIterable if attempted
-    return santaiKosong;
+    return Factory.Kosong;
   }
 
-  return new SantaiRange(start, stop, step);
+  return Factory.NewRange(start, stop, step);
 }
 
 defineAndRegisterGlobalClass(
-  new SantaiBuiltinClass("rentang", SantaiType.kRange, toRange)
+  Factory.NewBuiltinClass("rentang", SantaiType.kRange, toRange)
 );

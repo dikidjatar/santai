@@ -1,5 +1,5 @@
 import {
-  SantaiBuiltinClass,
+  Factory,
   SantaiError,
   SantaiObject,
   SantaiType,
@@ -17,5 +17,5 @@ function constructError(args: SantaiObject[]): SantaiObject {
 }
 
 defineAndRegisterGlobalClass(
-  new SantaiBuiltinClass("Masalah", SantaiType.kError, constructError)
+  Factory.NewBuiltinClass("Masalah", SantaiType.kError, constructError)
 );

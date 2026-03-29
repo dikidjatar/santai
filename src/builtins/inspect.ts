@@ -3,16 +3,7 @@
 
 import { assert } from "../base/asserts";
 import { isUndefined } from "../base/types";
-import {
-  SantaiBoolean,
-  SantaiBuiltinClass,
-  santaiKosong,
-  SantaiList,
-  SantaiNumber,
-  SantaiObject,
-  SantaiString,
-  SantaiType,
-} from "../objects/object";
+import { Factory, SantaiObject, SantaiType } from "../objects/object";
 import { getBuiltinClassOf } from "../objects/typeRegistry";
 import {
   arg0,
@@ -33,19 +24,19 @@ import {
  */
 defineGlobalFunction("panjang", (self, args) => {
   assert(!self);
-  const obj: SantaiObject = args[0] ?? santaiKosong;
+  const obj: SantaiObject = args[0] ?? Factory.Kosong;
 
   if (obj.isString()) {
-    return new SantaiNumber([...obj.value].length);
+    return Factory.NewNumber([...obj.value].length);
   } else if (obj.isList()) {
-    return new SantaiNumber(obj.length);
+    return Factory.NewNumber(obj.length);
   }
 
-  return new SantaiNumber(0);
+  return Factory.NewNumber(0);
 });
 
 defineAndRegisterGlobalClass(
-  new SantaiBuiltinClass("tipe", SantaiType.kBuiltinClass, (args) => {
+  Factory.NewBuiltinClass("tipe", SantaiType.kBuiltinClass, (args) => {
     const obj: SantaiObject = arg0(args);
 
     if (obj.isInstance()) {
@@ -57,10 +48,10 @@ defineAndRegisterGlobalClass(
       return cls;
     }
 
-    return new SantaiBuiltinClass(
+    return Factory.NewBuiltinClass(
       "tipe",
       SantaiType.kBuiltinClass,
-      () => santaiKosong
+      () => Factory.Kosong
     );
   })
 );
@@ -73,15 +64,15 @@ function toNumber(args: SantaiObject[]): SantaiObject {
   }
 
   if (obj.isBoolean()) {
-    return new SantaiNumber(obj.value ? 1 : 0);
+    return Factory.NewNumber(obj.value ? 1 : 0);
   }
 
   if (obj.isString()) {
     const n = Number(obj.value.trim());
-    return new SantaiNumber(isNaN(n) ? 0 : n);
+    return Factory.NewNumber(isNaN(n) ? 0 : n);
   }
 
-  return new SantaiNumber(0);
+  return Factory.NewNumber(0);
 }
 
 function toText(args: SantaiObject[]): SantaiObject {
@@ -91,15 +82,15 @@ function toText(args: SantaiObject[]): SantaiObject {
     return val;
   }
 
-  return new SantaiString(val.inspect());
+  return Factory.NewString(val.inspect());
 }
 
 function toBoolean(args: SantaiObject[]): SantaiObject {
-  return SantaiBoolean.of(arg0(args).isTruthy());
+  return Factory.Boolean(arg0(args).isTruthy());
 }
 
 function toList(args: SantaiObject[]): SantaiObject {
-  const val = args[0] ?? santaiKosong;
+  const val = args[0] ?? Factory.Kosong;
 
   if (val.isList()) {
     return val;
@@ -116,24 +107,24 @@ function toList(args: SantaiObject[]): SantaiObject {
       result = iterator.next();
     }
 
-    return new SantaiList(elements);
+    return Factory.NewList(elements);
   }
 
-  return new SantaiList([val]);
+  return Factory.NewList([val]);
 }
 
 defineAndRegisterGlobalClass(
-  new SantaiBuiltinClass("angka", SantaiType.kNumber, toNumber)
+  Factory.NewBuiltinClass("angka", SantaiType.kNumber, toNumber)
 );
 
 defineAndRegisterGlobalClass(
-  new SantaiBuiltinClass("teks", SantaiType.kString, toText)
+  Factory.NewBuiltinClass("teks", SantaiType.kString, toText)
 );
 
 defineAndRegisterGlobalClass(
-  new SantaiBuiltinClass("logika", SantaiType.kBoolen, toBoolean)
+  Factory.NewBuiltinClass("logika", SantaiType.kBoolen, toBoolean)
 );
 
 defineAndRegisterGlobalClass(
-  new SantaiBuiltinClass("daftar", SantaiType.kList, toList)
+  Factory.NewBuiltinClass("daftar", SantaiType.kList, toList)
 );

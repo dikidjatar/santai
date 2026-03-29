@@ -660,7 +660,7 @@ export class SantaiError extends SantaiObject {
 }
 
 export namespace Factory {
-  export const Empty: SantaiKosong = SantaiKosong.instance;
+  export const Kosong: SantaiKosong = SantaiKosong.instance;
   export const True: SantaiBoolean = SantaiBoolean.TRUE;
   export const False: SantaiBoolean = SantaiBoolean.FALSE;
 

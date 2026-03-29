@@ -4,8 +4,8 @@
 import { assert } from "../base/asserts";
 import {
   BuiltinFunction,
+  Factory,
   SantaiBuiltinClass,
-  santaiKosong,
   SantaiObject,
 } from "../objects/object";
 import { register } from "../objects/typeRegistry";
@@ -21,7 +21,7 @@ export interface BuiltinDefinition {
 }
 
 export function arg(args: SantaiObject[], index: number): SantaiObject {
-  return args[index] ?? santaiKosong;
+  return args[index] ?? Factory.Kosong;
 }
 
 export function arg0(args: SantaiObject[]): SantaiObject {
@@ -58,7 +58,7 @@ export class BuiltinRegistry {
    */
   public registerFunction(name: string, callable: BuiltinCallable): void {
     assert(!this.globals.has(name), "cannot redeclare: " + name);
-    const builtin: BuiltinFunction = new BuiltinFunction(name, callable);
+    const builtin: BuiltinFunction = Factory.NewBuiltinFunction(name, callable);
     this.globals.set(name, builtin);
   }
 

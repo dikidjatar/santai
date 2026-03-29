@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT
 
 import { writeLineToStdout } from "../base/output";
-import { santaiKosong, SantaiObject } from "../objects/object";
+import { Factory, SantaiObject } from "../objects/object";
 import { defineGlobalFunction } from "./builtin";
 
 function joinArgs(args: SantaiObject[]): string {
@@ -13,11 +13,11 @@ function joinArgs(args: SantaiObject[]): string {
 // tulis "Hello World!" // Hello World!\n
 defineGlobalFunction("tulis", (_self, args) => {
   writeLineToStdout(joinArgs(args));
-  return santaiKosong;
+  return Factory.Kosong;
 });
 
 // `spil(...args)` — alias for `tulis` (more relaxed).
 defineGlobalFunction("spil", (_self, args) => {
   writeLineToStdout(joinArgs(args));
-  return santaiKosong;
+  return Factory.Kosong;
 });
