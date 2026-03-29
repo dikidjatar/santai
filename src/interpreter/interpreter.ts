@@ -49,7 +49,6 @@ import {
   Factory,
   SantaiClass,
   SantaiFunction,
-  santaiKosong,
   SantaiObject,
 } from "../objects/object";
 import {
@@ -183,7 +182,7 @@ export class Interpreter extends AstVisitor<SantaiObject> {
     assertDefined(node);
 
     if (this.errorHandler.hasErrors()) {
-      return santaiKosong;
+      return Factory.Kosong;
     }
 
     switch (true) {
@@ -241,21 +240,21 @@ export class Interpreter extends AstVisitor<SantaiObject> {
   override visitVariableDeclaration(node: VariableDeclaration): SantaiObject {
     const variable: Variable | undefined = node.variable();
     assertDefined(variable);
-    let value: SantaiObject = santaiKosong;
+    let value: SantaiObject = Factory.Kosong;
     const initializer = node.initializer();
 
     if (initializer) {
       value = this.evaluate(initializer);
     } else if (variable.isConst()) {
       this.report(node, MessageTemplate.kConstDeclMissingInitialize);
-      return santaiKosong;
+      return Factory.Kosong;
     }
 
     if (!this.env.declare(variable, value)) {
       this.report(node, MessageTemplate.kVarRedeclaration, variable.name);
     }
 
-    return santaiKosong;
+    return Factory.Kosong;
   }
 
   override visitFunctionDeclaration(node: FunctionDeclaration): SantaiObject {
@@ -273,7 +272,7 @@ export class Interpreter extends AstVisitor<SantaiObject> {
       this.report(node, MessageTemplate.kVarRedeclaration, functionObj.name);
     }
 
-    return santaiKosong;
+    return Factory.Kosong;
   }
 
   override visitForInStatement(node: ForInStatement): SantaiObject {
@@ -286,7 +285,7 @@ export class Interpreter extends AstVisitor<SantaiObject> {
         MessageTemplate.kNotIterable,
         iterable.typeName
       );
-      return santaiKosong;
+      return Factory.Kosong;
     }
 
     const iterator: SantaiIterator = iterable.iterate();
@@ -301,9 +300,9 @@ export class Interpreter extends AstVisitor<SantaiObject> {
 
     // Declare iteration variable in loop env with initial value kosong.
     // Value will be updated each iteration through loopEnv.update().
-    if (!loopEnv.declare(variable, santaiKosong)) {
+    if (!loopEnv.declare(variable, Factory.Kosong)) {
       this.report(node, MessageTemplate.kVarRedeclaration, variable.name);
-      return santaiKosong;
+      return Factory.Kosong;
     }
 
     try {
@@ -331,7 +330,7 @@ export class Interpreter extends AstVisitor<SantaiObject> {
       this.env = previousEnv;
     }
 
-    return santaiKosong;
+    return Factory.Kosong;
   }
 
   override visitClassDeclaration(node: ClassDeclaration): SantaiObject {
@@ -353,7 +352,7 @@ export class Interpreter extends AstVisitor<SantaiObject> {
       this.report(node, MessageTemplate.kVarRedeclaration, node.className);
     }
 
-    return santaiKosong;
+    return Factory.Kosong;
   }
 
   override visitProperty(node: Property): SantaiObject {
@@ -383,7 +382,7 @@ export class Interpreter extends AstVisitor<SantaiObject> {
       }
     }
 
-    return santaiKosong;
+    return Factory.Kosong;
   }
 
   override visitThisExpression(_node: ThisExpression): SantaiObject {
@@ -437,7 +436,7 @@ export class Interpreter extends AstVisitor<SantaiObject> {
       }
     }
 
-    return santaiKosong;
+    return Factory.Kosong;
   }
 
   override visitBlock(node: Block): SantaiObject {
@@ -447,7 +446,7 @@ export class Interpreter extends AstVisitor<SantaiObject> {
 
   override visitReturnStatement(node: ReturnStatement): SantaiObject {
     const expression = node.expression;
-    const value = expression ? this.evaluate(expression) : santaiKosong;
+    const value = expression ? this.evaluate(expression) : Factory.Kosong;
     throw new ReturnSignal(node, value);
   }
 
@@ -460,14 +459,14 @@ export class Interpreter extends AstVisitor<SantaiObject> {
   }
 
   override visitEmptyStatement(_node: EmptyStatement): SantaiObject {
-    return santaiKosong;
+    return Factory.Kosong;
   }
 
   override visitIfStatement(node: IfStatement): SantaiObject {
     const condition: SantaiObject = this.evaluate(node.condition);
 
     if (!condition) {
-      return santaiKosong;
+      return Factory.Kosong;
     }
 
     if (condition.isTruthy()) {
@@ -475,7 +474,7 @@ export class Interpreter extends AstVisitor<SantaiObject> {
     } else if (node.hasElseStatement()) {
       return this.evaluate(node.orelse);
     } else {
-      return santaiKosong;
+      return Factory.Kosong;
     }
   }
 
@@ -513,7 +512,7 @@ export class Interpreter extends AstVisitor<SantaiObject> {
       throw pendingSignal;
     }
 
-    return santaiKosong;
+    return Factory.Kosong;
   }
 
   override visitThrowStatement(node: ThrowStatement): SantaiObject {
@@ -527,14 +526,14 @@ export class Interpreter extends AstVisitor<SantaiObject> {
       this.visitVariableDeclaration(declaration);
     }
 
-    return santaiKosong;
+    return Factory.Kosong;
   }
 
   override visitAssignment(node: Assignment): SantaiObject {
     const value = this.evaluate(node.value);
 
     if (!this.assignToTarget(node.target, value)) {
-      return santaiKosong;
+      return Factory.Kosong;
     }
 
     return value;
@@ -597,7 +596,7 @@ export class Interpreter extends AstVisitor<SantaiObject> {
       const element: SantaiObject = this.evaluate(value);
 
       if (!element) {
-        return santaiKosong;
+        return Factory.Kosong;
       }
 
       elements.push(element);
@@ -621,7 +620,7 @@ export class Interpreter extends AstVisitor<SantaiObject> {
             Token.string(op),
             right.typeName
           );
-          return santaiKosong;
+          return Factory.Kosong;
         }
         return Factory.NewNumber(-right.value);
       }
@@ -633,7 +632,7 @@ export class Interpreter extends AstVisitor<SantaiObject> {
             Token.string(op),
             right.typeName
           );
-          return santaiKosong;
+          return Factory.Kosong;
         }
         return right;
       }
@@ -723,7 +722,7 @@ export class Interpreter extends AstVisitor<SantaiObject> {
           left.typeName,
           right.typeName
         );
-        return santaiKosong;
+        return Factory.Kosong;
     }
   }
 
@@ -753,7 +752,7 @@ export class Interpreter extends AstVisitor<SantaiObject> {
           error.left.typeName
         );
       }
-      return santaiKosong;
+      return Factory.Kosong;
     }
 
     return result.value;
@@ -784,7 +783,7 @@ export class Interpreter extends AstVisitor<SantaiObject> {
     }
 
     this.report(node, MessageTemplate.kCalledNoCallable, fn.typeName);
-    return santaiKosong;
+    return Factory.Kosong;
   }
 
   private instantiateClass(
@@ -818,7 +817,7 @@ export class Interpreter extends AstVisitor<SantaiObject> {
     const params = fn.parameters;
 
     for (let i = 0; i < params.length; i++) {
-      if (!fnEnv.declare(params[i]!, args[i] ?? santaiKosong)) {
+      if (!fnEnv.declare(params[i]!, args[i] ?? Factory.Kosong)) {
         this.report(node, MessageTemplate.kVarRedeclaration, params[i]!.name);
       }
     }
@@ -851,7 +850,7 @@ export class Interpreter extends AstVisitor<SantaiObject> {
   override visitLiteral(node: Literal): SantaiObject {
     switch (node.type) {
       case LiteralType.kEmpty:
-        return santaiKosong;
+        return Factory.Kosong;
       case LiteralType.kBoolean:
         return Factory.Boolean(node.asBooleanLiteral());
       case LiteralType.kNumber:
@@ -869,7 +868,7 @@ export class Interpreter extends AstVisitor<SantaiObject> {
     }
 
     this.report(node, MessageTemplate.kNotDefined, node.name);
-    return santaiKosong;
+    return Factory.Kosong;
   }
 
   private evaluateStatements(
@@ -878,7 +877,7 @@ export class Interpreter extends AstVisitor<SantaiObject> {
   ): SantaiObject {
     const previousEnv = this.env;
     this.env = env;
-    let result: SantaiObject = santaiKosong;
+    let result: SantaiObject = Factory.Kosong;
 
     try {
       for (const statement of statements) {
