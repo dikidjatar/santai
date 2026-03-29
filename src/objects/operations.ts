@@ -1,0 +1,139 @@
+// Copyright (c) [2025-2026] [Diki Djatar]
+// SPDX-License-Identifier: MIT
+
+import {
+  SantaiBoolean,
+  SantaiNumber,
+  SantaiObject,
+  SantaiString,
+} from "./object";
+
+export interface OperationError {
+  readonly op: string;
+  readonly left: SantaiObject;
+  readonly right?: SantaiObject;
+  readonly isDivideByZero?: boolean;
+  readonly isModuleByZero?: boolean;
+}
+
+export type OperationResult =
+  | { ok: true; value: SantaiObject }
+  | { ok: false; value: OperationError };
+
+const ok = (value: SantaiObject): OperationResult => ({ ok: true, value });
+const err = (value: OperationError): OperationResult => ({ ok: false, value });
+
+export const Operation = {
+  // Arithmetic
+  Add: (left: SantaiObject, right: SantaiObject): OperationResult => {
+    if (left.isNumber() && right.isNumber()) {
+      return ok(new SantaiNumber(left.value + right.value));
+    }
+
+    if (left.isString()) {
+      if (right.isString()) {
+        return ok(new SantaiString(left.value + right.value));
+      }
+      if (right.isNumber() || right.isBoolean()) {
+        return ok(new SantaiString(left.value + right.value));
+      }
+    }
+
+    return err({ op: "+", left, right });
+  },
+  Sub: (left: SantaiObject, right: SantaiObject): OperationResult => {
+    if (left.isNumber() && right.isNumber()) {
+      return ok(new SantaiNumber(left.value - right.value));
+    }
+
+    return err({ op: "-", left, right });
+  },
+  Mul: (left: SantaiObject, right: SantaiObject): OperationResult => {
+    if (left.isNumber() && right.isNumber()) {
+      return ok(new SantaiNumber(left.value * right.value));
+    }
+
+    return err({ op: "*", left, right });
+  },
+  Div: (left: SantaiObject, right: SantaiObject): OperationResult => {
+    if (!left.isNumber() || !right.isNumber()) {
+      return err({ op: "/", left, right });
+    }
+
+    if (right.value === 0) {
+      return err({ op: "/", left, right, isDivideByZero: true });
+    }
+
+    return ok(new SantaiNumber(left.value / right.value));
+  },
+  Mod: (left: SantaiObject, right: SantaiObject): OperationResult => {
+    if (!left.isNumber() || !right.isNumber()) {
+      return err({ op: "%", left, right });
+    }
+
+    if (right.value === 0) {
+      return err({ op: "%", left, right, isModuleByZero: true });
+    }
+
+    return ok(new SantaiNumber(left.value % right.value));
+  },
+  Exp: (left: SantaiObject, right: SantaiObject): OperationResult => {
+    if (left.isNumber() && right.isNumber()) {
+      return ok(new SantaiNumber(left.value ** right.value));
+    }
+
+    return err({ op: "**", left, right });
+  },
+
+  // Comparison
+  Eq: (left: SantaiObject, right: SantaiObject): OperationResult => {
+    if (left.isKosong()) return ok(SantaiBoolean.of(right.isKosong()));
+
+    if (left.isBoolean()) {
+      if (!right.isBoolean()) return ok(SantaiBoolean.FALSE);
+      return ok(SantaiBoolean.of(left.value === right.value));
+    }
+
+    if (left.isNumber()) {
+      if (!right.isNumber()) return ok(SantaiBoolean.FALSE);
+      return ok(SantaiBoolean.of(left.value === right.value));
+    }
+
+    if (left.isString()) {
+      if (!right.isString()) return ok(SantaiBoolean.FALSE);
+      return ok(SantaiBoolean.of(left.value === right.value));
+    }
+
+    if (left.isRange() && right.isRange()) {
+      return ok(
+        SantaiBoolean.of(
+          left.start === right.start &&
+            left.stop === right.stop &&
+            left.step === right.step
+        )
+      );
+    }
+
+    return ok(SantaiBoolean.of(left === right));
+  },
+  Lt: (left: SantaiObject, right: SantaiObject): OperationResult => {
+    if (left.isNumber() && right.isNumber()) {
+      return ok(SantaiBoolean.of(left.value < right.value));
+    }
+
+    if (left.isString() && right.isString()) {
+      return ok(SantaiBoolean.of(left.value < right.value));
+    }
+
+    return err({ op: "<", left, right });
+  },
+  Gt: (left: SantaiObject, right: SantaiObject): OperationResult => {
+    if (left.isNumber() && right.isNumber()) {
+      return ok(SantaiBoolean.of(left.value > right.value));
+    }
+    if (left.isString() && right.isString()) {
+      return ok(SantaiBoolean.of(left.value > right.value));
+    }
+    return err({ op: ">", left, right });
+  },
+};

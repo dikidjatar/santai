@@ -46,8 +46,6 @@ import { BuiltinCallable, BuiltinRegistry } from "../builtins/builtin";
 import "../builtins/globals";
 import { SantaiIterator } from "../objects/iterator";
 import {
-  isOperationError,
-  OperationResult,
   SantaiBoolean,
   SantaiClass,
   SantaiFunction,
@@ -58,6 +56,11 @@ import {
   SantaiObject,
   SantaiString,
 } from "../objects/object";
+import {
+  Operation,
+  OperationError,
+  OperationResult,
+} from "../objects/operations";
 import { makeLocation, ScannerLocation } from "../parsing/scanner";
 import { Token, TokenValue } from "../parsing/token";
 import { Environment, VariableSlot } from "./environment";
@@ -679,38 +682,41 @@ export class Interpreter extends AstVisitor<SantaiObject> {
 
     switch (op) {
       case TokenValue.kAdd:
-        return resolve(left.opAdd(right));
+        return resolve(Operation.Add(left, right));
       case TokenValue.kSub:
-        return resolve(left.opSub(right));
+        return resolve(Operation.Sub(left, right));
       case TokenValue.kMul:
-        return resolve(left.opMul(right));
+        return resolve(Operation.Mul(left, right));
       case TokenValue.kDiv:
-        return resolve(left.opDiv(right));
+        return resolve(Operation.Div(left, right));
       case TokenValue.kMod:
-        return resolve(left.opMod(right));
+        return resolve(Operation.Mod(left, right));
       case TokenValue.kExp:
-        return resolve(left.opExp(right));
+        return resolve(Operation.Exp(left, right));
 
       case TokenValue.kEq:
-        return resolve(left.opEquals(right));
+        return resolve(Operation.Eq(left, right));
       case TokenValue.kNotEq: {
-        const eq = resolve(left.opEquals(right));
-        return eq.isBoolean() ? SantaiBoolean.of(!eq.value) : santaiKosong;
+        const eq = resolve(Operation.Eq(left, right));
+        assert(eq.isBoolean());
+        return SantaiBoolean.of(!eq.value);
       }
 
       case TokenValue.kLessThan:
-        return resolve(left.opLessThan(right));
+        return resolve(Operation.Lt(left, right));
       case TokenValue.kGreaterThan:
-        return resolve(left.opGreaterThan(right));
+        return resolve(Operation.Gt(left, right));
       case TokenValue.kLessThanEq: {
         // a <= b  =  !(a > b)
-        const gt = resolve(left.opGreaterThan(right));
-        return gt.isBoolean() ? SantaiBoolean.of(!gt.value) : santaiKosong;
+        const gt = resolve(Operation.Gt(left, right));
+        assert(gt.isBoolean());
+        return SantaiBoolean.of(!gt.value);
       }
       case TokenValue.kGreaterThanEq: {
         // a >= b  =  !(a < b)
-        const lt = resolve(left.opLessThan(right));
-        return lt.isBoolean() ? SantaiBoolean.of(!lt.value) : santaiKosong;
+        const lt = resolve(Operation.Lt(left, right));
+        assert(lt.isBoolean());
+        return SantaiBoolean.of(!lt.value);
       }
 
       default:
@@ -726,32 +732,35 @@ export class Interpreter extends AstVisitor<SantaiObject> {
   }
 
   private resolveOp(result: OperationResult, node: AstNode): SantaiObject {
-    if (isOperationError(result)) {
-      if (result.right) {
-        if (result.isDivideByZero) {
+    if (!result.ok) {
+      const error: OperationError = result.value;
+
+      if (error.right) {
+        if (error.isDivideByZero) {
           this.report(node, MessageTemplate.kDivisionByZero);
-        } else if (result.isModuleByZero) {
+        } else if (error.isModuleByZero) {
           this.report(node, MessageTemplate.kIntegerModuleByZero);
         } else {
           this.report(
             node,
             MessageTemplate.kUnsupportedBinaryOperation,
-            result.op,
-            result.left.typeName,
-            result.right.typeName
+            error.op,
+            error.left.typeName,
+            error.right.typeName
           );
         }
       } else {
         this.report(
           node,
           MessageTemplate.kUnsupportedUnaryOperation,
-          result.op,
-          result.left.typeName
+          error.op,
+          error.left.typeName
         );
       }
       return santaiKosong;
     }
-    return result;
+
+    return result.value;
   }
 
   override visitCall(node: Call): SantaiObject {

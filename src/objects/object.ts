@@ -8,32 +8,6 @@ import { BuiltinCallable } from "../builtins/builtin";
 import { Environment } from "../interpreter/environment";
 import { SantaiIterator } from "./iterator";
 
-export class OperationError {
-  constructor(
-    readonly op: string,
-    readonly left: SantaiObject,
-    readonly right?: SantaiObject,
-    readonly isDivideByZero?: boolean,
-    readonly isModuleByZero?: boolean
-  ) {}
-}
-
-export type OperationResult = SantaiObject | OperationError;
-
-function operationError(
-  op: string,
-  left: SantaiObject,
-  right?: SantaiObject,
-  isDivideByZero?: boolean,
-  isModuleByZero?: boolean
-): OperationError {
-  return new OperationError(op, left, right, isDivideByZero, isModuleByZero);
-}
-
-export function isOperationError(r: OperationResult): r is OperationError {
-  return r instanceof OperationError;
-}
-
 export const enum SantaiType {
   kKosong,
   kBoolen,
@@ -121,34 +95,6 @@ export abstract class SantaiObject {
   iterate(): SantaiIterator {
     throw new Error(`'${this.typeName}' is not iterable`);
   }
-
-  opAdd(other: SantaiObject): OperationResult {
-    return operationError("+", this, other);
-  }
-  opSub(other: SantaiObject): OperationResult {
-    return operationError("-", this, other);
-  }
-  opMul(other: SantaiObject): OperationResult {
-    return operationError("*", this, other);
-  }
-  opDiv(other: SantaiObject): OperationResult {
-    return operationError("/", this, other);
-  }
-  opMod(other: SantaiObject): OperationResult {
-    return operationError("%", this, other);
-  }
-  opExp(other: SantaiObject): OperationResult {
-    return operationError("**", this, other);
-  }
-  opEquals(other: SantaiObject): OperationResult {
-    return operationError("==", this, other);
-  }
-  opLessThan(other: SantaiObject): OperationResult {
-    return operationError("<", this, other);
-  }
-  opGreaterThan(other: SantaiObject): OperationResult {
-    return operationError(">", this, other);
-  }
 }
 
 export class SantaiKosong extends SantaiObject {
@@ -165,11 +111,6 @@ export class SantaiKosong extends SantaiObject {
 
   override inspect(): string {
     return "kosong";
-  }
-
-  override opEquals(other: SantaiObject): OperationResult {
-    // kosong == kosong -> true, kosong == any -> false
-    return other.isKosong() ? SantaiBoolean.TRUE : SantaiBoolean.FALSE;
   }
 }
 
@@ -195,13 +136,6 @@ export class SantaiBoolean extends SantaiObject {
   override inspect(): string {
     return this.value ? "bener" : "hoaks";
   }
-
-  override opEquals(other: SantaiObject): OperationResult {
-    if (!other.isBoolean()) {
-      return operationError("==", this, other);
-    }
-    return SantaiBoolean.of(this.value === other.value);
-  }
 }
 
 export class SantaiNumber extends SantaiObject {
@@ -217,61 +151,6 @@ export class SantaiNumber extends SantaiObject {
 
   override inspect(): string {
     return String(this.value);
-  }
-
-  private numOp(
-    op: string,
-    other: SantaiObject,
-    fn: (a: number, b: number) => number
-  ): OperationResult {
-    if (!other.isNumber()) {
-      return operationError(op, this, other);
-    }
-
-    if ((op === "/" || op === "%") && other.value === 0) {
-      return operationError(op, this, other, op === "/", op === "%");
-    }
-
-    return new SantaiNumber(fn(this.value, other.value));
-  }
-
-  private cmpOp(
-    other: SantaiObject,
-    fn: (a: number, b: number) => boolean
-  ): OperationResult {
-    if (!other.isNumber()) {
-      return SantaiBoolean.FALSE;
-    }
-    return SantaiBoolean.of(fn(this.value, other.value));
-  }
-
-  override opAdd(other: SantaiObject) {
-    return this.numOp("+", other, (a, b) => a + b);
-  }
-  override opSub(other: SantaiObject) {
-    return this.numOp("-", other, (a, b) => a - b);
-  }
-  override opMul(other: SantaiObject) {
-    return this.numOp("*", other, (a, b) => a * b);
-  }
-  override opDiv(other: SantaiObject) {
-    return this.numOp("/", other, (a, b) => a / b);
-  }
-  override opMod(other: SantaiObject) {
-    return this.numOp("%", other, (a, b) => a % b);
-  }
-  override opExp(other: SantaiObject) {
-    return this.numOp("**", other, (a, b) => a ** b);
-  }
-
-  override opEquals(other: SantaiObject) {
-    return this.cmpOp(other, (a, b) => a === b);
-  }
-  override opLessThan(other: SantaiObject) {
-    return this.cmpOp(other, (a, b) => a < b);
-  }
-  override opGreaterThan(other: SantaiObject) {
-    return this.cmpOp(other, (a, b) => a > b);
   }
 }
 
@@ -321,42 +200,6 @@ export class SantaiString extends SantaiObject {
 
   override iterate(): SantaiIterator {
     return new StringIterator(this);
-  }
-
-  override opAdd(other: SantaiObject): OperationResult {
-    if (!other.isString()) {
-      if (other.isNumber() || other.isBoolean()) {
-        return new SantaiString(this.value + other.inspect());
-      }
-
-      return operationError("+", this, other);
-    }
-
-    return new SantaiString(this.value + other.value);
-  }
-
-  override opEquals(other: SantaiObject): OperationResult {
-    if (!other.isString()) {
-      return operationError("==", this, other);
-    }
-
-    return SantaiBoolean.of(this.value === other.value);
-  }
-
-  override opLessThan(other: SantaiObject): OperationResult {
-    if (!other.isString()) {
-      return operationError("<", this, other);
-    }
-
-    return SantaiBoolean.of(this.value < other.value);
-  }
-
-  override opGreaterThan(other: SantaiObject): OperationResult {
-    if (!other.isString()) {
-      return operationError(">", this, other);
-    }
-
-    return SantaiBoolean.of(this.value > other.value);
   }
 
   override getSubscript(obj: SantaiObject): SantaiObject | undefined {
@@ -588,15 +431,6 @@ export class SantaiRange extends SantaiObject {
     return new RangeIterator(this.start, this.stop, this.step);
   }
 
-  override opEquals(other: SantaiObject): OperationResult {
-    if (!other.isRange()) return SantaiBoolean.FALSE;
-    return SantaiBoolean.of(
-      this.start === other.start &&
-        this.stop === other.stop &&
-        this.step === other.step
-    );
-  }
-
   override getSubscript(obj: SantaiObject): SantaiObject | undefined {
     if (!obj.isNumber()) {
       return undefined;
@@ -684,10 +518,6 @@ export class SantaiClass extends SantaiObject {
   override inspect(): string {
     return `<gue ${this.name}>`;
   }
-
-  override opEquals(other: SantaiObject): OperationResult {
-    return SantaiBoolean.of(this === other);
-  }
 }
 
 export class SantaiInstance extends SantaiObject {
@@ -772,10 +602,6 @@ export class SantaiInstance extends SantaiObject {
       _inspectingInstances.delete(this);
     }
   }
-
-  override opEquals(other: SantaiObject): OperationResult {
-    return SantaiBoolean.of(this === other);
-  }
 }
 
 export class SantaiBuiltinClass extends SantaiObject {
@@ -799,10 +625,6 @@ export class SantaiBuiltinClass extends SantaiObject {
 
   override inspect(): string {
     return `<gue ${this.name}>`;
-  }
-
-  override opEquals(other: SantaiObject): OperationResult {
-    return SantaiBoolean.of(this === other);
   }
 }
 
@@ -834,9 +656,5 @@ export class SantaiError extends SantaiObject {
       default:
         return undefined;
     }
-  }
-
-  override opEquals(other: SantaiObject): OperationResult {
-    return SantaiBoolean.of(this === other);
   }
 }
