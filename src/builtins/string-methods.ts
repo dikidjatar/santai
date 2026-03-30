@@ -32,10 +32,24 @@ define("kapital", (value, args) => {
   return Factory.NewString(result);
 });
 
-define("besar", (value) => Factory.NewString(value.toUpperCase()));
-define("kecil", (value) => Factory.NewString(value.toLowerCase()));
-define("rapikan", (value) => Factory.NewString(value.trim()));
-define("karakter", (value, args) => {
+define("gedein", (value) => Factory.NewString(value.toUpperCase()));
+define("kecilin", (value) => Factory.NewString(value.toLowerCase()));
+define("rapiin", (value) => Factory.NewString(value.trim()));
+define("diawali", (value, args) => {
+  const searchString = arg0(args);
+  if (!searchString.isNumber() && !searchString.isString()) {
+    return Factory.Boolean(false);
+  }
+  return Factory.Boolean(value.startsWith(searchString.value as string));
+});
+define("diakhiri", (value, args) => {
+  const searchString = arg0(args);
+  if (!searchString.isNumber() && !searchString.isString()) {
+    return Factory.Boolean(false);
+  }
+  return Factory.Boolean(value.endsWith(searchString.value as string));
+});
+define("karakter_ke", (value, args) => {
   const position = arg0(args);
   if (!position.isNumber()) {
     return Factory.NewString(value.charAt(0));
