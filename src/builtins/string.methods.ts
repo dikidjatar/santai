@@ -35,5 +35,9 @@ define("kapital", (value, args) => {
 define("besar", (value) => Factory.NewString(value.toUpperCase()));
 define("kecil", (value) => Factory.NewString(value.toLowerCase()));
 define("rapikan", (value) => Factory.NewString(value.trim()));
+define("pertama", (value) => Factory.NewString(value.charAt(0)));
+define("terakhir", (value) =>
+  Factory.NewString(value.charAt(value.length - 1))
+);
 
 stringMethod.registerFor(SantaiType.kString);
