@@ -27,9 +27,8 @@ define("kapital", (value, args) => {
 
   const result = allWord
     ? value.replace(/\S+/g, (w) => w[0]!.toUpperCase() + w.slice(1))
-    : value.length > 0
-      ? value[0]!.toUpperCase() + value.slice(1)
-      : value;
+    : value.replace(/\S/, (c) => c.toUpperCase());
+
   return Factory.NewString(result);
 });
 
