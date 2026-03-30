@@ -120,6 +120,12 @@ function getLocationForNode(node: AstNode): ScannerLocation {
       return end(node.variable()!.name.length);
     case node.isFunctionDeclaration():
       return end(node.variable()!.name.length);
+    case node.isProperty(): {
+      if (node.property.isLiteral() && node.property.isStringLiteral()) {
+        return end(node.property.asStringLiteral().length);
+      }
+      return end(0);
+    }
     //TODO: Add other node
     default:
       return end(0);
