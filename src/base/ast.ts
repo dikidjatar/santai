@@ -281,9 +281,24 @@ export class VariableDeclaration extends Declaration {
   }
 }
 
+export class Parameter {
+  constructor(
+    readonly variable: Variable,
+    readonly defaultValue: Expression | undefined
+  ) {}
+
+  get name(): string {
+    return this.variable.name;
+  }
+
+  hasDefault(): boolean {
+    return !isUndefined(this.defaultValue);
+  }
+}
+
 export class FunctionDeclaration extends Declaration {
   constructor(
-    readonly params: Variable[],
+    readonly params: Parameter[],
     readonly body: Block,
     position: number
   ) {
@@ -297,7 +312,7 @@ export class FunctionDeclaration extends Declaration {
  */
 export interface ClassMethod {
   readonly name: string;
-  readonly params: readonly Variable[];
+  readonly params: readonly Parameter[];
   readonly body: Block;
   readonly isConstructor: boolean;
   readonly position: number;
@@ -542,9 +557,16 @@ export class AstNodeFactory {
     return new VariableExpression(name, position);
   }
 
+  newParameter(
+    variable: Variable,
+    defaultValue: Expression | undefined
+  ): Parameter {
+    return new Parameter(variable, defaultValue);
+  }
+
   newFunctionDeclaration(
     variable: Variable,
-    params: Variable[],
+    params: Parameter[],
     body: Block,
     position: number
   ): FunctionDeclaration {

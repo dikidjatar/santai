@@ -8,6 +8,7 @@ import {
   ClassMethod,
   Declaration,
   Expression,
+  Parameter,
   Statement,
 } from "../base/ast";
 import { ErrorHandler } from "../base/errorHandler";
@@ -456,10 +457,12 @@ export class Parser {
       this.currentLiteral(),
       VariableMode.kFunction
     );
-    const parameters: Variable[] = [];
+    const parameters: Parameter[] = [];
 
     if (this.peek() === TokenValue.kAmbil) {
       this.next();
+
+      let seenDefault: boolean = false;
 
       do {
         if (this.peek() !== TokenValue.kIdentifier) {
@@ -474,7 +477,25 @@ export class Parser {
           VariableMode.kVar
         );
 
-        parameters.push(parameterVariable);
+        let defaultValue: Expression | undefined;
+
+        if (this.check(TokenValue.kAssign)) {
+          seenDefault = true;
+          defaultValue = this.parseExpression();
+          if (!defaultValue) return undefined;
+        } else if (seenDefault) {
+          this.reportError(
+            MessageTemplate.kNonDefaultAfterDefault,
+            parameterName
+          );
+          return undefined;
+        }
+
+        const parameter = this.factory.newParameter(
+          parameterVariable,
+          defaultValue
+        );
+        parameters.push(parameter);
       } while (this.check(TokenValue.kComma));
     }
 

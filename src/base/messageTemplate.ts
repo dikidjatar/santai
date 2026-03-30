@@ -20,6 +20,7 @@ export const enum MessageTemplate {
   kInvalidAssignmentTarget,
   kUnsupportedUnaryOperation,
   kUnsupportedBinaryOperation,
+  kNonDefaultAfterDefault,
   // Runtime
   kNotDefined,
   kCalledNoCallable,
@@ -93,6 +94,8 @@ export const MessageTemplateString: Record<MessageTemplate, string> = {
     "operasi '%s' gak bisa dipake ke %s, gak nyambung bro",
   [MessageTemplate.kUnsupportedBinaryOperation]:
     "operasi '%s' antara %s sama %s? itu gak mungkin",
+  [MessageTemplate.kNonDefaultAfterDefault]:
+    "parameter '%s' gak punya nilai default — harus sebelum yang punya default",
 
   // Runtime
   [MessageTemplate.kNotDefined]:
@@ -180,4 +183,5 @@ export const MessageTemplateMood: Record<MessageTemplate, Mood> = {
   [MessageTemplate.kGueOutsideClass]:              Mood.Panik,
   [MessageTemplate.kPropertyNotFound]:             Mood.Sedih,
   [MessageTemplate.kCannotSetProperty]:            Mood.Marah,
+  [MessageTemplate.kNonDefaultAfterDefault]:       Mood.Bingung,
 };
