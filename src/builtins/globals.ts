@@ -10,4 +10,4 @@ export * from "./inspect";
 export * from "./range";
 export * from "./errors";
 export * from "./functional";
-export * from "./string.methods";
+export * from "./string-methods";
