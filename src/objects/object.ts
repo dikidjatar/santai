@@ -288,7 +288,7 @@ export class SantaiList extends SantaiObject {
     return this.elements.length;
   }
 
-  get elements(): readonly SantaiObject[] {
+  get elements(): SantaiObject[] {
     return this._elements;
   }
 
