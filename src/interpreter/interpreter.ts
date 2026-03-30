@@ -34,15 +34,9 @@ import {
   VariableExpression,
   WhileStatement,
 } from "../base/ast";
-import { ErrorHandler, StackFrame } from "../base/errorHandler";
+import { ErrorHandler, formatMessage, StackFrame } from "../base/errorHandler";
 import { MessageTemplate } from "../base/messageTemplate";
-import {
-  isNumber,
-  isObject,
-  isUndefined,
-  isUndefinedOrNull,
-  Signal,
-} from "../base/types";
+import { isNumber, isObject, isUndefined, Signal } from "../base/types";
 import { Variable, VariableMode } from "../base/variable";
 import { BuiltinRegistry, CallSite } from "../builtins/builtin";
 import "../builtins/globals";
@@ -50,6 +44,7 @@ import { SantaiIterator } from "../objects/iterator";
 import {
   Factory,
   SantaiClass,
+  SantaiError,
   SantaiFunction,
   SantaiObject,
 } from "../objects/object";
@@ -93,6 +88,15 @@ class ThrowSignal extends Signal<ThrowStatement> {
   }
 }
 
+class RuntimeErrorSignal extends Signal<AstNode> {
+  constructor(
+    node: AstNode,
+    readonly error: SantaiError
+  ) {
+    super(node);
+  }
+}
+
 function isReturnSignal(signal: unknown): signal is ReturnSignal {
   return signal instanceof ReturnSignal;
 }
@@ -107,6 +111,10 @@ function isContinueSignal(signal: unknown): signal is ContinueSignal {
 
 function isThrowSignal(signal: unknown): signal is ThrowSignal {
   return signal instanceof ThrowSignal;
+}
+
+function isRuntimeErrorSignal(signal: unknown): signal is RuntimeErrorSignal {
+  return signal instanceof RuntimeErrorSignal;
 }
 
 function getLocationForNode(node: AstNode): ScannerLocation {
@@ -180,6 +188,8 @@ export class Interpreter extends AstVisitor<SantaiObject> implements CallSite {
         const message = error.value.inspect();
         const location = makeLocation(error.node.position, error.node.position);
         this.errorHandler.reportError(location, message, "dilempar disini");
+      } else if (isRuntimeErrorSignal(error)) {
+        this.errorHandler.flushPendingErrors();
       } else {
         throw error;
       }
@@ -508,37 +518,54 @@ export class Interpreter extends AstVisitor<SantaiObject> implements CallSite {
   }
 
   override visitTryStatement(node: TryStatement): SantaiObject {
-    let pendingSignal: unknown = null;
-
     try {
       this.evaluate(node.body);
     } catch (signal) {
-      if (isThrowSignal(signal) && !isUndefined(node.catchBody)) {
-        const catchEnv = Environment.new(this.env);
+      const isThrow = isThrowSignal(signal);
+      const isRuntime = isRuntimeErrorSignal(signal);
 
-        if (!isUndefined(node.catchVariable)) {
-          catchEnv.declare(node.catchVariable, signal.value);
-        }
+      if (isThrow || isRuntime) {
+        if (!isUndefined(node.catchVariable) && !isUndefined(node.catchBody)) {
+          if (isRuntime) {
+            this.errorHandler.clearLastError();
+          }
 
-        const previousEnv = this.env;
-        this.env = catchEnv;
+          const errorValue: SantaiObject = isThrow
+            ? signal.value // value from `lempar`
+            : signal.error; // SantaiError from runtime error
 
-        try {
-          this.evaluate(node.catchBody);
-        } catch {
-          this.env = previousEnv;
+          const catchEnv = Environment.new(this.env);
+          catchEnv.declare(node.catchVariable, errorValue);
+          this.evaluateStatements([node.catchBody], catchEnv);
+        } else {
+          throw signal;
         }
       } else {
-        pendingSignal = signal;
+        throw signal;
       }
+
+      // if (isThrowSignal(signal) && !isUndefined(node.catchBody)) {
+      //   const catchEnv = Environment.new(this.env);
+
+      //   if (!isUndefined(node.catchVariable)) {
+      //     catchEnv.declare(node.catchVariable, signal.value);
+      //   }
+
+      //   const previousEnv = this.env;
+      //   this.env = catchEnv;
+
+      //   try {
+      //     this.evaluate(node.catchBody);
+      //   } catch {
+      //     this.env = previousEnv;
+      //   }
+      // } else {
+      //   pendingSignal = signal;
+      // }
     } finally {
       if (!isUndefined(node.finallyBody)) {
         this.evaluate(node.finallyBody);
       }
-    }
-
-    if (!isUndefinedOrNull(pendingSignal)) {
-      throw pendingSignal;
     }
 
     return Factory.Kosong;
@@ -931,17 +958,23 @@ export class Interpreter extends AstVisitor<SantaiObject> implements CallSite {
   report(node: AstNode, message: MessageTemplate, ...args: unknown[]): void {
     assertDefined(node);
     const location = getLocationForNode(node);
+    const formatted = formatMessage(message, args);
 
     if (this.callStack.length > 0) {
-      this.errorHandler.reportErrorWithStack(
+      this.errorHandler.recordErrorWithStack(
         location,
         message,
         [...this.callStack],
         ...args
       );
     } else {
-      this.errorHandler.reportErrorAt(location, message, ...args);
+      this.errorHandler.recordErrorAt(location, message, ...args);
     }
+
+    throw new RuntimeErrorSignal(
+      node,
+      new SantaiError(formatted, "MasalahRuntime")
+    );
   }
 
   reportAt(

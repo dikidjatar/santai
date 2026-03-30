@@ -546,7 +546,10 @@ class DiagnosticRenderer {
   }
 }
 
-function formatMessage(template: MessageTemplate, args: unknown[]): string {
+export function formatMessage(
+  template: MessageTemplate,
+  args: unknown[]
+): string {
   let message = MessageTemplateString[template] ?? "error tidak dikenal";
   for (const arg of args) {
     if (arg !== null && arg !== undefined) {
@@ -561,6 +564,7 @@ export class ErrorHandler {
   private readonly _maxErrors: number;
   private readonly _output: NodeJS.WriteStream;
   private readonly _renderer: DiagnosticRenderer;
+  private _pendingErrors: Diagnostic[] = [];
 
   private _errorCount: number = 0;
   get errorCount(): number {
@@ -641,6 +645,63 @@ export class ErrorHandler {
     });
   }
 
+  /**
+   * Log errors to buffer without directly printing to output.
+   */
+  recordErrorAt(
+    location: ScannerLocation,
+    template: MessageTemplate,
+    ...args: unknown[]
+  ): void {
+    this.record({
+      template,
+      severity: Severity.Error,
+      message: formatMessage(template, args),
+      primaryLabel: { location, message: "di sini" },
+      note: MessageTemplateNote[template],
+    });
+  }
+
+  recordErrorWithStack(
+    location: ScannerLocation,
+    template: MessageTemplate,
+    stackFrames: StackFrame[],
+    ...args: unknown[]
+  ): void {
+    this.record({
+      template,
+      severity: Severity.Error,
+      message: formatMessage(template, args),
+      primaryLabel: { location, message: "di sini" },
+      note: MessageTemplateNote[template],
+      stackFrames,
+    });
+  }
+
+  /**
+   * Cancel the last error recorded (not yet printed)
+   */
+  clearLastError(): void {
+    const last = this._pendingErrors[this._pendingErrors.length - 1];
+    if (!last) return;
+
+    this._pendingErrors.pop();
+
+    if (last.severity === Severity.Error) {
+      this._errorCount--;
+    }
+  }
+
+  /**
+   * Print all diagnostics that have been recorded but not yet printed.
+   */
+  flushPendingErrors(): void {
+    for (const diag of this._pendingErrors) {
+      this.print(diag);
+    }
+    this._pendingErrors = [];
+  }
+
   summary(): boolean {
     if (this._errorCount === 0 && this._warningCount === 0) {
       return false;
@@ -662,8 +723,9 @@ export class ErrorHandler {
     return this._errorCount > 0;
   }
 
-  private emit(diag: Diagnostic): void {
+  private record(diag: Diagnostic): void {
     this._diagnostics.push(diag);
+    this._pendingErrors.push(diag);
 
     if (diag.severity === Severity.Error) {
       this._errorCount++;
@@ -671,13 +733,49 @@ export class ErrorHandler {
       this._warningCount++;
     }
 
-    // One write() per diagnostic — avoids interleaving in concurrent output
-    this._output.write("\n" + this._renderer.render(diag) + "\n");
-
     if (this._maxErrors > 0 && this._errorCount >= this._maxErrors) {
       const msg = `\nTerlalu banyak error (${this._maxErrors}). Hentiin dulu.\n`;
       this._output.write(msg);
       throw new SantaiError(diag, msg);
     }
   }
+
+  /**
+   * Print one diagnostic to output.
+   */
+  private print(diag: Diagnostic): void {
+    this._output.write("\n" + this._renderer.render(diag) + "\n");
+  }
+
+  /**
+   * Record and print directly for errors that are always displayed.
+   */
+  private emit(diag: Diagnostic): void {
+    this.record(diag);
+    // Flush this diagnostic directly only not all pending
+    const idx = this._pendingErrors.indexOf(diag);
+    if (idx !== -1) {
+      this._pendingErrors.splice(idx, 1);
+    }
+    this.print(diag);
+  }
+
+  // private emit(diag: Diagnostic): void {
+  //   this._diagnostics.push(diag);
+
+  //   if (diag.severity === Severity.Error) {
+  //     this._errorCount++;
+  //   } else if (diag.severity === Severity.Warning) {
+  //     this._warningCount++;
+  //   }
+
+  //   // One write() per diagnostic — avoids interleaving in concurrent output
+  //   this._output.write("\n" + this._renderer.render(diag) + "\n");
+
+  //   if (this._maxErrors > 0 && this._errorCount >= this._maxErrors) {
+  //     const msg = `\nTerlalu banyak error (${this._maxErrors}). Hentiin dulu.\n`;
+  //     this._output.write(msg);
+  //     throw new SantaiError(diag, msg);
+  //   }
+  // }
 }
