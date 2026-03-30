@@ -39,6 +39,7 @@ function isNoParenArgStart(token: TokenValue): boolean {
     case TokenValue.kIdentifier:
     case TokenValue.kLeftParen:
     case TokenValue.kNot:
+    case TokenValue.kGue:
       return true;
     default:
       return false;
