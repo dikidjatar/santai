@@ -7,6 +7,7 @@ import { Variable } from "../base/variable";
 import { BuiltinCallable } from "../builtins/builtin";
 import { Environment } from "../interpreter/environment";
 import { SantaiIterator } from "./iterator";
+import { lookupProperty } from "./propertyRegistry";
 import { SantaiType } from "./st-type";
 
 export abstract class SantaiObject {
@@ -61,8 +62,8 @@ export abstract class SantaiObject {
   /**
    * Returns properties or methods by name
    */
-  getProperty(_name: string): SantaiObject | undefined {
-    return undefined;
+  getProperty(name: string): SantaiObject | undefined {
+    return lookupProperty(this.type, name, this) as SantaiObject | undefined;
   }
 
   getSubscript(_obj: SantaiObject): SantaiObject | undefined {
