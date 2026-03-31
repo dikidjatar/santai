@@ -51,4 +51,13 @@ define(
   [required("indeks")]
 );
 
+define(
+  "kosongin",
+  (elements) => {
+    elements.splice(0, elements.length);
+    return Factory.Kosong;
+  },
+  []
+);
+
 listMethods.registerFor(SantaiType.kList);
