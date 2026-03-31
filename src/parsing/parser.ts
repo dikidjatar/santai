@@ -5,6 +5,7 @@ import { assert, assertDefined, unreachable } from "../base/asserts";
 import {
   AstNodeFactory,
   Block,
+  CallArgument,
   ClassMethod,
   Declaration,
   Expression,
@@ -641,7 +642,7 @@ export class Parser {
 
       return this.factory.newCall(
         expression,
-        [argument],
+        [this.factory.newCallArgument(argument, undefined)],
         argumentPosition
       ) as unknown as Statement;
     }
@@ -824,17 +825,36 @@ export class Parser {
           this.next();
 
           const position = this.position();
-          const arguments_: Expression[] = [];
+          const arguments_: CallArgument[] = [];
           const closingToken = TokenValue.kRightParen;
 
+          let seenNamed: boolean = false;
+
           while (this.peek() !== closingToken) {
+            // Detect named argument: `identifier =`
+            let argName: string | undefined;
+
+            if (
+              this.peek() === TokenValue.kIdentifier &&
+              this.scanner.peekAhead() === TokenValue.kAssign
+            ) {
+              this.next();
+              argName = this.currentLiteral();
+              this.next();
+              seenNamed = true;
+            } else if (seenNamed) {
+              // Positional after named
+              this.reportError(MessageTemplate.kPositionalAfterNamed);
+              return undefined;
+            }
+
             const expression = this.parseExpression();
 
             if (!expression) {
               break;
             }
 
-            arguments_.push(expression);
+            arguments_.push(this.factory.newCallArgument(expression, argName));
 
             if (this.peek() !== closingToken) {
               this.expect(TokenValue.kComma);

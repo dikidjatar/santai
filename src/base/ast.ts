@@ -513,16 +513,27 @@ export class UnaryOp extends Expression {
   }
 }
 
+export class CallArgument {
+  constructor(
+    readonly value: Expression,
+    readonly name: string | undefined
+  ) {}
+
+  isNamed(): boolean {
+    return !isUndefined(this.name);
+  }
+}
+
 export class Call extends Expression {
   constructor(
     readonly expression: Expression,
-    private readonly _arguments: Expression[],
+    private readonly _arguments: CallArgument[],
     position: number
   ) {
     super(NodeType.kCall, position);
   }
 
-  arguments(): readonly Expression[] {
+  arguments(): readonly CallArgument[] {
     return this._arguments;
   }
 }
@@ -700,9 +711,13 @@ export class AstNodeFactory {
     return new UnaryOp(op, expr, pos);
   }
 
+  newCallArgument(value: Expression, name: string | undefined): CallArgument {
+    return new CallArgument(value, name);
+  }
+
   newCall(
     expression: Expression,
-    arguments_: Expression[],
+    arguments_: CallArgument[],
     position: number
   ): Call {
     return new Call(expression, arguments_, position);

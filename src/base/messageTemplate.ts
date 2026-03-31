@@ -21,6 +21,7 @@ export const enum MessageTemplate {
   kUnsupportedUnaryOperation,
   kUnsupportedBinaryOperation,
   kNonDefaultAfterDefault,
+  kPositionalAfterNamed,
   // Runtime
   kNotDefined,
   kCalledNoCallable,
@@ -96,6 +97,8 @@ export const MessageTemplateString: Record<MessageTemplate, string> = {
     "operasi '%s' antara %s sama %s? itu gak mungkin",
   [MessageTemplate.kNonDefaultAfterDefault]:
     "parameter '%s' gak punya nilai default — harus sebelum yang punya default",
+  [MessageTemplate.kPositionalAfterNamed]:
+    "argumen biasa gak boleh setelah argumen bernama, kasih nama atau pindahin ke depan",
 
   // Runtime
   [MessageTemplate.kNotDefined]:
@@ -184,4 +187,5 @@ export const MessageTemplateMood: Record<MessageTemplate, Mood> = {
   [MessageTemplate.kPropertyNotFound]:             Mood.Sedih,
   [MessageTemplate.kCannotSetProperty]:            Mood.Marah,
   [MessageTemplate.kNonDefaultAfterDefault]:       Mood.Bingung,
+  [MessageTemplate.kPositionalAfterNamed]:         Mood.Bingung,
 };
