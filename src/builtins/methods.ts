@@ -9,12 +9,22 @@ import {
 } from "../objects/propertyRegistry";
 import { SantaiType } from "../objects/st-type";
 import { BuiltinCallable } from "./builtin";
+import { BuiltinParam } from "./paramSpec";
+
+interface MethodItem {
+  readonly callable: BuiltinCallable;
+  readonly params?: readonly BuiltinParam[];
+}
 
 export class MethodTable {
-  private readonly _methods = new Map<string, BuiltinCallable>();
+  private readonly _methods = new Map<string, MethodItem>();
 
-  define(name: string, callable: BuiltinCallable): this {
-    this._methods.set(name, callable);
+  define(
+    name: string,
+    callable: BuiltinCallable,
+    params?: readonly BuiltinParam[]
+  ): this {
+    this._methods.set(name, { callable, params });
     return this;
   }
 
@@ -25,11 +35,16 @@ export class MethodTable {
    */
   asGetter(): PropertyGetter {
     return (name: string, self: PropertyTarget) => {
-      const callable = this._methods.get(name);
-      if (!callable) {
+      const item = this._methods.get(name);
+      if (!item) {
         return undefined;
       }
-      return Factory.NewBuiltinFunction(name, callable, self as SantaiObject);
+      return Factory.NewBuiltinFunction(
+        name,
+        item.callable,
+        self as SantaiObject,
+        item.params
+      );
     };
   }
 
