@@ -9,6 +9,7 @@ import {
   SantaiObject,
 } from "../objects/object";
 import { register } from "../objects/typeRegistry";
+import { BuiltinParam } from "./paramSpec";
 
 /**
  * Interface to call back the Santai function from within the builtin.
@@ -88,9 +89,18 @@ export class BuiltinRegistry {
    * @param {string} name - The name of the built-in function to register
    * @param {BuiltinCallable} callable - The callable implementation of the function
    */
-  public registerFunction(name: string, callable: BuiltinCallable): void {
+  public registerFunction(
+    name: string,
+    callable: BuiltinCallable,
+    params?: readonly BuiltinParam[]
+  ): void {
     assert(!this.globals.has(name), "cannot redeclare: " + name);
-    const builtin: BuiltinFunction = Factory.NewBuiltinFunction(name, callable);
+    const builtin: BuiltinFunction = Factory.NewBuiltinFunction(
+      name,
+      callable,
+      undefined,
+      params
+    );
     this.globals.set(name, builtin);
   }
 
@@ -116,9 +126,10 @@ export class BuiltinRegistry {
  */
 export function defineGlobalFunction(
   name: string,
-  callable: BuiltinCallable
+  callable: BuiltinCallable,
+  params?: readonly BuiltinParam[]
 ): void {
-  BuiltinRegistry.getInstance().registerFunction(name, callable);
+  BuiltinRegistry.getInstance().registerFunction(name, callable, params);
 }
 
 export function defineGlobalClass(clazz: SantaiBuiltinClass): void {

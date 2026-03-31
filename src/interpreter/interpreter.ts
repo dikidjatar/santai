@@ -10,6 +10,7 @@ import {
   Block,
   BreakStatement,
   Call,
+  CallArgument,
   ClassDeclaration,
   ContinueStatement,
   DeclarationList,
@@ -23,6 +24,7 @@ import {
   ListLiteral,
   Literal,
   LiteralType,
+  Parameter,
   Property,
   ReturnStatement,
   Statement,
@@ -40,6 +42,7 @@ import { isNumber, isObject, isUndefined, Signal } from "../base/types";
 import { Variable, VariableMode } from "../base/variable";
 import { BuiltinRegistry, CallSite } from "../builtins/builtin";
 import "../builtins/globals";
+import { BuiltinParam } from "../builtins/paramSpec";
 import { SantaiIterator } from "../objects/iterator";
 import {
   Factory,
@@ -138,6 +141,35 @@ function getLocationForNode(node: AstNode): ScannerLocation {
     default:
       return end(0);
   }
+}
+
+/**
+ * The arguments that have been evaluated. Are used by invoke() of the callsite.
+ * Builtins saring, olah, etc. Calling invoke() with SantaiObject[],
+ * not CallArgument[]. This path is always positional, no need for binding.
+ */
+interface DirectArg {
+  readonly evaluatedValue: SantaiObject;
+}
+
+function isDirectArg(a: CallArgument | DirectArg): a is DirectArg {
+  return "evaluatedValue" in a;
+}
+
+type AnyArg = CallArgument | DirectArg;
+
+/**
+ * The parameter descriptor has been resolved to a uniform form.
+ */
+interface ResolvedParam {
+  readonly name: string;
+  readonly hasDefault: boolean;
+  /**
+   * The Lazy function is called right when the default is needed.
+   * For fn user: evaluation of expression in closure.
+   * For builtin: return the existing SantaiObject.
+   */
+  readonly resolveDefault?: () => SantaiObject;
 }
 
 export class Interpreter extends AstVisitor<SantaiObject> implements CallSite {
@@ -424,12 +456,11 @@ export class Interpreter extends AstVisitor<SantaiObject> implements CallSite {
   }
 
   override visitFunctionLiteral(node: FunctionLiteral): SantaiObject {
-    return Factory.NewFunction(
-      "<aksi anonim>",
-      node.params,
-      node.body,
-      this.env
+    // Function literal has no default. Wrap variable[] to parameter[]
+    const params: Parameter[] = node.params.map(
+      (v) => new Parameter(v, undefined)
     );
+    return Factory.NewFunction("<aksi anonim>", params, node.body, this.env);
   }
 
   override visitEmptyParentheses(_node: EmptyParentheses): SantaiObject {
@@ -816,44 +847,73 @@ export class Interpreter extends AstVisitor<SantaiObject> implements CallSite {
 
   invoke(fn: SantaiObject, args: SantaiObject[]): SantaiObject {
     const node = this.currentCallNode;
+    if (!node) return Factory.Kosong;
 
-    if (fn.isBuiltinClass()) return fn.construct(args);
-    if (fn.isCLass() && node) return this.instantiateClass(fn, args, node);
-    if (fn.isFunction() && node) return this.callFunction(fn, args, node);
-    if (fn.isBuiltinFunction()) {
-      return fn.callable()(fn.self(), args, this);
-    }
-
-    return Factory.Kosong;
+    // builtins always call invoke() with positional args already
+    // evaluated (saring, olah, etc. Wrap as DirectArg
+    const directArgs: DirectArg[] = args.map((v) => ({ evaluatedValue: v }));
+    return this.dispatch(fn, directArgs, node);
   }
 
   override visitCall(node: Call): SantaiObject {
     const fn = this.evaluate(node.expression);
-    const args: SantaiObject[] = node
-      .arguments()
-      .map((arg) => this.evaluate(arg));
+    const args: CallArgument[] = node.arguments();
 
     const previousCallNode = this.currentCallNode;
     this.currentCallNode = node;
 
     try {
-      if (fn.isBuiltinClass()) return fn.construct(args);
-      if (fn.isCLass()) return this.instantiateClass(fn, args, node);
-      if (fn.isFunction()) return this.callFunction(fn, args, node);
-      if (fn.isBuiltinFunction()) {
-        return fn.callable()(fn.self(), args, this);
-      }
-
-      this.report(node, MessageTemplate.kCalledNoCallable, fn.typeName);
-      return Factory.Kosong;
+      return this.dispatch(fn, args, node);
     } finally {
       this.currentCallNode = previousCallNode;
     }
   }
 
+  private dispatch(
+    fn: SantaiObject,
+    args: AnyArg[],
+    node: AstNode
+  ): SantaiObject {
+    if (fn.isBuiltinClass()) {
+      if (fn.hasSignature()) {
+        const resolvedParams = this.resolveBuiltinParams(fn.params!);
+        const bound = this.bindArguments(fn.name, resolvedParams, args, node);
+        if (!bound) return Factory.Kosong;
+        return fn.construct(bound);
+      }
+      return fn.construct(this.evalPositional(args));
+    }
+
+    if (fn.isCLass()) return this.instantiateClass(fn, args, node);
+    if (fn.isFunction()) return this.callFunction(fn, args, node);
+
+    if (fn.isBuiltinFunction()) {
+      if (fn.hasSignature()) {
+        const resolvedParams = this.resolveBuiltinParams(fn.params!);
+        const bound = this.bindArguments(fn.name, resolvedParams, args, node);
+        if (!bound) return Factory.Kosong;
+        return fn.callable()(fn.self(), bound, this);
+      }
+      // No signature: legacy positional (varargs, backward compat)
+      return fn.callable()(fn.self(), this.evalPositional(args), this);
+    }
+
+    this.report(node, MessageTemplate.kCalledNoCallable, fn.typeName);
+    return Factory.Kosong;
+  }
+
+  /**
+   * Evaluation of args as positional for callable without signature/legacy.
+   */
+  private evalPositional(args: AnyArg[]): SantaiObject[] {
+    return args.map((a) =>
+      isDirectArg(a) ? a.evaluatedValue : this.evaluate(a.value)
+    );
+  }
+
   private instantiateClass(
     klass: SantaiClass,
-    args: SantaiObject[],
+    args: AnyArg[],
     node: AstNode
   ): SantaiObject {
     const instance = Factory.NewInstance(klass);
@@ -875,14 +935,18 @@ export class Interpreter extends AstVisitor<SantaiObject> implements CallSite {
 
   private callFunction(
     fn: SantaiFunction,
-    args: SantaiObject[],
+    args: AnyArg[],
     node: AstNode
   ): SantaiObject {
+    const resolved = this.resolveUserParams(fn.parameters, fn.closure);
+    const bound = this.bindArguments(fn.name, resolved, args, node);
+    if (!bound) return Factory.Kosong;
+
     const fnEnv = Environment.new(fn.closure);
     const params = fn.parameters;
 
     for (let i = 0; i < params.length; i++) {
-      if (!fnEnv.declare(params[i]!, args[i] ?? Factory.Kosong)) {
+      if (!fnEnv.declare(params[i]!.variable, bound[i]!)) {
         this.report(node, MessageTemplate.kVarRedeclaration, params[i]!.name);
       }
     }
@@ -910,6 +974,112 @@ export class Interpreter extends AstVisitor<SantaiObject> implements CallSite {
     } finally {
       this.callStack.pop();
     }
+  }
+
+  private resolveUserParams(
+    params: readonly Parameter[],
+    closure: Environment
+  ): ResolvedParam[] {
+    return params.map((param) => ({
+      name: param.name,
+      hasDefault: param.hasDefault(),
+      resolveDefault: param.hasDefault()
+        ? () => {
+            // Default evaluation in closure
+            const saved = this.env;
+            this.env = closure;
+            const value = this.evaluate(param.defaultValue!);
+            this.env = saved;
+            return value;
+          }
+        : undefined,
+    }));
+  }
+
+  private resolveBuiltinParams(
+    params: readonly BuiltinParam[]
+  ): ResolvedParam[] {
+    return params.map((param) => ({
+      name: param.name,
+      hasDefault: !isUndefined(param.defaultValue),
+      resolveDefault: !isUndefined(param.defaultValue)
+        ? () => param.defaultValue as SantaiObject
+        : undefined,
+    }));
+  }
+
+  private bindArguments(
+    fnName: string,
+    params: ResolvedParam[],
+    args: AnyArg[],
+    node: AstNode
+  ): SantaiObject[] | undefined {
+    // Indexed by param name slot, initially undefined = not filled
+    const slots: Map<string, SantaiObject | undefined> = new Map(
+      params.map((param) => [param.name, undefined])
+    );
+
+    let positionalIndex: number = 0;
+
+    for (const arg of args) {
+      const value: SantaiObject = isDirectArg(arg)
+        ? arg.evaluatedValue
+        : this.evaluate(arg.value);
+
+      const named = !isDirectArg(arg) && arg.isNamed();
+      const argName = named ? (arg as CallArgument).name! : undefined;
+
+      if (!named) {
+        if (positionalIndex >= params.length) {
+          this.report(
+            node,
+            MessageTemplate.kTooManyArguments,
+            fnName,
+            params.length
+          );
+          return undefined;
+        }
+        slots.set(params[positionalIndex++]!.name, value);
+      } else {
+        if (!slots.has(argName!)) {
+          this.report(
+            node,
+            MessageTemplate.kUnexpectedKeywordArgument,
+            argName!,
+            fnName
+          );
+          return undefined;
+        }
+
+        if (slots.get(argName!) !== undefined) {
+          // has been filled in by the previous position
+          this.report(node, MessageTemplate.kDuplicateArgument, argName!);
+          return undefined;
+        }
+
+        slots.set(argName!, value);
+      }
+    }
+
+    // Fill in the default for empty slots
+    for (const param of params) {
+      if (slots.get(param.name) === undefined) {
+        if (param.hasDefault) {
+          slots.set(param.name, param.resolveDefault!());
+        } else {
+          this.report(
+            node,
+            MessageTemplate.kMissingArgument,
+            param.name,
+            fnName
+          );
+          return undefined;
+        }
+      }
+    }
+
+    // Return as a positional array of parameter sequences
+    return params.map((param) => slots.get(param.name)!);
   }
 
   override visitLiteral(node: Literal): SantaiObject {

@@ -1,10 +1,10 @@
 // Copyright (c) [2025-2026] [Diki Djatar]
 // SPDX-License-Identifier: MIT
 
-import { Block } from "../base/ast";
+import { Block, Parameter } from "../base/ast";
 import { isUndefined } from "../base/types";
-import { Variable } from "../base/variable";
 import { BuiltinCallable } from "../builtins/builtin";
+import { BuiltinParam } from "../builtins/paramSpec";
 import { Environment } from "../interpreter/environment";
 import { SantaiIterator } from "./iterator";
 import { lookupProperty } from "./propertyRegistry";
@@ -208,7 +208,7 @@ export class SantaiFunction extends SantaiObject {
 
   constructor(
     readonly name: string,
-    readonly parameters: readonly Variable[],
+    readonly parameters: readonly Parameter[],
     readonly body: Block,
     readonly closure: Environment,
     /**
@@ -237,7 +237,8 @@ export class BuiltinFunction extends SantaiObject {
   constructor(
     readonly name: string,
     private readonly _callable: BuiltinCallable,
-    private readonly _self?: SantaiObject
+    private readonly _self?: SantaiObject,
+    readonly params?: readonly BuiltinParam[]
   ) {
     super(SantaiType.kBuiltinFunction);
   }
@@ -256,6 +257,10 @@ export class BuiltinFunction extends SantaiObject {
 
   self(): SantaiObject | undefined {
     return this._self;
+  }
+
+  hasSignature(): boolean {
+    return !isUndefined(this.params);
   }
 }
 
@@ -597,13 +602,18 @@ export class SantaiBuiltinClass extends SantaiObject {
   constructor(
     readonly name: string,
     readonly santaiType: SantaiType,
-    private readonly _construct: (args: SantaiObject[]) => SantaiObject
+    private readonly _construct: (args: SantaiObject[]) => SantaiObject,
+    readonly params?: readonly BuiltinParam[]
   ) {
     super(SantaiType.kBuiltinClass);
   }
 
   construct(args: SantaiObject[]): SantaiObject {
     return this._construct(args);
+  }
+
+  hasSignature(): boolean {
+    return !isUndefined(this.params);
   }
 
   override isTruthy(): boolean {
@@ -677,7 +687,7 @@ export namespace Factory {
 
   export function NewFunction(
     name: string,
-    parameters: readonly Variable[],
+    parameters: readonly Parameter[],
     body: Block,
     closure: Environment,
     boundThis?: SantaiObject | undefined
@@ -688,9 +698,10 @@ export namespace Factory {
   export function NewBuiltinFunction(
     name: string,
     callable: BuiltinCallable,
-    self?: SantaiObject | undefined
+    self?: SantaiObject | undefined,
+    params?: readonly BuiltinParam[]
   ): BuiltinFunction {
-    return new BuiltinFunction(name, callable, self);
+    return new BuiltinFunction(name, callable, self, params);
   }
 
   export function NewClas(
@@ -707,9 +718,10 @@ export namespace Factory {
   export function NewBuiltinClass(
     name: string,
     santaiType: SantaiType,
-    construct: (args: SantaiObject[]) => SantaiObject
+    construct: (args: SantaiObject[]) => SantaiObject,
+    params?: readonly BuiltinParam[]
   ): SantaiBuiltinClass {
-    return new SantaiBuiltinClass(name, santaiType, construct);
+    return new SantaiBuiltinClass(name, santaiType, construct, params);
   }
 
   export function IsCallable(obj: SantaiObject): boolean {

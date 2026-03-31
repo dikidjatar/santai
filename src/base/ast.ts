@@ -533,7 +533,7 @@ export class Call extends Expression {
     super(NodeType.kCall, position);
   }
 
-  arguments(): readonly CallArgument[] {
+  arguments(): CallArgument[] {
     return this._arguments;
   }
 }

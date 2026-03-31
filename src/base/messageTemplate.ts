@@ -12,6 +12,7 @@ export const enum MessageTemplate {
   kUnexpectedTokenNumber,
   kUnexpectedTokenString,
   kUnexpectedTokenIdentifier,
+  kUnexpectedKeywordArgument,
   kUnexpectedEOS,
   // Declaration
   kConstDeclMissingInitialize,
@@ -28,6 +29,9 @@ export const enum MessageTemplate {
   kAssignToContantVariable,
   kDivisionByZero,
   kIntegerModuleByZero,
+  kTooManyArguments,
+  kMissingArgument,
+  kDuplicateArgument,
   // Control flow
   kIllegalReturnStatement,
   kIllegalBreakStatement,
@@ -81,6 +85,8 @@ export const MessageTemplateString: Record<MessageTemplate, string> = {
     "gak expect '%s' di sini, gue bingung",
   [MessageTemplate.kUnexpectedEOS]:
     "kode udah habis tapi kayak belum kelar — kurang apa nih?",
+  [MessageTemplate.kUnexpectedKeywordArgument]:
+    "'%s' bukan nama parameter yang valid di aksi '%s'",
 
   // Declaration
   [MessageTemplate.kConstDeclMissingInitialize]:
@@ -111,6 +117,12 @@ export const MessageTemplateString: Record<MessageTemplate, string> = {
     "bagi sama nol?? matematika lo di mana nih",
   [MessageTemplate.kIntegerModuleByZero]:
     "modulus sama nol juga gak bisa, sama aja gilanya",
+  [MessageTemplate.kTooManyArguments]:
+    "aksi '%s' cuma butuh %s argumen, kebanyakan nih",
+  [MessageTemplate.kMissingArgument]:
+    "parameter '%s' di aksi '%s' wajib diisi — jangan dikosongkan",
+  [MessageTemplate.kDuplicateArgument]:
+    "parameter '%s' dapat nilai dua kali — dari positional dan named",
 
   // Control flow
   [MessageTemplate.kIllegalReturnStatement]:
@@ -188,4 +200,8 @@ export const MessageTemplateMood: Record<MessageTemplate, Mood> = {
   [MessageTemplate.kCannotSetProperty]:            Mood.Marah,
   [MessageTemplate.kNonDefaultAfterDefault]:       Mood.Bingung,
   [MessageTemplate.kPositionalAfterNamed]:         Mood.Bingung,
+  [MessageTemplate.kTooManyArguments]:             Mood.Marah,
+  [MessageTemplate.kMissingArgument]:              Mood.Sedih,
+  [MessageTemplate.kUnexpectedKeywordArgument]:    Mood.Bingung,
+  [MessageTemplate.kDuplicateArgument]:            Mood.Marah,
 };
