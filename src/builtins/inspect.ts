@@ -11,6 +11,7 @@ import {
   defineAndRegisterGlobalClass,
   defineGlobalFunction,
 } from "./builtin";
+import { required } from "./paramSpec";
 
 /**
  * `panjang(value)` — the number of elements or characters of a value.
@@ -23,38 +24,45 @@ import {
  * panjang("😀🎉")      # 2 (not 4)
  * panjang([1, 2, 3])   # 3
  */
-defineGlobalFunction("panjang", (self, args) => {
-  assert(!self);
-  const obj: SantaiObject = args[0] ?? Factory.Kosong;
-
-  if (obj.isString()) {
-    return Factory.NewNumber([...obj.value].length);
-  } else if (obj.isList()) {
-    return Factory.NewNumber(obj.length);
-  }
-
-  return Factory.NewNumber(0);
-});
+defineGlobalFunction(
+  "panjang",
+  (self, args) => {
+    assert(!self);
+    const obj: SantaiObject = args[0];
+    if (obj.isString()) {
+      return Factory.NewNumber([...obj.value].length);
+    } else if (obj.isList()) {
+      return Factory.NewNumber(obj.length);
+    }
+    return Factory.NewNumber(0);
+  },
+  [required("nilai")]
+);
 
 defineAndRegisterGlobalClass(
-  Factory.NewBuiltinClass("tipe", SantaiType.kBuiltinClass, (args) => {
-    const obj: SantaiObject = arg0(args);
+  Factory.NewBuiltinClass(
+    "tipe",
+    SantaiType.kBuiltinClass,
+    (args) => {
+      const obj: SantaiObject = arg0(args);
 
-    if (obj.isInstance()) {
-      return obj.getClass();
-    }
+      if (obj.isInstance()) {
+        return obj.getClass();
+      }
 
-    const cls = getBuiltinClassOf(obj);
-    if (!isUndefined(cls)) {
-      return cls;
-    }
+      const cls = getBuiltinClassOf(obj);
+      if (!isUndefined(cls)) {
+        return cls;
+      }
 
-    return Factory.NewBuiltinClass(
-      "tipe",
-      SantaiType.kBuiltinClass,
-      () => Factory.Kosong
-    );
-  })
+      return Factory.NewBuiltinClass(
+        "tipe",
+        SantaiType.kBuiltinClass,
+        () => Factory.Kosong
+      );
+    },
+    [required("objek")]
+  )
 );
 
 function toNumber(args: SantaiObject[]): SantaiObject {
