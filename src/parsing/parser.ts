@@ -1,7 +1,6 @@
 // Copyright (c) [2025-2026] [Diki Djatar]
 // SPDX-License-Identifier: MIT
 
-import { assert, assertDefined, unreachable } from "../base/asserts";
 import {
   AstNodeFactory,
   Block,
@@ -11,11 +10,12 @@ import {
   Expression,
   Parameter,
   Statement,
-} from "../base/ast";
+} from "../ast/ast";
+import { Variable, VariableMode } from "../ast/variable";
+import { assert, assertDefined, unreachable } from "../base/asserts";
 import { ErrorHandler } from "../base/errorHandler";
 import { MessageTemplate } from "../base/messageTemplate";
 import { isUndefined } from "../base/types";
-import { Variable, VariableMode } from "../base/variable";
 import { makeLocation, Scanner, ScannerLocation } from "./scanner";
 import { Token, TokenValue } from "./token";
 

@@ -1,8 +1,8 @@
 // Copyright (c) [2025-2026] [Diki Djatar]
 // SPDX-License-Identifier: MIT
 
+import { Variable } from "../ast/variable";
 import { assertDefined } from "../base/asserts";
-import { Variable } from "../base/variable";
 import { SantaiObject } from "../objects/object";
 
 export interface VariableSlot {

@@ -1,7 +1,6 @@
 // Copyright (c) [2025-2026] [Diki Djatar]
 // SPDX-License-Identifier: MIT
 
-import { assert, assertDefined, unreachable } from "../base/asserts";
 import {
   Assignment,
   AstNode,
@@ -35,11 +34,12 @@ import {
   VariableDeclaration,
   VariableExpression,
   WhileStatement,
-} from "../base/ast";
+} from "../ast/ast";
+import { Variable, VariableMode } from "../ast/variable";
+import { assert, assertDefined, unreachable } from "../base/asserts";
 import { ErrorHandler, formatMessage, StackFrame } from "../base/errorHandler";
 import { MessageTemplate } from "../base/messageTemplate";
 import { isNumber, isObject, isUndefined, Signal } from "../base/types";
-import { Variable, VariableMode } from "../base/variable";
 import { BuiltinRegistry, CallSite } from "../builtins/builtin";
 import "../builtins/globals";
 import { BuiltinParam } from "../builtins/paramSpec";

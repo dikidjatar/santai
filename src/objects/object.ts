@@ -1,7 +1,7 @@
 // Copyright (c) [2025-2026] [Diki Djatar]
 // SPDX-License-Identifier: MIT
 
-import { Block, Parameter } from "../base/ast";
+import { Block, Parameter } from "../ast/ast";
 import { isUndefined } from "../base/types";
 import { BuiltinCallable } from "../builtins/builtin";
 import { BuiltinParam } from "../builtins/paramSpec";

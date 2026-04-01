@@ -14,8 +14,8 @@
  */
 
 import { TokenValue } from "../parsing/token";
-import { assert } from "./asserts";
-import { isUndefined } from "./types";
+import { assert } from "../base/asserts";
+import { isUndefined } from "../base/types";
 import { Variable, VariableMode } from "./variable";
 
 export const enum NodeType {

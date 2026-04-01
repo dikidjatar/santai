@@ -1,7 +1,7 @@
 // Copyright (c) [2026] [Diki Djatar]
 // SPDX-License-Identifier: MIT
 
-import { AstNodeFactory, Statement } from "../base/ast";
+import { AstNodeFactory, Statement } from "../ast/ast";
 import { ErrorHandler } from "../base/errorHandler";
 import { Interpreter } from "../interpreter/interpreter";
 import { Parser } from "../parsing/parser";
