@@ -883,6 +883,13 @@ export class Parser {
 
     if (token === TokenValue.kIdentifier) {
       this.next();
+      if (this.peek() === TokenValue.kArrow) {
+        const variable = this.factory.newVariable(
+          this.currentLiteral(),
+          VariableMode.kVar
+        );
+        return this.parseFunctionLiteralBody([variable], position, true);
+      }
       return this.factory.newVariableExpression(
         this.currentLiteral(),
         position
