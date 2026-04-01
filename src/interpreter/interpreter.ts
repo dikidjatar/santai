@@ -235,9 +235,9 @@ export class Interpreter extends AstVisitor<SantaiObject> implements CallSite {
   override visit(node: AstNode): SantaiObject {
     assertDefined(node);
 
-    if (this.errorHandler.hasErrors()) {
-      return Factory.Kosong;
-    }
+    // if (this.errorHandler.hasErrors()) {
+    //   return Factory.Kosong;
+    // }
 
     switch (true) {
       case node.isVariableDeclaration():
