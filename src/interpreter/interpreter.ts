@@ -1125,7 +1125,7 @@ export class Interpreter extends AstVisitor<SantaiObject> implements CallSite {
     return result;
   }
 
-  report(node: AstNode, message: MessageTemplate, ...args: unknown[]): void {
+  report(node: AstNode, message: MessageTemplate, ...args: unknown[]): never {
     assertDefined(node);
     const location = getLocationForNode(node);
     const formatted = formatMessage(message, args);
