@@ -94,8 +94,11 @@ const TOKEN_LIST: TokenDef[] = [
 ];
 
 export enum TokenValue {
+  // BEGIN Property
   kPeriod,
   kLeftBracket,
+
+  // END Property
   kLeftParen,
   kRightParen,
   kRightBracket,
@@ -103,10 +106,16 @@ export enum TokenValue {
   kColon,
   kSemicolon,
   kRightBrace,
+
+  // End of source indicator
   kEos,
+
   kArrow,
+
   kAssign,
   kComma,
+
+  // BINARY_OP
   kMul,
   kDiv,
   kMod,
@@ -116,6 +125,8 @@ export enum TokenValue {
   kAdd,
   kSub,
   kNot,
+
+  // Compare operators
   kEq,
   kNotEq,
   kLessThan,
@@ -124,6 +135,8 @@ export enum TokenValue {
   kGreaterThanEq,
   kDi,
   kItu,
+
+  // Keywords
   kSkip,
   kTapi,
   kStop,
@@ -141,17 +154,27 @@ export enum TokenValue {
   kTangkap,
   kLempar,
   kIsi,
+
+  // Literals
   kKosongLiteral,
   kBenarLiteral,
   kSalahLiteral,
   kNumber,
   kString,
+
+  // Identifier
   kIdentifier,
+
   kComment,
+
+  // Illegal
   kIllegal,
   kEscapedKeyword,
+
+  // Internal scanner use
   kWhitespace,
   kUninitialized,
+
   kNumTokens,
 }
 
