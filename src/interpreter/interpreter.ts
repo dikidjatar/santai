@@ -211,11 +211,17 @@ export class Interpreter extends AstVisitor<SantaiObject> implements CallSite {
       this.visit(program);
     } catch (error) {
       if (isReturnSignal(error)) {
-        this.report(error.node, MessageTemplate.kIllegalReturnStatement);
+        this.reportAndThrow(
+          error.node,
+          MessageTemplate.kIllegalReturnStatement
+        );
       } else if (isBreakSignal(error)) {
-        this.report(error.node, MessageTemplate.kIllegalBreakStatement);
+        this.reportAndThrow(error.node, MessageTemplate.kIllegalBreakStatement);
       } else if (isContinueSignal(error)) {
-        this.report(error.node, MessageTemplate.kIllegalContinueStatement);
+        this.reportAndThrow(
+          error.node,
+          MessageTemplate.kIllegalContinueStatement
+        );
       } else if (isThrowSignal(error)) {
         const message = error.value.inspect();
         const location = makeLocation(error.node.position, error.node.position);
@@ -304,12 +310,15 @@ export class Interpreter extends AstVisitor<SantaiObject> implements CallSite {
     if (initializer) {
       value = this.evaluate(initializer);
     } else if (variable.isConst()) {
-      this.report(node, MessageTemplate.kConstDeclMissingInitialize);
-      return Factory.Kosong;
+      this.reportAndThrow(node, MessageTemplate.kConstDeclMissingInitialize);
     }
 
     if (!this.env.declare(variable, value)) {
-      this.report(node, MessageTemplate.kVarRedeclaration, variable.name);
+      this.reportAndThrow(
+        node,
+        MessageTemplate.kVarRedeclaration,
+        variable.name
+      );
     }
 
     return Factory.Kosong;
@@ -327,7 +336,11 @@ export class Interpreter extends AstVisitor<SantaiObject> implements CallSite {
       this.env
     );
     if (!this.env.declare(variable, functionObj)) {
-      this.report(node, MessageTemplate.kVarRedeclaration, functionObj.name);
+      this.reportAndThrow(
+        node,
+        MessageTemplate.kVarRedeclaration,
+        functionObj.name
+      );
     }
 
     return Factory.Kosong;
@@ -338,12 +351,11 @@ export class Interpreter extends AstVisitor<SantaiObject> implements CallSite {
 
     // Ensure the object supports iteration before starting the loop
     if (!iterable.isIterable()) {
-      this.report(
+      this.reportAndThrow(
         node.iterable,
         MessageTemplate.kNotIterable,
         iterable.typeName
       );
-      return Factory.Kosong;
     }
 
     const iterator: SantaiIterator = iterable.iterate();
@@ -359,8 +371,11 @@ export class Interpreter extends AstVisitor<SantaiObject> implements CallSite {
     // Declare iteration variable in loop env with initial value kosong.
     // Value will be updated each iteration through loopEnv.update().
     if (!loopEnv.declare(variable, Factory.Kosong)) {
-      this.report(node, MessageTemplate.kVarRedeclaration, variable.name);
-      return Factory.Kosong;
+      this.reportAndThrow(
+        node,
+        MessageTemplate.kVarRedeclaration,
+        variable.name
+      );
     }
 
     try {
@@ -407,7 +422,11 @@ export class Interpreter extends AstVisitor<SantaiObject> implements CallSite {
     const klass = Factory.NewClas(node.className, methods);
 
     if (!this.env.declare(variable, klass)) {
-      this.report(node, MessageTemplate.kVarRedeclaration, node.className);
+      this.reportAndThrow(
+        node,
+        MessageTemplate.kVarRedeclaration,
+        node.className
+      );
     }
 
     return Factory.Kosong;
@@ -425,7 +444,7 @@ export class Interpreter extends AstVisitor<SantaiObject> implements CallSite {
         return property;
       }
 
-      this.report(
+      this.reportAndThrow(
         node,
         MessageTemplate.kPropertyNotFound,
         propertyName,
@@ -633,17 +652,15 @@ export class Interpreter extends AstVisitor<SantaiObject> implements CallSite {
       );
 
       if (!variableInfo) {
-        this.report(target, MessageTemplate.kNotDefined, target.name);
-        return false;
+        this.reportAndThrow(target, MessageTemplate.kNotDefined, target.name);
       }
 
       if (!this.env.update(variableInfo.variable, value)) {
-        this.report(
+        this.reportAndThrow(
           target,
           MessageTemplate.kAssignToContantVariable,
           variableInfo.variable.name
         );
-        return false;
       }
 
       return true;
@@ -655,13 +672,12 @@ export class Interpreter extends AstVisitor<SantaiObject> implements CallSite {
         const propertyName = propertyKey.asStringLiteral();
 
         if (!obj.isInstance()) {
-          this.report(
+          this.reportAndThrow(
             target,
             MessageTemplate.kCannotSetProperty,
             propertyName,
             obj.typeName
           );
-          return false;
         }
 
         obj.setProperty(propertyName, value);
@@ -671,8 +687,7 @@ export class Interpreter extends AstVisitor<SantaiObject> implements CallSite {
         return obj.setSubscript(keyObj, value);
       }
     } else {
-      this.report(target, MessageTemplate.kInvalidAssignmentTarget);
-      return false;
+      this.reportAndThrow(target, MessageTemplate.kInvalidAssignmentTarget);
     }
   }
 
@@ -701,25 +716,23 @@ export class Interpreter extends AstVisitor<SantaiObject> implements CallSite {
         return Factory.Boolean(!right.isTruthy());
       case TokenValue.kSub: {
         if (!right.isNumber()) {
-          this.report(
+          this.reportAndThrow(
             node,
             MessageTemplate.kUnsupportedUnaryOperation,
             Token.string(op),
             right.typeName
           );
-          return Factory.Kosong;
         }
         return Factory.NewNumber(-right.value);
       }
       case TokenValue.kAdd: {
         if (!right.isNumber()) {
-          this.report(
+          this.reportAndThrow(
             node,
             MessageTemplate.kUnsupportedUnaryOperation,
             Token.string(op),
             right.typeName
           );
-          return Factory.Kosong;
         }
         return right;
       }
@@ -802,14 +815,13 @@ export class Interpreter extends AstVisitor<SantaiObject> implements CallSite {
       }
 
       default:
-        this.report(
+        this.reportAndThrow(
           node,
           MessageTemplate.kUnsupportedBinaryOperation,
           Token.string(op),
           left.typeName,
           right.typeName
         );
-        return Factory.Kosong;
     }
   }
 
@@ -819,11 +831,11 @@ export class Interpreter extends AstVisitor<SantaiObject> implements CallSite {
 
       if (error.right) {
         if (error.isDivideByZero) {
-          this.report(node, MessageTemplate.kDivisionByZero);
+          this.reportAndThrow(node, MessageTemplate.kDivisionByZero);
         } else if (error.isModuleByZero) {
-          this.report(node, MessageTemplate.kIntegerModuleByZero);
+          this.reportAndThrow(node, MessageTemplate.kIntegerModuleByZero);
         } else {
-          this.report(
+          this.reportAndThrow(
             node,
             MessageTemplate.kUnsupportedBinaryOperation,
             error.op,
@@ -832,14 +844,13 @@ export class Interpreter extends AstVisitor<SantaiObject> implements CallSite {
           );
         }
       } else {
-        this.report(
+        this.reportAndThrow(
           node,
           MessageTemplate.kUnsupportedUnaryOperation,
           error.op,
           error.left.typeName
         );
       }
-      return Factory.Kosong;
     }
 
     return result.value;
@@ -898,8 +909,7 @@ export class Interpreter extends AstVisitor<SantaiObject> implements CallSite {
       return fn.callable()(fn.self(), this.evalPositional(args), this);
     }
 
-    this.report(node, MessageTemplate.kCalledNoCallable, fn.typeName);
-    return Factory.Kosong;
+    this.reportAndThrow(node, MessageTemplate.kCalledNoCallable, fn.typeName);
   }
 
   /**
@@ -947,7 +957,11 @@ export class Interpreter extends AstVisitor<SantaiObject> implements CallSite {
 
     for (let i = 0; i < params.length; i++) {
       if (!fnEnv.declare(params[i]!.variable, bound[i]!)) {
-        this.report(node, MessageTemplate.kVarRedeclaration, params[i]!.name);
+        this.reportAndThrow(
+          node,
+          MessageTemplate.kVarRedeclaration,
+          params[i]!.name
+        );
       }
     }
 
@@ -1013,7 +1027,7 @@ export class Interpreter extends AstVisitor<SantaiObject> implements CallSite {
     params: ResolvedParam[],
     args: AnyArg[],
     node: AstNode
-  ): SantaiObject[] | undefined {
+  ): SantaiObject[] {
     // Indexed by param name slot, initially undefined = not filled
     const slots: Map<string, SantaiObject | undefined> = new Map(
       params.map((param) => [param.name, undefined])
@@ -1031,30 +1045,31 @@ export class Interpreter extends AstVisitor<SantaiObject> implements CallSite {
 
       if (!named) {
         if (positionalIndex >= params.length) {
-          this.report(
+          this.reportAndThrow(
             node,
             MessageTemplate.kTooManyArguments,
             fnName,
             params.length
           );
-          return undefined;
         }
         slots.set(params[positionalIndex++]!.name, value);
       } else {
         if (!slots.has(argName!)) {
-          this.report(
+          this.reportAndThrow(
             node,
             MessageTemplate.kUnexpectedKeywordArgument,
             argName!,
             fnName
           );
-          return undefined;
         }
 
         if (slots.get(argName!) !== undefined) {
           // has been filled in by the previous position
-          this.report(node, MessageTemplate.kDuplicateArgument, argName!);
-          return undefined;
+          this.reportAndThrow(
+            node,
+            MessageTemplate.kDuplicateArgument,
+            argName!
+          );
         }
 
         slots.set(argName!, value);
@@ -1067,13 +1082,12 @@ export class Interpreter extends AstVisitor<SantaiObject> implements CallSite {
         if (param.hasDefault) {
           slots.set(param.name, param.resolveDefault!());
         } else {
-          this.report(
+          this.reportAndThrow(
             node,
             MessageTemplate.kMissingArgument,
             param.name,
             fnName
           );
-          return undefined;
         }
       }
     }
@@ -1102,8 +1116,7 @@ export class Interpreter extends AstVisitor<SantaiObject> implements CallSite {
       return value;
     }
 
-    this.report(node, MessageTemplate.kNotDefined, node.name);
-    return Factory.Kosong;
+    this.reportAndThrow(node, MessageTemplate.kNotDefined, node.name);
   }
 
   private evaluateStatements(
@@ -1125,7 +1138,11 @@ export class Interpreter extends AstVisitor<SantaiObject> implements CallSite {
     return result;
   }
 
-  report(node: AstNode, message: MessageTemplate, ...args: unknown[]): never {
+  reportAndThrow(
+    node: AstNode,
+    message: MessageTemplate,
+    ...args: unknown[]
+  ): never {
     assertDefined(node);
     const location = getLocationForNode(node);
     const formatted = formatMessage(message, args);
