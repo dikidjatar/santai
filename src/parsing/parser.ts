@@ -979,9 +979,6 @@ export class Parser {
     }
 
     const params = this.tryParseFunctionParamsFromFirstExpression(firstExpr);
-    if (!params) {
-      return undefined;
-    }
 
     this.expect(TokenValue.kRightParen);
 
@@ -994,16 +991,16 @@ export class Parser {
 
   private tryParseFunctionParamsFromFirstExpression(
     firstExpression: Expression
-  ): Variable[] | undefined {
+  ): Variable[] {
     if (!firstExpression.isVariableExpression()) {
-      return undefined;
+      return [];
     }
 
     if (
       this.peek() !== TokenValue.kComma &&
       this.peek() !== TokenValue.kRightParen
     ) {
-      return undefined;
+      return [];
     }
 
     const params: Variable[] = [
@@ -1013,7 +1010,7 @@ export class Parser {
     while (this.check(TokenValue.kComma)) {
       if (this.peek() !== TokenValue.kIdentifier) {
         this.reportUnexpectedToken(this.peek());
-        return undefined;
+        return [];
       }
 
       this.next();
