@@ -8,7 +8,7 @@ import { isError } from "../base/types";
 export class SourceFile {
   private constructor(
     readonly buffer: Uint8Array,
-    readonly displayName: string
+    readonly filepath: string
   ) {}
 
   static fromFile(filepath: string): SourceFile {
@@ -25,7 +25,7 @@ export class SourceFile {
 
     try {
       const buffer: Uint8Array = fs.readFileSync(resolved);
-      return new SourceFile(buffer, path.basename(filepath));
+      return new SourceFile(buffer, filepath);
     } catch (error) {
       throw new Error(
         `Gagal membaca file: ${isError(error) ? error.message : String(error)}`

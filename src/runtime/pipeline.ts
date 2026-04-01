@@ -34,7 +34,7 @@ export class Pipeline {
     this.scanner = new Scanner(this.characterStram);
     this.factory = new AstNodeFactory();
     this.errorHandler = new ErrorHandler(this.characterStram, {
-      filename: source.displayName,
+      filename: source.filepath,
     });
     this.parser = new Parser(this.scanner, this.factory, this.errorHandler);
   }
