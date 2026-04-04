@@ -13,6 +13,7 @@ export const enum MessageTemplate {
   kUnexpectedTokenString,
   kUnexpectedTokenIdentifier,
   kUnexpectedKeywordArgument,
+  kUnterminatedTemplate,
   kUnexpectedEOS,
   // Declaration
   kConstDeclMissingInitialize,
@@ -87,6 +88,8 @@ export const MessageTemplateString: Record<MessageTemplate, string> = {
     "kode udah habis tapi kayak belum kelar — kurang apa nih?",
   [MessageTemplate.kUnexpectedKeywordArgument]:
     "'%s' bukan nama parameter yang valid di aksi '%s'",
+  [MessageTemplate.kUnterminatedTemplate]:
+    'template string belum ditutup — `"` penutupnya ke mana? 🤔',
 
   // Declaration
   [MessageTemplate.kConstDeclMissingInitialize]:
@@ -204,4 +207,5 @@ export const MessageTemplateMood: Record<MessageTemplate, Mood> = {
   [MessageTemplate.kMissingArgument]:              Mood.Sedih,
   [MessageTemplate.kUnexpectedKeywordArgument]:    Mood.Bingung,
   [MessageTemplate.kDuplicateArgument]:            Mood.Marah,
+  [MessageTemplate.kUnterminatedTemplate]:         Mood.Bingung,
 };

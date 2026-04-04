@@ -262,6 +262,7 @@ function getOneCharToken(c: number): TokenValue {
     case Chars.Hash:
       return TokenValue.kComment;
     case Chars.DoubleQuote:
+      return TokenValue.kTemplateHead;
     case Chars.SingleQuote:
       return TokenValue.kString;
     case Chars.Space:
@@ -304,11 +305,17 @@ export class Scanner {
 
   private scannerError: MessageTemplate = MessageTemplate.kNone;
 
+  private _pendingTemplateContinuation: boolean = false;
+
   constructor(source: CharacterStream) {
     this.source = source;
     this.advance();
     this.getNext().afterLineTerminator = true;
     this.scan(this.nextIdx);
+  }
+
+  prepareTemplateContinuation(): void {
+    this._pendingTemplateContinuation = true;
   }
 
   next(): TokenValue {
@@ -436,7 +443,12 @@ export class Scanner {
   }
 
   private scan(descIdx: number): void {
-    this.tokenStorage[descIdx].token = this.scanSingleToken();
+    if (this._pendingTemplateContinuation) {
+      this._pendingTemplateContinuation = false;
+      this.tokenStorage[descIdx].token = this.scanTemplateChunk();
+    } else {
+      this.tokenStorage[descIdx].token = this.scanSingleToken();
+    }
     this.tokenStorage[descIdx].location.endPos = this.sourcePos();
   }
 
@@ -527,6 +539,9 @@ export class Scanner {
             }
             return TokenValue.kPeriod;
           }
+
+          case TokenValue.kTemplateHead:
+            return this.scanTemplateLiteral();
 
           case TokenValue.kString:
             return this.scanString();
@@ -822,6 +837,79 @@ export class Scanner {
 
       this.addLiteralChar(this.c0);
     }
+  }
+
+  private scanTemplateLiteral(): TokenValue {
+    this.getNext().literalChars = "";
+    this.advance();
+    return this.scanTemplateSegment(
+      TokenValue.kString,
+      TokenValue.kTemplateHead
+    );
+  }
+
+  private scanTemplateChunk(): TokenValue {
+    this.getNext().literalChars = "";
+    return this.scanTemplateSegment(
+      TokenValue.kTemplateTail,
+      TokenValue.kTemplateMiddle
+    );
+  }
+
+  private scanTemplateSegment(
+    closingToken: TokenValue,
+    interiorToken: TokenValue
+  ): TokenValue {
+    while (true) {
+      if (this.c0 === Chars.DoubleQuote) {
+        this.advance();
+        return closingToken;
+      }
+
+      if (this.c0 === Chars.BraceLeft) {
+        this.advance();
+        return interiorToken;
+      }
+
+      if (
+        this.c0 === CharacterStream.kEndOfInput ||
+        isStringLiteralLineTerminator(this.c0)
+      ) {
+        this.reportScannerError(MessageTemplate.kUnterminatedTemplate);
+        return TokenValue.kIllegal;
+      }
+
+      if (this.c0 === Chars.Backslash) {
+        this.advance();
+        if (this.c0 === CharacterStream.kEndOfInput || !this.scanEscape()) {
+          return TokenValue.kIllegal;
+        }
+        continue;
+      }
+
+      this.addLiteralChar(this.c0);
+      this.scanTemplateLiteralCharsAdvanceUntil();
+    }
+  }
+
+  private scanTemplateLiteralCharsAdvanceUntil(): void {
+    this.advanceUntil((c: number) => {
+      if (c > Scanner.kMaxAscii) {
+        if (isStringLiteralLineTerminator(c)) return true;
+        this.addLiteralChar(c);
+        return false;
+      }
+      if (
+        c === Chars.DoubleQuote ||
+        c === Chars.BraceLeft ||
+        isStringLiteralLineTerminator(c) ||
+        c === Chars.Backslash
+      ) {
+        return true;
+      }
+      this.addLiteralChar(c);
+      return false;
+    });
   }
 
   private scanEscape(): boolean {

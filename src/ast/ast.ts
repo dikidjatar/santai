@@ -47,6 +47,7 @@ export const enum NodeType {
   kThisExpression,
   kFunctionLiteral,
   kEmptyParentheses,
+  kTemplateLiteral,
 }
 
 export abstract class AstNode {
@@ -133,6 +134,9 @@ export abstract class AstNode {
   }
   isEmptyParentheses(): this is EmptyParentheses {
     return this.nodeType === NodeType.kEmptyParentheses;
+  }
+  isTemplateLiteral(): this is TemplateLiteral {
+    return this.nodeType === NodeType.kTemplateLiteral;
   }
 }
 
@@ -368,6 +372,16 @@ export class FunctionLiteral extends Expression {
 export class EmptyParentheses extends Expression {
   constructor(position: number) {
     super(NodeType.kEmptyParentheses, position);
+  }
+}
+
+export class TemplateLiteral extends Expression {
+  constructor(
+    readonly quasis: readonly string[],
+    readonly expressions: readonly Expression[],
+    position: number
+  ) {
+    super(NodeType.kTemplateLiteral, position);
   }
 }
 
@@ -621,6 +635,14 @@ export class AstNodeFactory {
     return new EmptyParentheses(position);
   }
 
+  newTemplateLiteral(
+    quasis: string[],
+    expressions: Expression[],
+    position: number
+  ): TemplateLiteral {
+    return new TemplateLiteral(quasis, expressions, position);
+  }
+
   newReturnStatement(
     expression: Expression | undefined,
     position: number
@@ -757,6 +779,7 @@ export abstract class AstVisitor<R = void> {
   abstract visitThisExpression(node: ThisExpression): R;
   abstract visitFunctionLiteral(node: FunctionLiteral): R;
   abstract visitEmptyParentheses(node: EmptyParentheses): R;
+  abstract visitTemplateLiteral(node: TemplateLiteral): R;
   abstract visitForInStatement(node: ForInStatement): R;
   abstract visitWhileStatement(node: WhileStatement): R;
   abstract visitBlock(node: Block): R;

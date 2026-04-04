@@ -12,6 +12,12 @@ type TokenDef = [
 ];
 
 const TOKEN_LIST: TokenDef[] = [
+  // BEGIN Template
+  ["kTemplateHead", undefined, 0, false], // "teks before {"
+  ["kTemplateMiddle", undefined, 0, false], // "text between } and {"
+  ["kTemplateTail", undefined, 0, false], // "teks after }"
+  // END Template
+
   // BEGIN Property
   ["kPeriod", ".", 0, false],
   ["kLeftBracket", "[", 0, false],
@@ -94,6 +100,12 @@ const TOKEN_LIST: TokenDef[] = [
 ];
 
 export enum TokenValue {
+  // BEGIN Template
+  kTemplateHead,
+  kTemplateMiddle,
+  kTemplateTail,
+  // END Template
+
   // BEGIN Property
   kPeriod,
   kLeftBracket,

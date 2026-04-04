@@ -34,6 +34,7 @@ import { Token, TokenValue } from "./token";
 function isNoParenArgStart(token: TokenValue): boolean {
   switch (token) {
     case TokenValue.kString:
+    case TokenValue.kTemplateHead:
     case TokenValue.kNumber:
     case TokenValue.kBenarLiteral:
     case TokenValue.kSalahLiteral:
@@ -960,6 +961,8 @@ export class Parser {
 
         return this.parseFunctionLiteralBody(params, position, false);
       }
+      case TokenValue.kTemplateHead:
+        return this.parseTemplateLiteral(position);
       default:
         break;
     }
@@ -1082,6 +1085,35 @@ export class Parser {
     }
 
     return this.factory.newListLiteral(values, position);
+  }
+
+  private parseTemplateLiteral(position: number): Expression | undefined {
+    this.next();
+    const quasis: string[] = [this.currentLiteral()];
+    const expressions: Expression[] = [];
+
+    while (true) {
+      const expression = this.parseExpression();
+      if (!expression) return undefined;
+      expressions.push(expression);
+
+      this.scanner.prepareTemplateContinuation();
+      this.expect(TokenValue.kRightBrace);
+
+      const chunkToken = this.next();
+      quasis.push(this.currentLiteral());
+
+      if (chunkToken === TokenValue.kTemplateTail) {
+        break;
+      }
+
+      if (chunkToken !== TokenValue.kTemplateMiddle) {
+        this.reportUnexpectedToken(chunkToken);
+        return undefined;
+      }
+    }
+
+    return this.factory.newTemplateLiteral(quasis, expressions, position);
   }
 
   private parseBinaryContinuation(

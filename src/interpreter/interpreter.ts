@@ -27,6 +27,7 @@ import {
   Property,
   ReturnStatement,
   Statement,
+  TemplateLiteral,
   ThisExpression,
   ThrowStatement,
   TryStatement,
@@ -260,6 +261,8 @@ export class Interpreter extends AstVisitor<SantaiObject> implements CallSite {
         return this.visitFunctionLiteral(node);
       case node.isEmptyParentheses():
         return this.visitEmptyParentheses(node);
+      case node.isTemplateLiteral():
+        return this.visitTemplateLiteral(node);
       case node.isForInStatement():
         return this.visitForInStatement(node);
       case node.isWhileStatement():
@@ -498,6 +501,18 @@ export class Interpreter extends AstVisitor<SantaiObject> implements CallSite {
 
   //   return this.evaluate(node).inspect();
   // }
+
+  override visitTemplateLiteral(node: TemplateLiteral): SantaiObject {
+    let result = node.quasis[0];
+
+    for (let i = 0; i < node.expressions.length; i++) {
+      const value = this.evaluate(node.expressions[i]!);
+      result += value.inspect();
+      result += node.quasis[i + 1]!;
+    }
+
+    return Factory.NewString(result);
+  }
 
   override visitWhileStatement(node: WhileStatement): SantaiObject {
     const conditionExpression: Expression = node.condition;
