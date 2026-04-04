@@ -861,25 +861,22 @@ export class Scanner {
     interiorToken: TokenValue
   ): TokenValue {
     while (true) {
-      if (this.c0 === Chars.DoubleQuote) {
+      let c: number = this.c0;
+      if (c === Chars.DoubleQuote) {
         this.advance();
         return closingToken;
       }
 
-      if (this.c0 === Chars.BraceLeft) {
+      if (c === Chars.BraceLeft) {
         this.advance();
         return interiorToken;
       }
 
-      if (
-        this.c0 === CharacterStream.kEndOfInput ||
-        isStringLiteralLineTerminator(this.c0)
-      ) {
-        this.reportScannerError(MessageTemplate.kUnterminatedTemplate);
+      if (c === CharacterStream.kEndOfInput) {
         return TokenValue.kIllegal;
       }
 
-      if (this.c0 === Chars.Backslash) {
+      if (c === Chars.Backslash) {
         this.advance();
         if (this.c0 === CharacterStream.kEndOfInput || !this.scanEscape()) {
           return TokenValue.kIllegal;
@@ -887,7 +884,12 @@ export class Scanner {
         continue;
       }
 
-      this.addLiteralChar(this.c0);
+      if (c === Chars.CarriageReturn) {
+        if (this.c0 === Chars.LineFeed) this.advance(); // Consume '\n'
+        c = Chars.LineFeed;
+      }
+
+      this.addLiteralChar(c);
       this.scanTemplateLiteralCharsAdvanceUntil();
     }
   }

@@ -88,8 +88,7 @@ export const MessageTemplateString: Record<MessageTemplate, string> = {
     "kode udah habis tapi kayak belum kelar — kurang apa nih?",
   [MessageTemplate.kUnexpectedKeywordArgument]:
     "'%s' bukan nama parameter yang valid di aksi '%s'",
-  [MessageTemplate.kUnterminatedTemplate]:
-    'template string belum ditutup — `"` penutupnya ke mana? 🤔',
+  [MessageTemplate.kUnterminatedTemplate]: "Kehilangan } di templat expression",
 
   // Declaration
   [MessageTemplate.kConstDeclMissingInitialize]:

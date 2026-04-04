@@ -1093,12 +1093,19 @@ export class Parser {
     const expressions: Expression[] = [];
 
     while (true) {
+      const exprPos = this.peekPosition();
       const expression = this.parseExpression();
       if (!expression) return undefined;
       expressions.push(expression);
 
       this.scanner.prepareTemplateContinuation();
-      this.expect(TokenValue.kRightBrace);
+      if (this.next() !== TokenValue.kRightBrace) {
+        this.reportErrorAt(
+          makeLocation(exprPos, this.position()),
+          MessageTemplate.kUnterminatedTemplate
+        );
+        return undefined;
+      }
 
       const chunkToken = this.next();
       quasis.push(this.currentLiteral());
