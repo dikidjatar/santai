@@ -619,6 +619,7 @@ export class SantaiBuiltinClass extends SantaiObject {
     readonly params?: readonly BuiltinParam[]
   ) {
     super(SantaiType.kBuiltinClass);
+    this.typeName = name;
   }
 
   construct(args: SantaiObject[]): SantaiObject {
