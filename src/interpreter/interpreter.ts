@@ -16,6 +16,7 @@ import {
   EmptyParentheses,
   EmptyStatement,
   Expression,
+  ExtensionFunctionDeclaration,
   ForInStatement,
   FunctionDeclaration,
   FunctionLiteral,
@@ -44,6 +45,10 @@ import { isNumber, isObject, isUndefined, Signal } from "../base/types";
 import { BuiltinRegistry, CallSite } from "../builtins/builtin";
 import "../builtins/globals";
 import { BuiltinParam } from "../builtins/paramSpec";
+import {
+  lookupExtension,
+  registerExtension,
+} from "../objects/extensionRegistry";
 import { SantaiIterator } from "../objects/iterator";
 import {
   Factory,
@@ -253,6 +258,8 @@ export class Interpreter extends AstVisitor<SantaiObject> implements CallSite {
         return this.visitFunctionDeclaration(node);
       case node.isClassDeclaration():
         return this.visitClassDeclaration(node);
+      case node.isExtensionFunctionDeclaration():
+        return this.visitExtensionFunctionDeclaration(node);
       case node.isProperty():
         return this.visitProperty(node);
       case node.isThisExpression():
@@ -346,6 +353,21 @@ export class Interpreter extends AstVisitor<SantaiObject> implements CallSite {
       );
     }
 
+    return Factory.Kosong;
+  }
+
+  override visitExtensionFunctionDeclaration(
+    node: ExtensionFunctionDeclaration
+  ): SantaiObject {
+    const fn = Factory.NewFunction(
+      node.methodName,
+      node.params,
+      node.body,
+      this.env
+      // Stored unbound, bound lazily in visitProperty
+    );
+
+    registerExtension(node.receiverName, node.methodName, fn);
     return Factory.Kosong;
   }
 
@@ -445,6 +467,11 @@ export class Interpreter extends AstVisitor<SantaiObject> implements CallSite {
 
       if (!isUndefined(property)) {
         return property;
+      }
+
+      const extensionFn = lookupExtension(obj.typeName, propertyName);
+      if (!isUndefined(extensionFn)) {
+        return extensionFn.bindAndCopy(obj);
       }
 
       this.reportAndThrow(

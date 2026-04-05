@@ -445,84 +445,131 @@ export class Parser {
   parseFunctionDeclaration(): Statement | undefined {
     this.next();
     const position = this.peekPosition();
-    const nextToken = this.next();
+    const nameToken = this.next();
 
     if (
-      nextToken !== TokenValue.kIdentifier &&
-      nextToken !== TokenValue.kAwal
+      nameToken !== TokenValue.kIdentifier &&
+      nameToken !== TokenValue.kAwal
     ) {
-      this.reportUnexpectedToken(this.peek());
+      this.reportUnexpectedToken(nameToken);
       return undefined;
+    }
+
+    const firstName = this.currentLiteral();
+
+    // Extension: aksi ReceiverType.methodName ...
+    if (this.check(TokenValue.kPeriod)) {
+      return this.parseExtensionFunctionDeclaration(firstName, position);
     }
 
     const variable = this.factory.newVariable(
-      this.currentLiteral(),
+      firstName,
       VariableMode.kFunction
     );
-    const parameters: Parameter[] = [];
 
-    if (this.peek() === TokenValue.kAmbil) {
-      this.next();
-
-      let seenDefault: boolean = false;
-
-      do {
-        if (this.peek() !== TokenValue.kIdentifier) {
-          this.reportUnexpectedToken(this.peek());
-          return undefined;
-        }
-
-        this.next();
-        const parameterName = this.currentLiteral();
-        const parameterVariable = this.factory.newVariable(
-          parameterName,
-          VariableMode.kVar
-        );
-
-        let defaultValue: Expression | undefined;
-
-        if (this.check(TokenValue.kAssign)) {
-          seenDefault = true;
-          defaultValue = this.parseExpression();
-          if (!defaultValue) return undefined;
-        } else if (seenDefault) {
-          this.reportError(
-            MessageTemplate.kNonDefaultAfterDefault,
-            parameterName
-          );
-          return undefined;
-        }
-
-        const parameter = this.factory.newParameter(
-          parameterVariable,
-          defaultValue
-        );
-        parameters.push(parameter);
-      } while (this.check(TokenValue.kComma));
-    }
-
-    // if (this.peek() !== TokenValue.kLeftBrace) {
-    //   this.reportUnexpectedToken(this.peek());
-    //   return undefined;
-    // }
-
-    let body = this.parseStatement();
-    if (!body) {
+    const parameters = this.parseParameterList();
+    if (isUndefined(parameters)) {
       return undefined;
     }
 
-    if (!body.isBlock()) {
-      const block = this.factory.newBlock();
-      block.initializeStatements([body]);
-      body = block;
-    }
+    const body = this.parseFunctionBody();
+    if (!body) return undefined;
 
     return this.factory.newFunctionDeclaration(
       variable,
       parameters,
-      body as Block,
+      body,
       position
     );
+  }
+
+  private parseExtensionFunctionDeclaration(
+    receiverName: string,
+    position: number
+  ): Statement | undefined {
+    const methodToken = this.next();
+    if (
+      methodToken !== TokenValue.kIdentifier &&
+      methodToken !== TokenValue.kAwal
+    ) {
+      this.reportUnexpectedToken(methodToken);
+      return undefined;
+    }
+    const methodName = this.currentLiteral();
+
+    const parameters = this.parseParameterList();
+    if (isUndefined(parameters)) {
+      return undefined;
+    }
+
+    // Push synthetic class context so `gue` is valid in the body
+    this.classContextStack.push({ className: receiverName, position });
+    let body: Block | undefined;
+    try {
+      body = this.parseFunctionBody();
+    } finally {
+      this.classContextStack.pop();
+    }
+
+    if (!body) return undefined;
+
+    return this.factory.newExtensionFunctionDeclaration(
+      receiverName,
+      methodName,
+      parameters,
+      body,
+      position
+    );
+  }
+
+  private parseParameterList(): Parameter[] | undefined {
+    if (!this.check(TokenValue.kAmbil)) {
+      return [];
+    }
+
+    const parameters: Parameter[] = [];
+    let seenDefault = false;
+
+    do {
+      if (this.peek() !== TokenValue.kIdentifier) {
+        this.reportUnexpectedToken(this.peek());
+        return undefined;
+      }
+
+      this.next();
+      const name = this.currentLiteral();
+      const variable = this.factory.newVariable(name, VariableMode.kVar);
+
+      let defaultValue: Expression | undefined;
+
+      if (this.check(TokenValue.kAssign)) {
+        seenDefault = true;
+        defaultValue = this.parseExpression();
+        if (!defaultValue) return undefined;
+      } else if (seenDefault) {
+        this.reportError(MessageTemplate.kNonDefaultAfterDefault, name);
+        return undefined;
+      }
+
+      parameters.push(this.factory.newParameter(variable, defaultValue));
+    } while (this.check(TokenValue.kComma));
+
+    return parameters;
+  }
+
+  /**
+   * Parse a function body. Accepts either a `{ block }` or a single statement
+   * and normalising the latter into a Block
+   */
+  private parseFunctionBody(): Block | undefined {
+    const body = this.parseStatement();
+    if (!body) return undefined;
+
+    if (body.isBlock()) return body;
+
+    const block = this.factory.newBlock();
+    block.initializeStatements([body]);
+    return block;
   }
 
   parseClassDeclaration(): Statement | undefined {

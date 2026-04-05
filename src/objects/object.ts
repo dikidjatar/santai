@@ -86,7 +86,7 @@ export abstract class SantaiObject {
 
 export class SantaiKosong extends SantaiObject {
   static readonly instance = new SantaiKosong();
-  override readonly typeName = "Kosong";
+  override readonly typeName = "kosong";
 
   constructor() {
     super(SantaiType.kKosong);
@@ -106,7 +106,7 @@ const santaiKosong: SantaiKosong = SantaiKosong.instance;
 export class SantaiBoolean extends SantaiObject {
   static readonly TRUE = new SantaiBoolean(true);
   static readonly FALSE = new SantaiBoolean(false);
-  override readonly typeName = "Logika";
+  override readonly typeName = "logika";
 
   static of(value: boolean): SantaiBoolean {
     return value ? SantaiBoolean.TRUE : SantaiBoolean.FALSE;
@@ -126,7 +126,7 @@ export class SantaiBoolean extends SantaiObject {
 }
 
 export class SantaiNumber extends SantaiObject {
-  override readonly typeName = "Angka";
+  override readonly typeName = "angka";
 
   constructor(readonly value: number) {
     super(SantaiType.kNumber);
@@ -167,7 +167,7 @@ class StringIterator extends SantaiIterator {
 }
 
 export class SantaiString extends SantaiObject {
-  override readonly typeName = "Teks";
+  override readonly typeName = "teks";
 
   constructor(readonly value: string) {
     super(SantaiType.kString);
@@ -204,7 +204,7 @@ export class SantaiString extends SantaiObject {
 }
 
 export class SantaiFunction extends SantaiObject {
-  override readonly typeName = "Aksi";
+  override readonly typeName = "aksi";
 
   constructor(
     readonly name: string,
@@ -222,6 +222,19 @@ export class SantaiFunction extends SantaiObject {
     super(SantaiType.kFunction);
   }
 
+  /**
+   * Return a copy of this function bound to receiver
+   */
+  bindAndCopy(receiver: SantaiObject): SantaiFunction {
+    return new SantaiFunction(
+      this.name,
+      this.parameters,
+      this.body,
+      this.closure,
+      receiver // boundThis
+    );
+  }
+
   override isTruthy(): boolean {
     return true;
   }
@@ -232,7 +245,7 @@ export class SantaiFunction extends SantaiObject {
 }
 
 export class BuiltinFunction extends SantaiObject {
-  override typeName: string = "Aksi";
+  override typeName: string = "aksi";
 
   constructor(
     readonly name: string,
@@ -287,7 +300,7 @@ class ListIterator extends SantaiIterator {
 }
 
 export class SantaiList extends SantaiObject {
-  override typeName: string = "Daftar";
+  override typeName: string = "daftar";
 
   get length(): number {
     return this.elements.length;
@@ -380,7 +393,7 @@ class RangeIterator extends SantaiIterator {
 }
 
 export class SantaiRange extends SantaiObject {
-  override readonly typeName = "Rentang";
+  override readonly typeName = "rentang";
 
   readonly start: number;
   readonly stop: number;
@@ -597,7 +610,7 @@ export class SantaiInstance extends SantaiObject {
 }
 
 export class SantaiBuiltinClass extends SantaiObject {
-  override readonly typeName: string = "Type";
+  override readonly typeName: string = "type";
 
   constructor(
     readonly name: string,

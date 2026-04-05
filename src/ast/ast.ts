@@ -23,6 +23,7 @@ export const enum NodeType {
   kVariableDeclaration,
   kFunctionDeclaration,
   kClassDeclaration,
+  kExtensionFunctionDeclaration,
   // Statements
   kForInStatement,
   kWhileStatement,
@@ -68,6 +69,9 @@ export abstract class AstNode {
   }
   isClassDeclaration(): this is ClassDeclaration {
     return this.nodeType === NodeType.kClassDeclaration;
+  }
+  isExtensionFunctionDeclaration(): this is ExtensionFunctionDeclaration {
+    return this.nodeType === NodeType.kExtensionFunctionDeclaration;
   }
   isForInStatement(): this is ForInStatement {
     return this.nodeType === NodeType.kForInStatement;
@@ -337,6 +341,26 @@ export class ClassDeclaration extends Declaration {
 
   getInstanceMethods(): ClassMethod[] {
     return this.methods.filter((method) => !method.isConstructor);
+  }
+}
+
+export class ExtensionFunctionDeclaration extends Statement {
+  constructor(
+    /**
+     * Receiver type name as written in source
+     */
+    readonly receiverName: string,
+
+    /**
+     * The new method name being added.
+     */
+    readonly methodName: string,
+
+    readonly params: readonly Parameter[],
+    readonly body: Block,
+    position: number
+  ) {
+    super(NodeType.kExtensionFunctionDeclaration, position);
   }
 }
 
@@ -611,6 +635,22 @@ export class AstNodeFactory {
     return declaration;
   }
 
+  newExtensionFunctionDeclaration(
+    receiverName: string,
+    methodName: string,
+    params: readonly Parameter[],
+    body: Block,
+    position: number
+  ): ExtensionFunctionDeclaration {
+    return new ExtensionFunctionDeclaration(
+      receiverName,
+      methodName,
+      params,
+      body,
+      position
+    );
+  }
+
   newProperty(
     object: Expression,
     property: Expression,
@@ -775,6 +815,9 @@ export abstract class AstVisitor<R = void> {
   abstract visitVariableDeclaration(node: VariableDeclaration): R;
   abstract visitFunctionDeclaration(node: FunctionDeclaration): R;
   abstract visitClassDeclaration(node: ClassDeclaration): R;
+  abstract visitExtensionFunctionDeclaration(
+    node: ExtensionFunctionDeclaration
+  ): R;
   abstract visitProperty(node: Property): R;
   abstract visitThisExpression(node: ThisExpression): R;
   abstract visitFunctionLiteral(node: FunctionLiteral): R;
