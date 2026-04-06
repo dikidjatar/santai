@@ -14,3 +14,4 @@ export * from "./string-methods";
 export * from "./list-methods";
 export * from "./number-methods";
 export * from "./range-methods";
+export * from "./sistem";
