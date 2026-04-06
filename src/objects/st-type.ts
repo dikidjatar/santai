@@ -11,7 +11,7 @@ export const enum SantaiType {
   kList,
   kRange,
   kClass,
-  Kinstance,
+  kInstance,
   kBuiltinClass,
   kError,
 }

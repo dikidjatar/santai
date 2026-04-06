@@ -46,7 +46,7 @@ export abstract class SantaiObject {
     return this.type === SantaiType.kClass;
   }
   isInstance(): this is SantaiInstance {
-    return this.type === SantaiType.Kinstance;
+    return this.type === SantaiType.kInstance;
   }
   isBuiltinClass(): this is SantaiBuiltinClass {
     return this.type === SantaiType.kBuiltinClass;
@@ -531,7 +531,7 @@ export class SantaiInstance extends SantaiObject {
   private readonly _properties: Map<string, SantaiObject> = new Map();
 
   constructor(private readonly clazz: SantaiClass) {
-    super(SantaiType.Kinstance);
+    super(SantaiType.kInstance);
     this.typeName = clazz.name;
   }
 
@@ -610,7 +610,7 @@ export class SantaiInstance extends SantaiObject {
 }
 
 export class SantaiBuiltinClass extends SantaiObject {
-  override readonly typeName: string = "type";
+  override readonly typeName: string;
 
   constructor(
     readonly name: string,
