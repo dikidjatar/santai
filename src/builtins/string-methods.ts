@@ -110,5 +110,24 @@ define(
   },
   [required("teks"), optional("posisi", Factory.Kosong)]
 );
+define(
+  "mirip",
+  (value, args) => {
+    if (!args[0].isString()) {
+      return Factory.Boolean(false);
+    }
+    return Factory.Boolean(value.toLowerCase() === args[0].value.toLowerCase());
+  },
+  [required("teks")]
+);
+define(
+  "ulangin",
+  (value, args) => {
+    return Factory.NewString(
+      value.repeat(args[0].isNumber() ? args[0].value : 1)
+    );
+  },
+  [required("jumlah")]
+);
 
 stringMethod.registerFor(SantaiType.kString);

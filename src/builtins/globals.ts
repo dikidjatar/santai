@@ -12,3 +12,5 @@ export * from "./errors";
 export * from "./functional";
 export * from "./string-methods";
 export * from "./list-methods";
+export * from "./number-methods";
+export * from "./range-methods";
