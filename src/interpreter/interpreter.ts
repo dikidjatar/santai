@@ -64,6 +64,7 @@ import {
 } from "../objects/operations";
 import { makeLocation, ScannerLocation } from "../parsing/scanner";
 import { Token, TokenValue } from "../parsing/token";
+import { RuntimeContext } from "../runtime/runtimeContext";
 import { Environment, VariableSlot } from "./environment";
 
 /**
@@ -193,7 +194,10 @@ export class Interpreter extends AstVisitor<SantaiObject> implements CallSite {
    */
   private readonly callStack: StackFrame[] = [];
 
-  constructor(private readonly errorHandler: ErrorHandler) {
+  constructor(
+    private readonly errorHandler: ErrorHandler,
+    private readonly runtimeCtx: RuntimeContext
+  ) {
     super();
     this.globalEnv = new Environment();
     this.env = this.globalEnv;

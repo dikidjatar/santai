@@ -33,5 +33,5 @@ export function writeError(error: unknown): void {
       ? error.stack
       : error.message
     : String(error);
-  writeLine(process.stderr, `${config.PROGRAM_NAME}: ${message}`);
+  writeLine(process.stderr, `${process.argv[1]}: ${message}`);
 }

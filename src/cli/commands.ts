@@ -1,45 +1,57 @@
 // Copyright (c) [2026] [Diki Djatar]
 // SPDX-License-Identifier: MIT
 
-import * as config from "../base/config";
-import { writeToStdout } from "../base/output";
+import { ExitCode } from "../base/exitCode";
+import * as meta from "../base/meta";
+import { writeLineToStdout, writeToStdout } from "../base/output";
 import { Pipeline } from "../runtime/pipeline";
+import { makeEvalContext, makeScriptContext } from "../runtime/runtimeContext";
 import { SourceFile } from "../runtime/sourceFile";
 
 function printHelp(): void {
   writeToStdout(
-    `${config.LANG_NAME} v${config.VERSION} — bahasa pemrograman dengan sintaks Indonesia\n` +
+    `${meta.LANG_NAME} — ${meta.LANG_DESCRIPTION}\n` +
+      `${meta.COPYRIGHT} · Lisensi ${meta.LICENSE}\n` +
+      `${meta.LANG_HOMEPAGE}\n` +
       `\n` +
       `Penggunaan:\n` +
-      `  <file>       Jalankan file Santai\n` +
-      `  -e "<kode>"             Evaluasi kode langsung\n` +
-      `  --eval "<kode>"         Evaluasi kode langsung\n` +
-      `  -h / --help             Tampilkan bantuan ini\n` +
-      `  -v / --version          Tampilkan versi\n` +
+      `  santai <file${meta.LANG_EXT}>        Jalankan file sumber\n` +
+      `  santai -e "<kode>"          Evaluasi kode secara langsung\n` +
+      `  santai --eval "<kode>"      Evaluasi kode secara langsung\n` +
+      `  santai -h / --help          Tampilkan bantuan ini\n` +
+      `  santai -v / --version       Tampilkan versi\n` +
+      `\n` +
+      `Variabel lingkungan:\n` +
+      `  SANTAI_DEBUG=1              Aktifkan output diagnostik internal\n` +
+      `  SANTAI_MAX_ERRORS=<n>       Batas maksimum error (default: 20)\n` +
+      `  SANTAI_STACK_LIMIT=<n>      Batas kedalaman call stack (default: 500)\n` +
+      `  NO_COLOR=1                  Nonaktifkan warna ANSI di output\n` +
       `\n`
   );
 }
 
 function printVersion(): void {
-  writeToStdout(`${config.LANG_NAME} ${config.VERSION}\n`);
+  writeLineToStdout(meta.VERSION_FULL);
 }
 
-export function cmdHelp(): number {
+export function cmdHelp(): ExitCode {
   printHelp();
-  return 0;
+  return ExitCode.Success;
 }
 
-export function cmdVersion(): number {
+export function cmdVersion(): ExitCode {
   printVersion();
-  return 0;
+  return ExitCode.Success;
 }
 
-export function cmdEval(code: string): number {
+export function cmdEval(code: string, args: readonly string[]): ExitCode {
   const source = SourceFile.fromString(code);
-  return Pipeline.from(source).run().exitCode;
+  const runtimeCtx = makeEvalContext(args);
+  return Pipeline.from(source, runtimeCtx).run().exitCode;
 }
 
-export function cmdRun(filepath: string): number {
+export function cmdRun(filepath: string, args: readonly string[]): ExitCode {
   const source = SourceFile.fromFile(filepath);
-  return Pipeline.from(source).run().exitCode;
+  const runtimeCtx = makeScriptContext(filepath, args);
+  return Pipeline.from(source, runtimeCtx).run().exitCode;
 }

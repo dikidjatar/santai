@@ -4,6 +4,7 @@
 import fs from "fs";
 import path from "path";
 import { isError } from "../base/types";
+import * as meta from "../base/meta";
 
 export class SourceFile {
   private constructor(
@@ -13,6 +14,15 @@ export class SourceFile {
 
   static fromFile(filepath: string): SourceFile {
     const resolved = path.resolve(filepath);
+
+    const ext = path.extname(resolved).toLowerCase();
+    if (ext !== "" && !meta.LANG_EXTENSIONS.includes(ext)) {
+      throw new Error(
+        `Ekstensi file '${ext}' tidak dikenali.\n` +
+          `  Gunakan ekstensi ${meta.LANG_EXTENSIONS.join(" atau ")} ` +
+          `untuk file sumber ${meta.LANG_EXT}.`
+      );
+    }
 
     if (!fs.existsSync(resolved)) {
       throw new Error(`File tidak ditemukan: '${filepath}'`);

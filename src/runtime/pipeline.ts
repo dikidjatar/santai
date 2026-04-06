@@ -2,11 +2,14 @@
 // SPDX-License-Identifier: MIT
 
 import { AstNodeFactory, Statement } from "../ast/ast";
+import { MAX_ERRORS } from "../base/config";
 import { ErrorHandler } from "../base/errorHandler";
+import { ExitCode } from "../base/exitCode";
 import { Interpreter } from "../interpreter/interpreter";
 import { Parser } from "../parsing/parser";
 import { CharacterStream, Scanner } from "../parsing/scanner";
 import { TokenValue } from "../parsing/token";
+import { RuntimeContext } from "./runtimeContext";
 import { SourceFile } from "./sourceFile";
 
 /**
@@ -14,7 +17,7 @@ import { SourceFile } from "./sourceFile";
  * @property {number} exitCode - The exit code returned by the pipeline execution.
  */
 export interface PipelineResult {
-  readonly exitCode: number;
+  readonly exitCode: ExitCode;
 }
 
 /**
@@ -29,12 +32,16 @@ export class Pipeline {
   private readonly errorHandler: ErrorHandler;
   private readonly parser: Parser;
 
-  private constructor(source: SourceFile) {
+  private constructor(
+    source: SourceFile,
+    private readonly runtimeCtx: RuntimeContext
+  ) {
     this.characterStram = new CharacterStream(0, source.buffer);
     this.scanner = new Scanner(this.characterStram);
     this.factory = new AstNodeFactory();
     this.errorHandler = new ErrorHandler(this.characterStram, {
       filename: source.filepath,
+      maxErrors: MAX_ERRORS,
     });
     this.parser = new Parser(this.scanner, this.factory, this.errorHandler);
   }
@@ -44,8 +51,8 @@ export class Pipeline {
    * @param source - The source file to process
    * @returns A new Pipeline instance
    */
-  public static from(source: SourceFile) {
-    return new Pipeline(source);
+  public static from(source: SourceFile, runtimeCtx: RuntimeContext) {
+    return new Pipeline(source, runtimeCtx);
   }
 
   /**
@@ -56,11 +63,16 @@ export class Pipeline {
     const statements: Statement[] = this.parse();
 
     if (this.errorHandler.hasErrors()) {
-      return this.result();
+      return { exitCode: ExitCode.SourceError };
     }
 
     this.interpret(statements);
-    return this.result();
+
+    return {
+      exitCode: this.errorHandler.hasErrors()
+        ? ExitCode.RuntimeError
+        : ExitCode.Success,
+    };
   }
 
   private parse(): Statement[] {
@@ -82,14 +94,12 @@ export class Pipeline {
   }
 
   private interpret(statements: Statement[]): void {
-    const interpreter: Interpreter = new Interpreter(this.errorHandler);
+    const interpreter: Interpreter = new Interpreter(
+      this.errorHandler,
+      this.runtimeCtx
+    );
     const program = this.factory.newBlock();
     program.initializeStatements(statements);
     interpreter.execute(program);
-  }
-
-  private result(): PipelineResult {
-    const errorCount = this.errorHandler.errorCount;
-    return { exitCode: errorCount > 0 ? 1 : 0 };
   }
 }
