@@ -49,6 +49,47 @@ function isNoParenArgStart(token: TokenValue): boolean {
   }
 }
 
+/**
+ * Infix calls occupy precedence level 11. A clean gap between:
+ * ```
+ *   Arithmetic     : 12
+ *   Infix calls    : 11
+ *   Comparison     : 10
+ * ```
+ *
+ * This means:
+ * ```
+ *   x + y mirip z     -> (x + y).mirip(z)  // [arithmetic binds tighter than infix]
+ *   x mirip y == z    -> x.mirip(y) == z   // [infix binds tighter than comparison]
+ *   x mirip y dan z   -> x.mirip(y) dan z  // [infix binds tighter than logical]
+ * ```
+ *
+ * No existing token uses precedence 11, so there is no conflict.
+ */
+const INFIX_CALL_PREC = 11;
+
+/**
+ * Tokens that can legally start an infix argument.
+ * Mirrors `isNoParenArgStart` but adds kGue and excludes kSub/kAdd/kNot
+ * (unary minus/plus is syntactically ambiguous in infix position).
+ */
+function isInfixArgStart(token: TokenValue): boolean {
+  switch (token) {
+    case TokenValue.kString:
+    case TokenValue.kTemplateHead:
+    case TokenValue.kNumber:
+    case TokenValue.kBenarLiteral:
+    case TokenValue.kSalahLiteral:
+    case TokenValue.kKosongLiteral:
+    case TokenValue.kIdentifier:
+    case TokenValue.kLeftParen: // allows: x method (a + b)
+    case TokenValue.kGue:
+      return true;
+    default:
+      return false;
+  }
+}
+
 interface ClassParseContext {
   /**
    * The name of the class being parsed.
@@ -764,7 +805,12 @@ export class Parser {
       return undefined;
     }
 
-    const prec1 = Token.precedence(this.peek(), this.accept_IN);
+    let prec1 = Token.precedence(this.peek(), this.accept_IN);
+
+    if (this.checkInfixCall()) {
+      prec1 = INFIX_CALL_PREC;
+    }
+
     if (prec1 >= prec) {
       return this.parseBinaryContinuation(expression, prec, prec1);
     }
@@ -1224,10 +1270,52 @@ export class Parser {
         }
       }
 
+      // infix function calls at INFIX_CALL_PREC
+      if (prec1 === INFIX_CALL_PREC && prec <= INFIX_CALL_PREC) {
+        expression = this.parseInfixCalls(expression);
+      }
+
       --prec1;
     } while (prec1 >= prec);
 
     return expression;
+  }
+
+  private parseInfixCalls(initial: Expression): Expression {
+    let result = initial;
+
+    while (this.checkInfixCall()) {
+      const pos = this.peekPosition();
+      this.next();
+      const methodName = this.currentLiteral();
+
+      // Argument: arithmetic and above
+      // no infix inside infix, no comparisons
+      const arg = this.parseBinaryExpression(INFIX_CALL_PREC + 1);
+      if (!arg) return result;
+
+      // Desugar: `result methodName arg`  ->  `result.methodName(arg)`
+      const methodLiteral = this.factory.newStringLiteral(methodName, pos);
+      const property = this.factory.newProperty(result, methodLiteral, pos);
+      result = this.factory.newCall(
+        property,
+        [this.factory.newCallArgument(arg, undefined)],
+        pos
+      );
+    }
+
+    return result;
+  }
+
+  /**
+   * Check if the current token is the beginning of an Infix Call.
+   */
+  private checkInfixCall(): boolean {
+    return (
+      this.peek() === TokenValue.kIdentifier &&
+      !this.scanner.hasLineTerminator() &&
+      isInfixArgStart(this.scanner.peekAhead())
+    );
   }
 
   private buildUnaryExpression(
