@@ -30,7 +30,7 @@ export class MethodTable {
 
   /**
    * Create a PropertyGetter that can be registered with the registry.
-   * Cast to RelaxObject here is safe because we are just registering
+   * Cast to SantaiObject here is safe because we are just registering
    * This table is for a type that is CasualObject.
    */
   asGetter(): PropertyGetter {

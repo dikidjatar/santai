@@ -570,7 +570,7 @@ export class SantaiInstance extends SantaiObject {
     // 2. Look in the class method, bind it to this instance
     const method = this.clazz.getMethod(name);
     if (!isUndefined(method)) {
-      // Create a new RelaxFunction with boundThis = this instance.
+      // Create a new SantaiFunction with boundThis = this instance.
       // Each access creates a new object
       // TODO: caching
       return new SantaiFunction(
