@@ -70,8 +70,7 @@ export function arg0(args: SantaiObject[]): SantaiObject {
  */
 export class BuiltinRegistry {
   private static _instance: BuiltinRegistry | undefined = undefined;
-  private readonly globals: Map<string, BuiltinFunction | SantaiBuiltinClass> =
-    new Map();
+  private readonly _globals: Map<string, SantaiObject> = new Map();
 
   /**
    * The singleton instance of the BuiltinRegistry.
@@ -94,19 +93,19 @@ export class BuiltinRegistry {
     callable: BuiltinCallable,
     params?: readonly BuiltinParam[]
   ): void {
-    assert(!this.globals.has(name), "cannot redeclare: " + name);
+    assert(!this._globals.has(name), "cannot redeclare: " + name);
     const builtin: BuiltinFunction = Factory.NewBuiltinFunction(
       name,
       callable,
       undefined,
       params
     );
-    this.globals.set(name, builtin);
+    this._globals.set(name, builtin);
   }
 
   public registerClass(clazz: SantaiBuiltinClass): void {
-    assert(!this.globals.has(clazz.name), "cannot redeclare: " + clazz.name);
-    this.globals.set(clazz.name, clazz);
+    assert(!this._globals.has(clazz.name), "cannot redeclare: " + clazz.name);
+    this._globals.set(clazz.name, clazz);
   }
 
   /**
@@ -114,8 +113,8 @@ export class BuiltinRegistry {
    *
    * @returns An immutable array of all registered built-in functions
    */
-  public getAllBuiltins(): readonly (BuiltinFunction | SantaiBuiltinClass)[] {
-    return Array.from(this.globals.values());
+  public getAllBuiltins(): ReadonlyMap<string, SantaiObject> {
+    return this._globals;
   }
 }
 

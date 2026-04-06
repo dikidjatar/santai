@@ -207,12 +207,9 @@ export class Interpreter extends AstVisitor<SantaiObject> implements CallSite {
   private registerBuiltinsGlobals(): void {
     const builtins = BuiltinRegistry.getInstance().getAllBuiltins();
 
-    for (const builtin of builtins) {
-      const variable: Variable = new Variable(
-        builtin.name,
-        VariableMode.kConst
-      );
-      this.globalEnv.declare(variable, builtin);
+    for (const [name, value] of builtins) {
+      const variable: Variable = new Variable(name, VariableMode.kConst);
+      this.globalEnv.declare(variable, value);
     }
   }
 
