@@ -42,7 +42,8 @@ import { assert, assertDefined, unreachable } from "../base/asserts";
 import { ErrorHandler, formatMessage, StackFrame } from "../base/errorHandler";
 import { MessageTemplate } from "../base/messageTemplate";
 import { isNumber, isObject, isUndefined, Signal } from "../base/types";
-import { BuiltinRegistry, CallSite } from "../builtins/builtin";
+import { CallSite } from "../builtins/builtin";
+import { globalProvideRegistry } from "../builtins/globalProvider";
 import "../builtins/globals";
 import { BuiltinParam } from "../builtins/paramSpec";
 import {
@@ -64,7 +65,7 @@ import {
 } from "../objects/operations";
 import { makeLocation, ScannerLocation } from "../parsing/scanner";
 import { Token, TokenValue } from "../parsing/token";
-import { RuntimeContext } from "../runtime/runtimeContext";
+import { ServiceContainer } from "../runtime/serviceContainer";
 import { Environment, VariableSlot } from "./environment";
 
 /**
@@ -196,7 +197,7 @@ export class Interpreter extends AstVisitor<SantaiObject> implements CallSite {
 
   constructor(
     private readonly errorHandler: ErrorHandler,
-    private readonly runtimeCtx: RuntimeContext
+    private readonly serviceContainer: ServiceContainer
   ) {
     super();
     this.globalEnv = new Environment();
@@ -205,9 +206,8 @@ export class Interpreter extends AstVisitor<SantaiObject> implements CallSite {
   }
 
   private registerBuiltinsGlobals(): void {
-    const builtins = BuiltinRegistry.getInstance().getAllBuiltins();
-
-    for (const [name, value] of builtins) {
+    const globals = globalProvideRegistry.resolveAll(this.serviceContainer);
+    for (const [name, value] of globals) {
       const variable: Variable = new Variable(name, VariableMode.kConst);
       this.globalEnv.declare(variable, value);
     }

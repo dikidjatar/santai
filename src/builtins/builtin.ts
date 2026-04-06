@@ -9,6 +9,7 @@ import {
   SantaiObject,
 } from "../objects/object";
 import { register } from "../objects/typeRegistry";
+import { defineBatchGlobals } from "./globalProvider";
 import { BuiltinParam } from "./paramSpec";
 
 /**
@@ -109,14 +110,14 @@ export class BuiltinRegistry {
   }
 
   /**
-   * Get all registered built-in functions dan variables.
-   *
-   * @returns An immutable array of all registered built-in functions
+   * @internal — only called by the batch provider registered below
    */
-  public getAllBuiltins(): ReadonlyMap<string, SantaiObject> {
+  public snapshot(): ReadonlyMap<string, SantaiObject> {
     return this._globals;
   }
 }
+
+defineBatchGlobals(() => BuiltinRegistry.getInstance().snapshot());
 
 /**
  * Registers a global function in the Santai language.

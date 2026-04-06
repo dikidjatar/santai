@@ -10,7 +10,9 @@ import { Parser } from "../parsing/parser";
 import { CharacterStream, Scanner } from "../parsing/scanner";
 import { TokenValue } from "../parsing/token";
 import { RuntimeContext } from "./runtimeContext";
+import { ServiceContainer } from "./serviceContainer";
 import { SourceFile } from "./sourceFile";
+import { Tokens } from "./tokens";
 
 /**
  * Represents the result of a pipeline execution.
@@ -94,12 +96,14 @@ export class Pipeline {
   }
 
   private interpret(statements: Statement[]): void {
-    const interpreter: Interpreter = new Interpreter(
-      this.errorHandler,
-      this.runtimeCtx
-    );
     const program = this.factory.newBlock();
     program.initializeStatements(statements);
+
+    const container = ServiceContainer.builder()
+      .provide(Tokens.RuntimeContext, this.runtimeCtx)
+      .build();
+
+    const interpreter = new Interpreter(this.errorHandler, container);
     interpreter.execute(program);
   }
 }

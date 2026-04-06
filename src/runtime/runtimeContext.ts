@@ -3,7 +3,12 @@
 
 export interface RuntimeContext {
   /**
-   * Absolute path to the Santai executable or the node binary in dev mode
+   * Node executable path
+   */
+  readonly node: string;
+
+  /**
+   * Absolute path to the Santai executable
    */
   readonly execPath: string;
 
@@ -28,7 +33,8 @@ export function makeScriptContext(
   args: readonly string[]
 ): RuntimeContext {
   return {
-    execPath: process.execPath,
+    node: process.execPath,
+    execPath: process.argv[1],
     scriptPath,
     args,
   };
@@ -39,7 +45,8 @@ export function makeScriptContext(
  */
 export function makeEvalContext(args: readonly string[] = []): RuntimeContext {
   return {
-    execPath: process.execPath,
+    node: process.execPath,
+    execPath: process.argv[1],
     scriptPath: "<eval>",
     args,
   };
