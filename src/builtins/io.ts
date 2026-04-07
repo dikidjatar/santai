@@ -1,7 +1,7 @@
 // Copyright (c) [2026] [Diki Djatar]
 // SPDX-License-Identifier: MIT
 
-import { writeLineToStdout } from "../base/output";
+import { writeLineToStdout, writeToStdout } from "../base/output";
 import { Factory, SantaiObject } from "../objects/object";
 import { defineGlobalFunction } from "./builtin";
 
@@ -9,14 +9,13 @@ function joinArgs(args: SantaiObject[]): string {
   return args.map((a) => a.inspect()).join(" ");
 }
 
-//`tulis(...args)` — print arguments to stdout and add a newline.
-// tulis "Hello World!" // Hello World!\n
+// print arguments to stdout without newline.
 defineGlobalFunction("tulis", (_self, args) => {
-  writeLineToStdout(joinArgs(args));
+  writeToStdout(joinArgs(args));
   return Factory.Kosong;
 });
 
-// `spil(...args)` — alias for `tulis` (more relaxed).
+// print arguments to stdout and add a newline.
 defineGlobalFunction("spil", (_self, args) => {
   writeLineToStdout(joinArgs(args));
   return Factory.Kosong;
