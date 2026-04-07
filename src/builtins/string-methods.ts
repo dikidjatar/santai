@@ -131,21 +131,12 @@ define(
 );
 define(
   "gabungin",
-  (value, args) => {
-    if (!args[0].isIterable()) {
-      return Factory.NewString("");
-    }
-
-    let result: string = "";
+  (separator, args) => {
+    if (!args[0].isIterable()) return Factory.NewString("");
     const iterator = args[0].iterate();
-
-    let first = true;
-    for (const item of iterator) {
-      result += (first ? "" : value) + item.inspect();
-      if (first) first = false;
-    }
-
-    return Factory.NewString(result);
+    return Factory.NewString(
+      [...iterator].map((v) => v.inspect()).join(separator)
+    );
   },
   [required("iterable")]
 );
