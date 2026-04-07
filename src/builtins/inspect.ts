@@ -56,7 +56,7 @@ defineAndRegisterGlobalClass(
       }
 
       return Factory.NewBuiltinClass(
-        "tipe",
+        obj.typeName,
         SantaiType.kBuiltinClass,
         () => Factory.Kosong
       );

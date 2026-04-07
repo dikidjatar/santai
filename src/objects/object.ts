@@ -655,7 +655,7 @@ export class SantaiBuiltinClass extends SantaiObject {
   }
 
   override inspect(): string {
-    return `<gue ${this.name}>`;
+    return `<gue ${this.typeName}>`;
   }
 }
 
