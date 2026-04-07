@@ -99,12 +99,9 @@ class ThrowSignal extends Signal<ThrowStatement> {
   }
 }
 
-class RuntimeErrorSignal extends Signal<AstNode> {
-  constructor(
-    node: AstNode,
-    readonly error: SantaiError
-  ) {
-    super(node);
+class RuntimeErrorSignal extends Signal<void> {
+  constructor(readonly error: SantaiError) {
+    super();
   }
 }
 
@@ -145,6 +142,21 @@ function getLocationForNode(node: AstNode): ScannerLocation {
       }
       return end(0);
     }
+    case node.isLiteral(): {
+      if (node.isStringLiteral()) {
+        return makeLocation(
+          begin + 1,
+          begin + node.asStringLiteral().length + 1
+        );
+      } else if (node.isNumberLiteral()) {
+        return end(node.asNumber().toString().length);
+      } else if (node.isBooleanLiteral()) {
+        return end(String(node.asBooleanLiteral()).length);
+      } else if (node.isKosongLiteral()) {
+        return end(6);
+      }
+      unreachable();
+    }
     //TODO: Add other node
     default:
       return end(0);
@@ -165,6 +177,12 @@ function isDirectArg(a: CallArgument | DirectArg): a is DirectArg {
 }
 
 type AnyArg = CallArgument | DirectArg;
+
+function getArgLocation(arg: CallArgument): ScannerLocation | AstNode {
+  return arg.isNamed()
+    ? makeLocation(arg.namePos!, arg.namePos! + arg.name!.length)
+    : arg.value;
+}
 
 /**
  * The parameter descriptor has been resolved to a uniform form.
@@ -1079,17 +1097,18 @@ export class Interpreter extends AstVisitor<SantaiObject> implements CallSite {
     let positionalIndex: number = 0;
 
     for (const arg of args) {
-      const value: SantaiObject = isDirectArg(arg)
+      const isDirect = isDirectArg(arg);
+      const value: SantaiObject = isDirect
         ? arg.evaluatedValue
         : this.evaluate(arg.value);
 
-      const named = !isDirectArg(arg) && arg.isNamed();
-      const argName = named ? (arg as CallArgument).name! : undefined;
+      const argName = !isDirect && arg.isNamed() ? arg.name : undefined;
+      const argLoc = !isDirect ? getArgLocation(arg) : node;
 
-      if (!named) {
+      if (!argName) {
         if (positionalIndex >= params.length) {
           this.reportAndThrow(
-            node,
+            argLoc as any,
             MessageTemplate.kTooManyArguments,
             fnName,
             params.length
@@ -1097,25 +1116,25 @@ export class Interpreter extends AstVisitor<SantaiObject> implements CallSite {
         }
         slots.set(params[positionalIndex++]!.name, value);
       } else {
-        if (!slots.has(argName!)) {
+        if (!slots.has(argName)) {
           this.reportAndThrow(
-            node,
+            argLoc as any,
             MessageTemplate.kUnexpectedKeywordArgument,
             argName!,
             fnName
           );
         }
 
-        if (slots.get(argName!) !== undefined) {
+        if (slots.get(argName) !== undefined) {
           // has been filled in by the previous position
           this.reportAndThrow(
-            node,
+            argLoc as any,
             MessageTemplate.kDuplicateArgument,
             argName!
           );
         }
 
-        slots.set(argName!, value);
+        slots.set(argName, value);
       }
     }
 
@@ -1141,7 +1160,7 @@ export class Interpreter extends AstVisitor<SantaiObject> implements CallSite {
 
   override visitLiteral(node: Literal): SantaiObject {
     switch (node.type) {
-      case LiteralType.kEmpty:
+      case LiteralType.kKosong:
         return Factory.Kosong;
       case LiteralType.kBoolean:
         return Factory.Boolean(node.asBooleanLiteral());
@@ -1182,12 +1201,25 @@ export class Interpreter extends AstVisitor<SantaiObject> implements CallSite {
   }
 
   reportAndThrow(
+    location: ScannerLocation,
+    message: MessageTemplate,
+    ...args: unknown[]
+  ): never;
+  reportAndThrow(
     node: AstNode,
     message: MessageTemplate,
     ...args: unknown[]
+  ): never;
+  reportAndThrow(
+    locationOrNode: ScannerLocation | AstNode,
+    message: MessageTemplate,
+    ...args: unknown[]
   ): never {
-    assertDefined(node);
-    const location = getLocationForNode(node);
+    assertDefined(locationOrNode);
+    const location =
+      locationOrNode instanceof AstNode
+        ? getLocationForNode(locationOrNode)
+        : locationOrNode;
     const formatted = formatMessage(message, args);
 
     if (this.callStack.length > 0) {
@@ -1201,10 +1233,7 @@ export class Interpreter extends AstVisitor<SantaiObject> implements CallSite {
       this.errorHandler.recordErrorAt(location, message, ...args);
     }
 
-    throw new RuntimeErrorSignal(
-      node,
-      new SantaiError(formatted, "MasalahRuntime")
-    );
+    throw new RuntimeErrorSignal(new SantaiError(formatted, "MasalahRuntime"));
   }
 
   reportAt(
