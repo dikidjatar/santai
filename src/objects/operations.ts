@@ -34,6 +34,10 @@ export const Operation = {
       }
     }
 
+    if (left.isList() && right.isList()) {
+      return ok(Factory.NewList([...left.elements, ...right.elements]));
+    }
+
     return err({ op: "+", left, right });
   },
   Sub: (left: SantaiObject, right: SantaiObject): OperationResult => {
