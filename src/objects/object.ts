@@ -102,6 +102,10 @@ export abstract class SantaiObject {
   iterate(): SantaiIterator {
     throw new Error(`'${this.typeName}' is not iterable`);
   }
+
+  getLength(): number {
+    return 0;
+  }
 }
 
 export class SantaiKosong extends SantaiObject {
@@ -207,6 +211,10 @@ export class SantaiString extends SantaiObject {
 
   override iterate(): SantaiIterator {
     return new StringIterator(this);
+  }
+
+  override getLength(): number {
+    return this.value.length;
   }
 
   override getSubscript(obj: SantaiObject): SantaiObject | undefined {
@@ -333,16 +341,16 @@ class ListIterator extends SantaiIterator {
 export class SantaiList extends SantaiObject {
   override typeName: string = "daftar";
 
-  get length(): number {
-    return this.elements.length;
-  }
-
   get elements(): SantaiObject[] {
     return this._elements;
   }
 
   constructor(private _elements: SantaiObject[]) {
     super(SantaiType.kList);
+  }
+
+  override getLength(): number {
+    return this.elements.length;
   }
 
   override inspect(): string {
@@ -435,6 +443,10 @@ export class SantaiRange extends SantaiObject {
     this.start = start;
     this.stop = stop;
     this.step = step;
+  }
+
+  override getLength(): number {
+    return this.size;
   }
 
   get size(): number {

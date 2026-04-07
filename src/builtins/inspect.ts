@@ -28,13 +28,7 @@ defineGlobalFunction(
   "panjang",
   (self, args) => {
     assert(!self);
-    const obj: SantaiObject = args[0];
-    if (obj.isString()) {
-      return Factory.NewNumber([...obj.value].length);
-    } else if (obj.isList()) {
-      return Factory.NewNumber(obj.length);
-    }
-    return Factory.NewNumber(0);
+    return Factory.NewNumber(args[0].getLength());
   },
   [required("nilai")]
 );
