@@ -1,16 +1,13 @@
 // Copyright (c) [2026] [Diki Djatar]
 // SPDX-License-Identifier: MIT
 
+import type { SantaiObject } from "./object";
 import { SantaiType } from "./st-type";
-
-export interface PropertyTarget {
-  readonly type: SantaiType;
-}
 
 export type PropertyGetter = (
   name: string,
-  self: PropertyTarget
-) => PropertyTarget | undefined;
+  self: SantaiObject
+) => SantaiObject | undefined;
 
 const _registry = new Map<SantaiType, PropertyGetter>();
 
@@ -31,7 +28,7 @@ export function registerPropertyProvider(
 export function lookupProperty(
   type: SantaiType,
   name: string,
-  self: PropertyTarget
-): PropertyTarget | undefined {
+  self: SantaiObject
+): SantaiObject | undefined {
   return _registry.get(type)?.(name, self);
 }

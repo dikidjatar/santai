@@ -267,10 +267,14 @@ export class SantaiFunction extends SantaiObject {
 export class BuiltinFunction extends SantaiObject {
   override typeName: string = "aksi";
 
+  get self(): SantaiObject | undefined {
+    return this._self;
+  }
+
   constructor(
     readonly name: string,
-    private readonly _callable: Callable,
-    private readonly _self?: SantaiObject,
+    private readonly callable: Callable,
+    private _self?: SantaiObject,
     readonly params?: readonly GlobalMethodParam[]
   ) {
     super(SantaiType.kBuiltinFunction);
@@ -284,16 +288,23 @@ export class BuiltinFunction extends SantaiObject {
     return true;
   }
 
-  callable(): Callable {
-    return this._callable;
-  }
-
-  self(): SantaiObject | undefined {
-    return this._self;
-  }
-
   hasSignature(): boolean {
     return !isUndefined(this.params);
+  }
+
+  call(
+    self: SantaiObject | undefined,
+    args: SantaiObject[],
+    callsite: CallSite
+  ): SantaiObject {
+    return this.callable(self, args, callsite);
+  }
+
+  bind(self: SantaiObject): void {
+    if (this._self === self) {
+      return;
+    }
+    this._self = self;
   }
 }
 

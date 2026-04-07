@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: MIT
 
 import {
+  BuiltinFunction,
   Callable,
   Factory,
   GlobalMethodParam,
@@ -9,46 +10,26 @@ import {
 } from "../objects/object";
 import {
   PropertyGetter,
-  PropertyTarget,
   registerPropertyProvider,
 } from "../objects/propertyRegistry";
 import { SantaiType } from "../objects/st-type";
 
-interface MethodItem {
-  readonly callable: Callable;
-  readonly params?: readonly GlobalMethodParam[];
-}
-
 export class MethodTable {
-  private readonly _methods = new Map<string, MethodItem>();
+  private readonly _methods = new Map<string, BuiltinFunction>();
 
   define(
     name: string,
     callable: Callable,
     params?: readonly GlobalMethodParam[]
   ): this {
-    this._methods.set(name, { callable, params });
+    const method = Factory.NewBuiltinFunction(
+      name,
+      callable,
+      undefined,
+      params
+    );
+    this._methods.set(name, method);
     return this;
-  }
-
-  /**
-   * Create a PropertyGetter that can be registered with the registry.
-   * Cast to SantaiObject here is safe because we are just registering
-   * This table is for a type that is CasualObject.
-   */
-  asGetter(): PropertyGetter {
-    return (name: string, self: PropertyTarget) => {
-      const item = this._methods.get(name);
-      if (!item) {
-        return undefined;
-      }
-      return Factory.NewBuiltinFunction(
-        name,
-        item.callable,
-        self as SantaiObject,
-        item.params
-      );
-    };
   }
 
   /**
@@ -58,5 +39,16 @@ export class MethodTable {
   registerFor(type: SantaiType): this {
     registerPropertyProvider(type, this.asGetter());
     return this;
+  }
+
+  /**
+   * Create a PropertyGetter that can be registered with the registry.
+   */
+  private asGetter(): PropertyGetter {
+    return (name: string, self: SantaiObject) => {
+      const method = this._methods.get(name);
+      if (method) method.bind(self);
+      return method;
+    };
   }
 }

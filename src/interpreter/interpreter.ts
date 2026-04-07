@@ -946,10 +946,10 @@ export class Interpreter extends AstVisitor<SantaiObject> implements CallSite {
         const resolvedParams = this.resolveBuiltinParams(fn.params!);
         const bound = this.bindArguments(fn.name, resolvedParams, args, node);
         if (!bound) return Factory.Kosong;
-        return fn.callable()(fn.self(), bound, this);
+        return fn.call(fn.self, bound, this);
       }
       // No signature: legacy positional (varargs, backward compat)
-      return fn.callable()(fn.self(), this.evalPositional(args), this);
+      return fn.call(fn.self, this.evalPositional(args), this);
     }
 
     this.reportAndThrow(node, MessageTemplate.kCalledNoCallable, fn.typeName);
