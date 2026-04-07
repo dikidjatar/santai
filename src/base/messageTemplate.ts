@@ -87,7 +87,7 @@ export const MessageTemplateString: Record<MessageTemplate, string> = {
   [MessageTemplate.kUnexpectedEOS]:
     "kode udah habis tapi kayak belum kelar — kurang apa nih?",
   [MessageTemplate.kUnexpectedKeywordArgument]:
-    "'%s' bukan nama parameter yang valid di aksi '%s'",
+    "'%s' bukan nama parameter yang valid di aksi '%s' — lo yakin beneran ada?",
   [MessageTemplate.kUnterminatedTemplate]: "Kehilangan } di templat expression",
 
   // Declaration
@@ -104,7 +104,7 @@ export const MessageTemplateString: Record<MessageTemplate, string> = {
   [MessageTemplate.kUnsupportedBinaryOperation]:
     "operasi '%s' antara %s sama %s? itu gak mungkin",
   [MessageTemplate.kNonDefaultAfterDefault]:
-    "parameter '%s' gak punya nilai default — harus sebelum yang punya default",
+    "parameter '%s' gak punya nilai default — harus sebelum yang punya default bro",
   [MessageTemplate.kPositionalAfterNamed]:
     "argumen biasa gak boleh setelah argumen bernama, kasih nama atau pindahin ke depan",
 
@@ -122,9 +122,9 @@ export const MessageTemplateString: Record<MessageTemplate, string> = {
   [MessageTemplate.kTooManyArguments]:
     "aksi '%s' cuma butuh %s argumen, kebanyakan nih",
   [MessageTemplate.kMissingArgument]:
-    "parameter '%s' di aksi '%s' wajib diisi — jangan dikosongkan",
+    "parameter '%s' di aksi '%s' wajib diisi — jangan dikosongkan dong",
   [MessageTemplate.kDuplicateArgument]:
-    "parameter '%s' dapat nilai dua kali — dari positional dan named",
+    "parameter '%s' dapat nilai dua kali — pilih salah satu, jangan serakah",
 
   // Control flow
   [MessageTemplate.kIllegalReturnStatement]:
