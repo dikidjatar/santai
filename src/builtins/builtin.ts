@@ -10,7 +10,7 @@ import {
   SantaiBuiltinClass,
   SantaiObject,
 } from "../objects/object";
-import { register } from "../objects/typeRegistry";
+import { TypeRegistry } from "../objects/typeRegistry";
 import { defineBatchGlobals } from "./globalProvider";
 
 export function arg(args: SantaiObject[], index: number): SantaiObject {
@@ -96,5 +96,5 @@ export function defineGlobalClass(clazz: SantaiBuiltinClass): void {
 }
 
 export function defineAndRegisterGlobalClass(clazz: SantaiBuiltinClass): void {
-  defineGlobalClass(register(clazz));
+  defineGlobalClass(TypeRegistry.registerType(clazz));
 }

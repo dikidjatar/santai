@@ -4,22 +4,22 @@
 import { SantaiBuiltinClass, SantaiObject } from "./object";
 import { SantaiType } from "./st-type";
 
-const typeRegistry = new Map<SantaiType, SantaiBuiltinClass>();
-
-/**
- * Register `SantaiBuiltinClass`
- */
-export function register(cls: SantaiBuiltinClass): SantaiBuiltinClass {
-  typeRegistry.set(cls.santaiType, cls);
-  return cls;
+export interface ITypeRegistry {
+  registerType(cls: SantaiBuiltinClass): SantaiBuiltinClass;
+  getTypeOf(obj: SantaiObject): SantaiBuiltinClass | undefined;
 }
 
-/**
- * Returns a `SantaiBuiltinClass` corresponding to type `obj`.
- * Used by builtin `tipe()`:
- */
-export function getBuiltinClassOf(
-  obj: SantaiObject
-): SantaiBuiltinClass | undefined {
-  return typeRegistry.get(obj.type);
+class TypeRegistryImpl implements ITypeRegistry {
+  private readonly _types = new Map<SantaiType, SantaiBuiltinClass>();
+
+  registerType(cls: SantaiBuiltinClass): SantaiBuiltinClass {
+    this._types.set(cls.santaiType, cls);
+    return cls;
+  }
+
+  getTypeOf(obj: SantaiObject): SantaiBuiltinClass | undefined {
+    return this._types.get(obj.type);
+  }
 }
+
+export const TypeRegistry: ITypeRegistry = new TypeRegistryImpl();

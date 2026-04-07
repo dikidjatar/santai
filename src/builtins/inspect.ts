@@ -5,7 +5,7 @@ import { assert } from "../base/asserts";
 import { isUndefined } from "../base/types";
 import { Factory, SantaiObject } from "../objects/object";
 import { SantaiType } from "../objects/st-type";
-import { getBuiltinClassOf } from "../objects/typeRegistry";
+import { TypeRegistry } from "../objects/typeRegistry";
 import {
   arg0,
   defineAndRegisterGlobalClass,
@@ -50,7 +50,7 @@ defineAndRegisterGlobalClass(
         return obj.getClass();
       }
 
-      const cls = getBuiltinClassOf(obj);
+      const cls = TypeRegistry.getTypeOf(obj);
       if (!isUndefined(cls)) {
         return cls;
       }
