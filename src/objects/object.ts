@@ -574,6 +574,21 @@ export class SantaiInstance extends SantaiObject {
     this._properties.set(name, value);
   }
 
+  override setSubscript(obj: SantaiObject, value: SantaiObject): boolean {
+    if (!obj.isString() && !obj.isNumber()) {
+      return false;
+    }
+    this._properties.set(obj.value.toString(), value);
+    return true;
+  }
+
+  override getSubscript(obj: SantaiObject): SantaiObject | undefined {
+    if (!obj.isString() && !obj.isNumber()) {
+      return undefined;
+    }
+    return this.getProperty(obj.value.toString());
+  }
+
   /**
    * Reads properties belonging to this instance (excluding class methods)
    */
