@@ -129,5 +129,25 @@ define(
   },
   [required("jumlah")]
 );
+define(
+  "gabungin",
+  (value, args) => {
+    if (!args[0].isIterable()) {
+      return Factory.NewString("");
+    }
+
+    let result: string = "";
+    const iterator = args[0].iterate();
+
+    let first = true;
+    for (const item of iterator) {
+      result += (first ? "" : value) + item.inspect();
+      if (first) first = false;
+    }
+
+    return Factory.NewString(result);
+  },
+  [required("iterable")]
+);
 
 stringMethod.registerFor(SantaiType.kString);
