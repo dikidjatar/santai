@@ -4,6 +4,7 @@
 import { assert } from "../base/asserts";
 import {
   BuiltinFunction,
+  Callable,
   Factory,
   SantaiBuiltinClass,
   SantaiObject,
@@ -11,48 +12,6 @@ import {
 import { register } from "../objects/typeRegistry";
 import { defineBatchGlobals } from "./globalProvider";
 import { BuiltinParam } from "./paramSpec";
-
-/**
- * Interface to call back the Santai function from within the builtin.
- * ```
- * ┌─────────────────────────────────────────────────────┐
- * │                   builtin.ts                        │
- * │                                                     │
- * │  interface Callsite {                               │
- * │    invoke(fn, args): SantaiObject                   │
- * │  }                                ▲                 │
- * │                                   │ implements      │
- * │  type BuiltinCallable =           │                 │
- * │    (self, args, callsite) =>  ────┘                 │
- * │      SantaiObject                                   │
- * └─────────────────────────────────────────────────────┘
- *          ↑ depend on                ↑ depend on
- * ┌────────┴──────┐          ┌────────┴──────────────┐
- * │ functional.ts │          │    interpreter.ts     │
- * │               │          │                       │
- * │ fn(...)       │          │ class Interpreter     │
- * │  callsite     │          │   implements Callsite │
- * │   .invoke(fn) │          │                       │
- * │               │          │  invoke(fn, args) {   │
- * │               │          │    callFunction(fn)   │
- * │               │          │  }                    │
- * └───────────────┘          └───────────────────────┘
- * ```
- */
-export interface CallSite {
-  invoke(fn: SantaiObject, args: SantaiObject[]): SantaiObject;
-}
-
-export type BuiltinCallable = (
-  self: SantaiObject | undefined,
-  args: SantaiObject[],
-  callsite: CallSite
-) => SantaiObject;
-
-export interface BuiltinDefinition {
-  readonly name: string;
-  readonly callable: BuiltinCallable;
-}
 
 export function arg(args: SantaiObject[], index: number): SantaiObject {
   return args[index] ?? Factory.Kosong;
@@ -87,11 +46,11 @@ export class BuiltinRegistry {
    * Registers a new built-in function in the registry.
    *
    * @param {string} name - The name of the built-in function to register
-   * @param {BuiltinCallable} callable - The callable implementation of the function
+   * @param {Callable} callable - The callable implementation of the function
    */
   public registerFunction(
     name: string,
-    callable: BuiltinCallable,
+    callable: Callable,
     params?: readonly BuiltinParam[]
   ): void {
     assert(!this._globals.has(name), "cannot redeclare: " + name);
@@ -126,7 +85,7 @@ defineBatchGlobals(() => BuiltinRegistry.getInstance().snapshot());
  */
 export function defineGlobalFunction(
   name: string,
-  callable: BuiltinCallable,
+  callable: Callable,
   params?: readonly BuiltinParam[]
 ): void {
   BuiltinRegistry.getInstance().registerFunction(name, callable, params);

@@ -42,7 +42,6 @@ import { assert, assertDefined, unreachable } from "../base/asserts";
 import { ErrorHandler, formatMessage, StackFrame } from "../base/errorHandler";
 import { MessageTemplate } from "../base/messageTemplate";
 import { isNumber, isObject, isUndefined, Signal } from "../base/types";
-import { CallSite } from "../builtins/builtin";
 import { globalProvideRegistry } from "../builtins/globalProvider";
 import "../builtins/globals";
 import { BuiltinParam } from "../builtins/paramSpec";
@@ -52,6 +51,7 @@ import {
 } from "../objects/extensionRegistry";
 import { SantaiIterator } from "../objects/iterator";
 import {
+  CallSite,
   Factory,
   SantaiClass,
   SantaiError,

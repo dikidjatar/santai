@@ -3,12 +3,21 @@
 
 import { Block, Parameter } from "../ast/ast";
 import { isUndefined } from "../base/types";
-import { BuiltinCallable } from "../builtins/builtin";
 import { BuiltinParam } from "../builtins/paramSpec";
 import { Environment } from "../interpreter/environment";
 import { SantaiIterator } from "./iterator";
 import { lookupProperty } from "./propertyRegistry";
 import { SantaiType } from "./st-type";
+
+export interface CallSite {
+  invoke(fn: SantaiObject, args: SantaiObject[]): SantaiObject;
+}
+
+export type Callable = (
+  self: SantaiObject | undefined,
+  args: SantaiObject[],
+  callsite: CallSite
+) => SantaiObject;
 
 export abstract class SantaiObject {
   abstract readonly typeName: string;
@@ -249,7 +258,7 @@ export class BuiltinFunction extends SantaiObject {
 
   constructor(
     readonly name: string,
-    private readonly _callable: BuiltinCallable,
+    private readonly _callable: Callable,
     private readonly _self?: SantaiObject,
     readonly params?: readonly BuiltinParam[]
   ) {
@@ -264,7 +273,7 @@ export class BuiltinFunction extends SantaiObject {
     return true;
   }
 
-  callable(): BuiltinCallable {
+  callable(): Callable {
     return this._callable;
   }
 
@@ -711,7 +720,7 @@ export namespace Factory {
 
   export function NewBuiltinFunction(
     name: string,
-    callable: BuiltinCallable,
+    callable: Callable,
     self?: SantaiObject | undefined,
     params?: readonly BuiltinParam[]
   ): BuiltinFunction {
