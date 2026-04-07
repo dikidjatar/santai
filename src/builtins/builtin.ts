@@ -6,12 +6,12 @@ import {
   BuiltinFunction,
   Callable,
   Factory,
+  GlobalMethodParam,
   SantaiBuiltinClass,
   SantaiObject,
 } from "../objects/object";
 import { register } from "../objects/typeRegistry";
 import { defineBatchGlobals } from "./globalProvider";
-import { BuiltinParam } from "./paramSpec";
 
 export function arg(args: SantaiObject[], index: number): SantaiObject {
   return args[index] ?? Factory.Kosong;
@@ -51,7 +51,7 @@ export class BuiltinRegistry {
   public registerFunction(
     name: string,
     callable: Callable,
-    params?: readonly BuiltinParam[]
+    params?: readonly GlobalMethodParam[]
   ): void {
     assert(!this._globals.has(name), "cannot redeclare: " + name);
     const builtin: BuiltinFunction = Factory.NewBuiltinFunction(
@@ -86,7 +86,7 @@ defineBatchGlobals(() => BuiltinRegistry.getInstance().snapshot());
 export function defineGlobalFunction(
   name: string,
   callable: Callable,
-  params?: readonly BuiltinParam[]
+  params?: readonly GlobalMethodParam[]
 ): void {
   BuiltinRegistry.getInstance().registerFunction(name, callable, params);
 }

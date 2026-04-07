@@ -1,23 +1,13 @@
 // Copyright (c) [2026] [Diki Djatar]
 // SPDX-License-Identifier: MIT
 
-/**
- * One parameter descriptor for builtin functions.
- */
-export interface BuiltinParam {
-  readonly name: string;
-  /**
-   * `undefined`     = mandatory parameter, must be filled with caller
-   * `SantaiObject`  = Optional, use this value if not filled
-   */
-  readonly defaultValue?: unknown;
-}
+import { GlobalMethodParam, SantaiObject } from "../objects/object";
 
 /**
  * Create mandatory parameters without default.
  * @example required("name")
  */
-export function required(name: string): BuiltinParam {
+export function required(name: string): GlobalMethodParam {
   return { name };
 }
 
@@ -25,6 +15,9 @@ export function required(name: string): BuiltinParam {
  * Create optional parameters with default values.
  * @example optional("value", Factory.NewNumber(1))
  */
-export function optional<T>(name: string, defaultValue: T): BuiltinParam {
+export function optional<T extends SantaiObject>(
+  name: string,
+  defaultValue: T
+): GlobalMethodParam {
   return { name, defaultValue };
 }

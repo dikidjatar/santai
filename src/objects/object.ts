@@ -3,7 +3,6 @@
 
 import { Block, Parameter } from "../ast/ast";
 import { isUndefined } from "../base/types";
-import { BuiltinParam } from "../builtins/paramSpec";
 import { Environment } from "../interpreter/environment";
 import { SantaiIterator } from "./iterator";
 import { lookupProperty } from "./propertyRegistry";
@@ -18,6 +17,18 @@ export type Callable = (
   args: SantaiObject[],
   callsite: CallSite
 ) => SantaiObject;
+
+/**
+ * One parameter descriptor for global functions.
+ */
+export interface GlobalMethodParam {
+  readonly name: string;
+  /**
+   * `undefined`     = mandatory parameter, must be filled with caller
+   * `SantaiObject`  = Optional, use this value if not filled
+   */
+  readonly defaultValue?: SantaiObject;
+}
 
 export abstract class SantaiObject {
   abstract readonly typeName: string;
@@ -260,7 +271,7 @@ export class BuiltinFunction extends SantaiObject {
     readonly name: string,
     private readonly _callable: Callable,
     private readonly _self?: SantaiObject,
-    readonly params?: readonly BuiltinParam[]
+    readonly params?: readonly GlobalMethodParam[]
   ) {
     super(SantaiType.kBuiltinFunction);
   }
@@ -625,7 +636,7 @@ export class SantaiBuiltinClass extends SantaiObject {
     readonly name: string,
     readonly santaiType: SantaiType,
     private readonly _construct: (args: SantaiObject[]) => SantaiObject,
-    readonly params?: readonly BuiltinParam[]
+    readonly params?: readonly GlobalMethodParam[]
   ) {
     super(SantaiType.kBuiltinClass);
     this.typeName = name;
@@ -722,7 +733,7 @@ export namespace Factory {
     name: string,
     callable: Callable,
     self?: SantaiObject | undefined,
-    params?: readonly BuiltinParam[]
+    params?: readonly GlobalMethodParam[]
   ): BuiltinFunction {
     return new BuiltinFunction(name, callable, self, params);
   }
@@ -742,7 +753,7 @@ export namespace Factory {
     name: string,
     santaiType: SantaiType,
     construct: (args: SantaiObject[]) => SantaiObject,
-    params?: readonly BuiltinParam[]
+    params?: readonly GlobalMethodParam[]
   ): SantaiBuiltinClass {
     return new SantaiBuiltinClass(name, santaiType, construct, params);
   }

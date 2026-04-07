@@ -44,7 +44,6 @@ import { MessageTemplate } from "../base/messageTemplate";
 import { isNumber, isObject, isUndefined, Signal } from "../base/types";
 import { globalProvideRegistry } from "../builtins/globalProvider";
 import "../builtins/globals";
-import { BuiltinParam } from "../builtins/paramSpec";
 import {
   lookupExtension,
   registerExtension,
@@ -53,6 +52,7 @@ import { SantaiIterator } from "../objects/iterator";
 import {
   CallSite,
   Factory,
+  GlobalMethodParam,
   SantaiClass,
   SantaiError,
   SantaiFunction,
@@ -1054,7 +1054,7 @@ export class Interpreter extends AstVisitor<SantaiObject> implements CallSite {
   }
 
   private resolveBuiltinParams(
-    params: readonly BuiltinParam[]
+    params: readonly GlobalMethodParam[]
   ): ResolvedParam[] {
     return params.map((param) => ({
       name: param.name,

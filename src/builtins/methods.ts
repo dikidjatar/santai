@@ -1,18 +1,22 @@
 // Copyright (c) [2026] [Diki Djatar]
 // SPDX-License-Identifier: MIT
 
-import { Callable, Factory, SantaiObject } from "../objects/object";
+import {
+  Callable,
+  Factory,
+  GlobalMethodParam,
+  SantaiObject,
+} from "../objects/object";
 import {
   PropertyGetter,
   PropertyTarget,
   registerPropertyProvider,
 } from "../objects/propertyRegistry";
 import { SantaiType } from "../objects/st-type";
-import { BuiltinParam } from "./paramSpec";
 
 interface MethodItem {
   readonly callable: Callable;
-  readonly params?: readonly BuiltinParam[];
+  readonly params?: readonly GlobalMethodParam[];
 }
 
 export class MethodTable {
@@ -21,7 +25,7 @@ export class MethodTable {
   define(
     name: string,
     callable: Callable,
-    params?: readonly BuiltinParam[]
+    params?: readonly GlobalMethodParam[]
   ): this {
     this._methods.set(name, { callable, params });
     return this;

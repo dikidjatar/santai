@@ -2,17 +2,22 @@
 // SPDX-License-Identifier: MIT
 
 import { assert, assertDefined } from "../base/asserts";
-import { Factory, SantaiObject, SantaiRange } from "../objects/object";
+import {
+  Factory,
+  GlobalMethodParam,
+  SantaiObject,
+  SantaiRange,
+} from "../objects/object";
 import { SantaiType } from "../objects/st-type";
 import { MethodTable } from "./methods";
-import { BuiltinParam, required } from "./paramSpec";
+import { required } from "./paramSpec";
 
 const method = new MethodTable();
 
 function define(
   name: string,
   fn: (value: SantaiRange, args: SantaiObject[]) => SantaiObject,
-  params?: readonly BuiltinParam[]
+  params?: readonly GlobalMethodParam[]
 ) {
   method.define(
     name,
