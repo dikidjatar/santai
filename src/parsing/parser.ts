@@ -573,7 +573,7 @@ export class Parser {
 
     do {
       if (this.peek() !== TokenValue.kIdentifier) {
-        this.reportUnexpectedToken(this.peek());
+        this.reportUnexpectedTokenAt(this.scanner.peekLocation(), this.peek());
         return undefined;
       }
 
