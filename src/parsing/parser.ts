@@ -731,7 +731,7 @@ export class Parser {
 
       return this.factory.newCall(
         expression,
-        [this.factory.newCallArgument(argument, undefined)],
+        [this.factory.newCallArgument(argument, undefined, undefined)],
         argumentPosition
       ) as unknown as Statement;
     }
@@ -927,18 +927,23 @@ export class Parser {
           while (this.peek() !== closingToken) {
             // Detect named argument: `identifier =`
             let argName: string | undefined;
+            let namePos: number | undefined;
 
             if (
               this.peek() === TokenValue.kIdentifier &&
               this.scanner.peekAhead() === TokenValue.kAssign
             ) {
               this.next();
+              namePos = this.position();
               argName = this.currentLiteral();
               this.next();
               seenNamed = true;
             } else if (seenNamed) {
               // Positional after named
-              this.reportError(MessageTemplate.kPositionalAfterNamed);
+              this.reportErrorAt(
+                this.scanner.peekLocation(),
+                MessageTemplate.kPositionalAfterNamed
+              );
               return undefined;
             }
 
@@ -948,7 +953,9 @@ export class Parser {
               break;
             }
 
-            arguments_.push(this.factory.newCallArgument(expression, argName));
+            arguments_.push(
+              this.factory.newCallArgument(expression, argName, namePos)
+            );
 
             if (this.peek() !== closingToken) {
               this.expect(TokenValue.kComma);
@@ -1299,7 +1306,7 @@ export class Parser {
       const property = this.factory.newProperty(result, methodLiteral, pos);
       result = this.factory.newCall(
         property,
-        [this.factory.newCallArgument(arg, undefined)],
+        [this.factory.newCallArgument(arg, undefined, undefined)],
         pos
       );
     }

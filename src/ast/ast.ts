@@ -152,7 +152,7 @@ export const enum LiteralType {
   kString,
   kNumber,
   kBoolean,
-  kEmpty,
+  kKosong,
 }
 
 export class Literal extends Expression {
@@ -167,7 +167,7 @@ export class Literal extends Expression {
   }
 
   static empty(position: number): Literal {
-    return new Literal(LiteralType.kEmpty, position);
+    return new Literal(LiteralType.kKosong, position);
   }
 
   static number(value: number, position: number): Literal {
@@ -204,6 +204,9 @@ export class Literal extends Expression {
     return this.stringVal!;
   }
 
+  isBooleanLiteral(): boolean {
+    return this.type === LiteralType.kBoolean;
+  }
   asBooleanLiteral(): boolean {
     assert(this.type === LiteralType.kBoolean);
     return this.boolVal!;
@@ -217,13 +220,17 @@ export class Literal extends Expression {
         return this.stringVal !== "";
       case LiteralType.kBoolean:
         return this.boolVal!;
-      case LiteralType.kEmpty:
+      case LiteralType.kKosong:
         return false;
     }
   }
 
   toBooleanIsFalse(): boolean {
     return !this.toBooleanIsTrue();
+  }
+
+  isKosongLiteral(): boolean {
+    return this.type === LiteralType.kKosong;
   }
 }
 
@@ -554,7 +561,8 @@ export class UnaryOp extends Expression {
 export class CallArgument {
   constructor(
     readonly value: Expression,
-    readonly name: string | undefined
+    readonly name: string | undefined,
+    readonly namePos: number | undefined
   ) {}
 
   isNamed(): boolean {
@@ -773,8 +781,12 @@ export class AstNodeFactory {
     return new UnaryOp(op, expr, pos);
   }
 
-  newCallArgument(value: Expression, name: string | undefined): CallArgument {
-    return new CallArgument(value, name);
+  newCallArgument(
+    value: Expression,
+    name: string | undefined,
+    namePos: number | undefined
+  ): CallArgument {
+    return new CallArgument(value, name, namePos);
   }
 
   newCall(
