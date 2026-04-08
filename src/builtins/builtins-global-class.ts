@@ -155,7 +155,7 @@ const teks: ClassArg = ["teks", SantaiType.kString, Teks];
 const logika: ClassArg = ["logika", SantaiType.kBoolean, Logika];
 const daftar: ClassArg = ["daftar", SantaiType.kList, Daftar];
 const rentang: ClassArg = ["rentang", SantaiType.kRange, Rentang];
-const masalah: ClassArg = ["masalah", SantaiType.kError, Masalah];
+const masalah: ClassArg = ["Masalah", SantaiType.kError, Masalah];
 
 defineAndRegisterGlobalClass(Factory.NewBuiltinClass(...tipe));
 defineAndRegisterGlobalClass(Factory.NewBuiltinClass(...angka));
