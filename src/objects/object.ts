@@ -5,7 +5,7 @@ import { Block, Parameter } from "../ast/ast";
 import { isUndefined } from "../base/types";
 import { Environment } from "../interpreter/environment";
 import { SantaiIterator } from "./iterator";
-import { lookupProperty } from "./propertyRegistry";
+import { listPropertyNames, lookupProperty } from "./propertyRegistry";
 import { SantaiType } from "./st-type";
 
 export interface CallSite {
@@ -105,6 +105,13 @@ export abstract class SantaiObject {
 
   getLength(): number {
     return 0;
+  }
+
+  /**
+   * Retu1n all name property/method for this object.
+   */
+  dir(): readonly string[] {
+    return listPropertyNames(this.type);
   }
 }
 
@@ -559,6 +566,14 @@ export class SantaiClass extends SantaiObject {
     return this._methods.get(name);
   }
 
+  methodNames(): readonly string[] {
+    return [...this._methods.keys()].sort();
+  }
+
+  override dir(): readonly string[] {
+    return this.methodNames();
+  }
+
   override isTruthy(): boolean {
     return true;
   }
@@ -643,6 +658,12 @@ export class SantaiInstance extends SantaiObject {
     return undefined;
   }
 
+  override dir(): readonly string[] {
+    const ownProps = [...this._properties.keys()];
+    const classMethods = this.clazz.methodNames();
+    return [...new Set([...ownProps, ...classMethods])].sort();
+  }
+
   override isTruthy(): boolean {
     return true;
   }
@@ -708,14 +729,6 @@ export class SantaiError extends SantaiObject {
     this.typeName = name;
   }
 
-  override isTruthy(): boolean {
-    return true;
-  }
-
-  override inspect(): string {
-    return `${this.name}: ${this.message}`;
-  }
-
   override getProperty(name: string): SantaiObject | undefined {
     switch (name) {
       case "pesan":
@@ -725,6 +738,18 @@ export class SantaiError extends SantaiObject {
       default:
         return undefined;
     }
+  }
+
+  override dir(): readonly string[] {
+    return ["nama", "pesan"];
+  }
+
+  override isTruthy(): boolean {
+    return true;
+  }
+
+  override inspect(): string {
+    return `${this.name}: ${this.message}`;
   }
 }
 

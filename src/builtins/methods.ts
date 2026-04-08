@@ -37,7 +37,8 @@ export class MethodTable {
    * Called once when the module is loaded.
    */
   registerFor(type: SantaiType): this {
-    registerPropertyProvider(type, this.asGetter());
+    const names = Array.from(this._methods.keys());
+    registerPropertyProvider(type, this.asGetter(), names);
     return this;
   }
 

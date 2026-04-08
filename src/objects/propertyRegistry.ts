@@ -10,15 +10,20 @@ export type PropertyGetter = (
 ) => SantaiObject | undefined;
 
 const _registry = new Map<SantaiType, PropertyGetter>();
+const _names = new Map<SantaiType, string[]>();
 
 /**
  * Register a provider method for one type.
  */
 export function registerPropertyProvider(
   type: SantaiType,
-  getter: PropertyGetter
+  getter: PropertyGetter,
+  names?: readonly string[]
 ): void {
   _registry.set(type, getter);
+  if (names) {
+    _names.set(type, [...names].sort());
+  }
 }
 
 /**
@@ -31,4 +36,11 @@ export function lookupProperty(
   self: SantaiObject
 ): SantaiObject | undefined {
   return _registry.get(type)?.(name, self);
+}
+
+/**
+ * Return all name property/method for this type.
+ */
+export function listPropertyNames(type: SantaiType): readonly string[] {
+  return _names.get(type) ?? [];
 }
