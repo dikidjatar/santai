@@ -22,6 +22,10 @@ class SantaiEnvMap extends SantaiObject {
     return isUndefined(value) ? Factory.Kosong : Factory.NewString(value);
   }
 
+  override dir(): readonly string[] {
+    return Object.keys(process.env);
+  }
+
   override isTruthy(): boolean {
     return true;
   }
@@ -38,16 +42,12 @@ defineGlobal("sistem", (serviceContainer) => {
   return new (class extends SantaiObject {
     override readonly typeName: string = "sistem";
 
-    private readonly _argumen: SantaiObject;
-    private readonly _exit: SantaiObject;
-    private readonly _env: SantaiEnvMap;
+    private readonly _properties: Map<string, SantaiObject> = new Map();
 
-    constructor(private readonly ctx: RuntimeContext) {
+    constructor(ctx: RuntimeContext) {
       super(SantaiType.kBuiltinClass);
-      this._argumen = Factory.NewList(
-        ctx.args.map((arg) => Factory.NewString(arg))
-      );
-      this._exit = Factory.NewBuiltinFunction(
+
+      const exit = Factory.NewBuiltinFunction(
         "keluar",
         (_self, args) => {
           const exitCode = args[0].isNumber() ? Math.trunc(args[0].value) : 0;
@@ -56,32 +56,31 @@ defineGlobal("sistem", (serviceContainer) => {
         undefined,
         [optional("kode", Factory.NewNumber(0))]
       );
-      this._env = new SantaiEnvMap();
+
+      this.set("versi", Factory.NewString(meta.VERSION_STRING));
+      this.set("nama", Factory.NewString(meta.LANG_NAME));
+      this.set("platform", Factory.NewString(process.platform));
+      this.set("direktori_kerja", Factory.NewString(process.cwd()));
+      this.set("jalur_eksekusi", Factory.NewString(ctx.execPath));
+      this.set("nodejs", Factory.NewString(ctx.node));
+      this.set(
+        "argumen",
+        Factory.NewList(ctx.args.map((arg) => Factory.NewString(arg)))
+      );
+      this.set("env", new SantaiEnvMap());
+      this.set("keluar", exit);
+    }
+
+    private set(name: string, value: SantaiObject): void {
+      this._properties.set(name, value);
     }
 
     override getProperty(name: string): SantaiObject | undefined {
-      switch (name) {
-        case "versi":
-          return Factory.NewString(meta.VERSION_STRING);
-        case "nama":
-          return Factory.NewString(meta.LANG_NAME);
-        case "platform":
-          return Factory.NewString(process.platform);
-        case "direktori_kerja":
-          return Factory.NewString(process.cwd());
-        case "jalur_eksekusi":
-          return Factory.NewString(this.ctx.execPath);
-        case "nodejs":
-          return Factory.NewString(this.ctx.node);
-        case "argumen":
-          return this._argumen;
-        case "env":
-          return this._env;
-        case "keluar":
-          return this._exit;
-        default:
-          return undefined;
-      }
+      return this._properties.get(name);
+    }
+
+    override dir(): readonly string[] {
+      return [...this._properties.keys()].sort();
     }
 
     override isTruthy(): boolean {

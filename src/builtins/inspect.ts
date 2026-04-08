@@ -11,7 +11,7 @@ import {
   defineAndRegisterGlobalClass,
   defineGlobalFunction,
 } from "./builtin";
-import { required } from "./paramSpec";
+import { optional, required } from "./paramSpec";
 
 /**
  * `panjang(value)` — the number of elements or characters of a value.
@@ -130,4 +130,14 @@ defineAndRegisterGlobalClass(
 
 defineAndRegisterGlobalClass(
   Factory.NewBuiltinClass("daftar", SantaiType.kList, toList)
+);
+
+defineGlobalFunction(
+  "daftar_metode",
+  (self, args) => {
+    assert(!self);
+    const names = args[0].dir();
+    return Factory.NewList(names.map((name) => Factory.NewString(name)));
+  },
+  [optional("objek", Factory.Kosong)]
 );
