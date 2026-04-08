@@ -1,0 +1,378 @@
+# Program Animasi Teks Berwarna
+# Ditulis menggunakan bahasa pemrograman Santai
+# https://github.com/dikidjatar/santai
+
+# Warna-warna
+isi HIJAU   = "\033[92m"
+isi KUNING  = "\033[93m"
+isi CYAN    = "\033[96m"
+isi MAGENTA = "\033[95m"
+isi MERAH   = "\033[91m"
+isi PUTIH   = "\033[0m"
+
+# Gaya huruf A-Z
+isi A = [
+  [0, 0, 0, 1, 1, 1, 1, 0, 0, 0],
+  [0, 1, 1, 0, 0, 0, 0, 1, 1, 0],
+  [1, 1, 0, 0, 0, 0, 0, 0, 1, 1],
+  [1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+  [1, 1, 0, 0, 0, 0, 0, 0, 1, 1],
+  [1, 1, 0, 0, 0, 0, 0, 0, 1, 1]
+],
+B = [
+  [1, 1, 0, 1, 1, 0, 1, 1, 0, 0],
+  [1, 1, 0, 0, 0, 0, 0, 0, 1, 1],
+  [1, 1, 0, 0, 0, 0, 1, 1, 0, 0],
+  [1, 1, 0, 0, 0, 0, 1, 1, 0, 0],
+  [1, 1, 0, 0, 0, 0, 0, 0, 1, 1],
+  [1, 1, 0, 1, 1, 0, 1, 1, 0, 0]
+],
+C = [
+  [0, 0, 0, 1, 1, 0, 1, 1, 0, 1, 1],
+  [0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0],
+  [1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+  [1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+  [0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0],
+  [0, 0, 0, 1, 1, 0, 1, 1, 0, 1, 1]
+],
+D = [
+  [1, 1, 0, 1, 1, 0, 1, 1, 0, 0, 0],
+  [1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1],
+  [1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1],
+  [1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1],
+  [1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1],
+  [1, 1, 0, 1, 1, 0, 1, 1, 0, 0, 0]
+],
+E = [
+  [1, 1, 0, 1, 1, 0, 1, 1, 0, 1, 1],
+  [1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+  [1, 1, 0, 1, 1, 0, 1, 1, 0, 1, 1],
+  [1, 1, 0, 1, 1, 0, 1, 1, 0, 1, 1],
+  [1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+  [1, 1, 0, 1, 1, 0, 1, 1, 0, 1, 1]
+],
+F = [
+  [1, 1, 0, 1, 1, 0, 1, 1, 0, 1, 1],
+  [1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+  [1, 1, 0, 1, 1, 0, 1, 1, 0, 1, 1],
+  [1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+  [1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+  [1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+],
+G = [
+  [1, 1, 0, 1, 1, 0, 1, 1, 0, 1, 1],
+  [1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+  [1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+  [1, 1, 0, 0, 0, 0, 1, 1, 0, 1, 1],
+  [1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1],
+  [1, 1, 0, 1, 1, 0, 1, 1, 0, 1, 1]
+],
+H = [
+  [1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1],
+  [1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1],
+  [1, 1, 0, 1, 1, 0, 1, 1, 0, 1, 1],
+  [1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1],
+  [1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1],
+  [1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1]
+],
+I = [
+  [1, 1],[1, 1],[1, 1],[1, 1],[1, 1],[1, 1]
+],
+J = [
+  [0, 0, 0, 0, 0, 1, 1],
+  [0, 0, 0, 0, 0, 1, 1],
+  [0, 0, 0, 0, 0, 1, 1],
+  [0, 0, 0, 0, 0, 1, 1],
+  [0, 0, 0, 0, 0, 1, 1],
+  [1, 1, 0, 1, 1, 0, 0]
+],
+K = [
+  [1, 1, 0, 0, 0, 0, 0, 1, 1],
+  [1, 1, 0, 0, 0, 0, 1, 1, 0],
+  [1, 1, 0, 1, 1, 0, 0, 0, 0],
+  [1, 1, 0, 1, 1, 0, 0, 0, 0],
+  [1, 1, 0, 0, 0, 0, 1, 1, 0],
+  [1, 1, 0, 0, 0, 0, 0, 1, 1]
+],
+L = [
+  [1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+  [1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+  [1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+  [1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+  [1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+  [1, 1, 0, 1, 1, 0, 1, 1, 0, 1, 1]
+],
+M = [
+  [1, 1, 0, 1, 1, 0, 0, 0, 1, 1, 0, 1, 1],
+  [1, 1, 0, 0, 1, 1, 0, 1, 1, 0, 0, 1, 1],
+  [1, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 1],
+  [1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1],
+  [1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1],
+  [1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1]
+],
+N = [
+  [1, 1, 1, 1, 0, 0, 0, 0, 1, 1],
+  [1, 1, 0, 1, 1, 0, 0, 0, 1, 1],
+  [1, 1, 0, 0, 1, 1, 0, 0, 1, 1],
+  [1, 1, 0, 0, 0, 1, 1, 0, 1, 1],
+  [1, 1, 0, 0, 0, 0, 1, 1, 1, 1],
+  [1, 1, 0, 0, 0, 0, 0, 1, 1, 1]
+],
+O = [
+  [0, 1, 1, 0, 1, 1, 0, 1, 1, 0],
+  [1, 1, 0, 0, 0, 0, 0, 0, 1, 1],
+  [1, 1, 0, 0, 0, 0, 0, 0, 1, 1],
+  [1, 1, 0, 0, 0, 0, 0, 0, 1, 1],
+  [1, 1, 0, 0, 0, 0, 0, 0, 1, 1],
+  [0, 1, 1, 0, 1, 1, 0, 1, 1, 0]
+],
+P = [
+  [1, 1, 0, 1, 1, 0, 1, 1, 0, 0],
+  [1, 1, 0, 0, 0, 0, 0, 0, 1, 1],
+  [1, 1, 0, 0, 0, 0, 0, 0, 1, 1],
+  [1, 1, 0, 1, 1, 0, 1, 1, 0, 0],
+  [1, 1, 0, 0, 0, 0, 0, 0, 0, 0],
+  [1, 1, 0, 0, 0, 0, 0, 0, 0, 0]
+],
+Q = [
+  [0, 1, 1, 0, 1, 1, 0, 1, 1, 0, 0, 0, 0],
+  [1, 1, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0],
+  [1, 1, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0],
+  [1, 1, 0, 0, 0, 1, 1, 0, 1, 1, 0, 0, 0],
+  [1, 1, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0],
+  [0, 1, 1, 0, 1, 1, 0, 1, 1, 0, 0, 1, 1]
+],
+R = [
+  [1, 1, 0, 1, 1, 0, 1, 1, 0, 0, 0],
+  [1, 1, 0, 0, 0, 0, 0, 0, 1, 1, 0],
+  [1, 1, 0, 0, 0, 0, 0, 0, 1, 1, 0],
+  [1, 1, 0, 1, 1, 1, 1, 1, 0, 0, 0],
+  [1, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0],
+  [1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1]
+],
+S = [
+  [0, 1, 1, 0, 1, 1, 0, 1, 1],
+  [1, 1, 0, 0, 0, 0, 0, 0, 0],
+  [0, 1, 1, 0, 1, 1, 0, 0, 0],
+  [0, 0, 0, 0, 0, 0, 1, 1, 0],
+  [0, 0, 0, 0, 0, 0, 1, 1, 0],
+  [1, 1, 0, 1, 1, 0, 0, 0, 0]
+],
+T = [
+  [1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+  [0, 0, 0, 0, 1, 1, 0, 0, 0, 0],
+  [0, 0, 0, 0, 1, 1, 0, 0, 0, 0],
+  [0, 0, 0, 0, 1, 1, 0, 0, 0, 0],
+  [0, 0, 0, 0, 1, 1, 0, 0, 0, 0],
+  [0, 0, 0, 0, 1, 1, 0, 0, 0, 0]
+],
+U = [
+  [1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1],
+  [1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1],
+  [1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1],
+  [1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1],
+  [1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1],
+  [1, 1, 0, 1, 1, 0, 1, 1, 0, 1, 1]
+],
+V = [
+  [1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1],
+  [1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1],
+  [1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1],
+  [1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1],
+  [0, 1, 1, 0, 0, 0, 0, 0, 1, 1, 0],
+  [0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0]
+],
+W = [
+  [1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1],
+  [1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1],
+  [1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1],
+  [1, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 1],
+  [1, 1, 0, 0, 1, 1, 0, 1, 1, 0, 0, 1, 1],
+  [1, 1, 0, 1, 1, 0, 0, 0, 1, 1, 0, 1, 1]
+],
+X = [
+  [1, 1, 0, 0, 0, 0, 0, 0, 1, 1],
+  [0, 1, 1, 0, 0, 0, 0, 1, 1, 0],
+  [0, 0, 0, 1, 1, 0, 1, 1, 0, 0],
+  [0, 0, 0, 1, 1, 0, 1, 1, 0, 0],
+  [0, 1, 1, 0, 0, 0, 0, 1, 1, 0],
+  [1, 1, 0, 0, 0, 0, 0, 0, 1, 1]
+],
+Y = [
+  [1, 1, 0, 0, 0, 0, 0, 0, 1, 1],
+  [0, 0, 1, 1, 0, 0, 1, 1, 0, 0],
+  [0, 0, 0, 0, 1, 1, 0, 0, 0, 0],
+  [0, 0, 0, 0, 1, 1, 0, 0, 0, 0],
+  [0, 0, 0, 0, 1, 1, 0, 0, 0, 0],
+  [0, 0, 0, 0, 1, 1, 0, 0, 0, 0]
+],
+Z = [
+  [1, 1, 0, 1, 1, 0, 1, 1, 0, 0],
+  [0, 0, 0, 0, 0, 0, 0, 0, 1, 1],
+  [0, 0, 0, 0, 0, 0, 1, 1, 0, 0],
+  [0, 0, 0, 1, 1, 0, 0, 0, 0, 0],
+  [1, 1, 0, 0, 0, 0, 0, 0, 0, 0],
+  [0, 0, 1, 1, 0, 1, 1, 0, 1, 1]
+];
+
+# Metode ekstensi untuk bantuan
+aksi daftar.itu_kosong panjang(gue) itu 0
+aksi daftar.ke ambil indeks gue[indeks]
+aksi angka.bulatin matematika.bulatin_kebawah(gue)
+
+aksi gabung_huruf_matrix ambil daftar_matrix = [], jarak = 2 {
+  kalo daftar_matrix.itu_kosong() balikin []
+  kalo panjang(daftar_matrix) itu 1 balikin daftar_matrix[0]
+
+  isi gabungan = [], pemisah = []
+  tiap baris di daftar_matrix[0] gabungan.tambah(baris)
+  kalo jarak > 0 tiap _ di rentang(jarak) pemisah.tambah(0)
+
+  tiap i di 1 sampai panjang(daftar_matrix) {
+    isi matrix_berikut = daftar_matrix[i]
+    kalo panjang(gabungan) != panjang(matrix_berikut) {
+      lempar Masalah('Matrix tidak memiliki tinggi yang sama.')
+    }
+    tiap j di rentang(panjang(gabungan)) {
+      gabungan[j] = gabungan[j] + pemisah + matrix_berikut[j]
+    }
+  }
+
+  balikin gabungan
+}
+
+# Konfirgurasi animasi
+isi lebar = 120, tinggi = 20
+isi jumlah_partikel   = 500
+isi karakter_partikel = '$'
+isi kecepatan_loop    = 1000
+
+isi teks_1      = gabung_huruf_matrix([S, A, N, T, A, I])
+isi teks_2      = gabung_huruf_matrix([B, R, O])
+isi teks_matrix = gabung_huruf_matrix([teks_1, teks_2], jarak = 5)
+
+# Inisialisasi koordinat target
+isi koordinat_tujuan = []
+isi offset_y  = ((tinggi - panjang(teks_matrix)) / 2).bulatin()
+titip y = 0
+
+tiap baris di teks_matrix {
+  isi offset_x = ((lebar - panjang(baris)) / 2).bulatin()
+  titip x = 0
+  tiap angka di baris {
+    kalo angka itu 1 {
+      koordinat_tujuan.tambah([offset_x + x, offset_y + y])
+    }
+    x = x + 1
+  }
+  y = y + 1
+}
+
+gue peta {}
+isi peta_kolom_indeks_huruf = peta()
+titip indeks_huruf_sekarang = -1
+titip dalam_huruf           = salah
+
+tiap x di rentang(panjang(teks_matrix[0])) {
+  titip ada_karakter = salah
+
+  # Cek apakah karakter di kolom x ini pada baris manapun
+  tiap y di rentang(panjang(teks_matrix)) {
+    kalo teks_matrix[y][x] itu 1 {
+      ada_karakter = benar
+      stop
+    }
+  }
+
+  kalo ada_karakter {
+    # Jika ada karakter dan sebelumnya adalah spasi,
+    # ini adalah huruf baru
+    kalo gak dalam_huruf {
+      dalam_huruf = benar
+      indeks_huruf_sekarang = indeks_huruf_sekarang + 1
+    }
+
+    peta_kolom_indeks_huruf[x] = indeks_huruf_sekarang
+  } yaudah {
+    dalam_huruf = salah
+  }
+}
+
+# Inisialisasi generator angka Pseudo-Acak (LCG)
+titip prng_seed = 1337,
+      prng_a    = 1664525,
+      prng_c    = 1013904223,
+      prng_m    = 2**32
+
+# Inisialisasi Partikel
+isi partikel        = [],
+    partikel_target = [],
+    partikel_warna  = []
+
+tiap i di rentang(jumlah_partikel) {
+  # posisi awal acak untuk partik/el
+  prng_seed = (prng_a * prng_seed + prng_c) % prng_m
+  isi pos_x = prng_seed % lebar
+  prng_seed = (prng_a * prng_seed + prng_c) % prng_m
+  isi pos_y = prng_seed % tinggi
+
+  partikel tambah ([pos_x, pos_y])
+
+  isi target = koordinat_tujuan[i % panjang(koordinat_tujuan)]
+  partikel_target tambah target
+
+  # Warna partikel berdasarkan posisi x dari target
+  isi target_x    = target[0] - ((lebar - panjang(teks_matrix[0])) / 2).bulatin()
+  isi palet_warna = daftar([HIJAU, KUNING, CYAN, MAGENTA, MERAH])
+  isi idx_huruf   = peta_kolom_indeks_huruf[target_x]
+  isi warna       = palet_warna[idx_huruf % panjang(palet_warna)]
+  partikel_warna tambah warna
+}
+
+titip animasi_berjalan = benar
+mumpung animasi_berjalan {
+  animasi_berjalan = salah
+
+  isi grid = []
+  tiap _ di 0 sampai tinggi {
+    isi baris = []
+    tiap _ di 0 sampai lebar
+    baris tambah ' '
+    grid tambah baris
+  }
+
+  tiap i di 0 sampai jumlah_partikel {
+    isi posisi = partikel[i],
+        target = partikel_target[i],
+        warna  = partikel_warna[i]
+    
+    isi sudah_sampai = (posisi[0] == target[0] dan posisi[1] == target[1])
+    kalo sudah_sampai itu gak benar {
+      animasi_berjalan = benar
+      kalo posisi[0]        < target[0] posisi[0] = posisi[0] + 1
+      yaudah kalo posisi[0] > target[0] posisi[0] = posisi[0] - 1
+      yaudah kalo posisi[1] < target[1] posisi[1] = posisi[1] + 1
+      yaudah kalo posisi[1] > target[1] posisi[1] = posisi[1] - 1
+    }
+
+    # Tempatkan partikel di grid dengan warna
+    kalo 0 <= posisi[1]     dan
+         posisi[1] < tinggi dan
+         0 <= posisi[0]     dan
+         posisi[0] < lebar
+    {
+      grid[posisi[1]][posisi[0]] = warna + karakter_partikel + PUTIH
+    }
+  }
+
+  # Gambar frame
+  tulis('\033[H')
+  tiap y di 0 sampai tinggi {
+    tulis(''.gabungin(grid[y]))
+    kalo y < tinggi - 1 {
+      tulis('\n')
+    }
+  }
+  # Jeda animasi
+  # tiap _ di 0 sampai kecepatan_loop {}
+}

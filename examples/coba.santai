@@ -1,7 +1,0 @@
-# SANTAI COBA & TANGKAP
-
-coba {
-  lempar 'Ups!'
-} tangkap kesalahan {
-  spil 'Terjadi kesalahan: ' + kesalahan
-}

@@ -1,0 +1,154 @@
+# Program Sistem Login Sederhana
+# Ditulis menggunakan bahasa pemrograman Santai
+# https://github.com/dikidjatar/santai
+
+isi password_salah           = 'password_salah'
+isi pengguna_tidak_ditemukan = 'pengguna_tidak_ditemukan'
+isi pengguna_sudah_terdaftar = 'pengguna_sudah_terdaftar'
+
+gue Gagal {
+  aksi awal ambil pesan, nama, tipe {
+    gue.pesan = pesan
+    gue.nama = nama
+    gue.tipe = tipe
+  }
+}
+
+gue Pengguna {
+  aksi awal bawa nama, email, password {
+    gue.nama = nama
+    gue.email = email
+    gue.password = password
+  }
+}
+
+gue Database {
+  aksi awal {
+    gue.daftar_pengguna = []
+  }
+
+  aksi tambah_penguna bawa pengguna_baru {
+    gue.daftar_pengguna.tambah(pengguna_baru);
+  }
+
+  aksi ambil_pengguna_dengan_email bawa email {
+    balikin gue.daftar_pengguna.cariin(pengguna -> pengguna.email == email)
+  }
+}
+
+gue Server {
+  aksi awal {
+    gue.database = Database()
+  }
+
+  aksi masuk bawa email, password {
+    isi pengguna = gue.database.ambil_pengguna_dengan_email(email)
+    kalo pengguna itu gak kosong {
+      kalo pengguna.password == password {
+        balikin pengguna
+      }
+      lempar Gagal(
+        pesan = "Password salah",
+        nama  = 'GagalMasuk',
+        tipe  = password_salah
+      )
+    }
+
+    lempar Gagal(
+      pesan = "Pengguna dengan email '{email}' tidak ditemukan",
+      nama  = 'GagalMasuk',
+      tipe  = pengguna_tidak_ditemukan
+    )
+  }
+
+  aksi daftar bawa nama, email, password {
+    isi pengguna_baru = Pengguna(
+      nama     = nama,
+      email    = email,
+      password = password
+    )
+    isi pengguna = gue.database.ambil_pengguna_dengan_email(email);
+    kalo pengguna itu gak kosong {
+      lempar Gagal(
+        pesan = "Pengguna dengan email '{pengguna.email}' sudah terdaftar, silahkan gunakan email yang lain",
+        nama  = 'GagalDaftar',
+        tipe  = pengguna_sudah_terdaftar
+      )
+    }
+    gue.database.tambah_penguna(pengguna_baru);
+    balikin pengguna_baru
+  }
+}
+
+gue Aplikasi {
+  aksi awal {
+    gue.server = Server()
+    gue.pengguna = kosong
+  }
+
+  aksi masuk bawa email = kosong, password = kosong {
+    spil "\n{"=" ulangin 10} APLIKASI - LOGIN {"=" ulangin 10}"
+    kalo email itu kosong email = baca('Masukan email: ').rapiin()
+    kalo password itu kosong password = baca('Masukan password: ').rapiin()
+
+    coba {
+      gue.pengguna = gue.server.masuk(email, password)
+      spil "SELAMAT DATANG {gue.pengguna.nama}, Anda berhasil masuk.\n\n"
+      gue.tampilin_pengguna();
+      gue.tampilin_menu();
+    } tangkap gagal {
+      kalo gagal.nama itu 'GagalMasuk' dan gagal.tipe itu pengguna_tidak_ditemukan {
+        isi tanya_daftar = baca("{gagal.pesan}. Apakah Anda ingin mendaftar? (ya/tidak) ").rapiin()
+        kalo tanya_daftar itu 'ya' gue.daftar()
+      } yaudah lempar gagal
+    }
+  }
+
+  aksi daftar {
+    titip ulangi = benar
+    titip harus_masuk = salah
+    selama ulangi itu benar {
+      spil "\n{"=" ulangin 10} APLIKASI - DAFTAR {"=" ulangin 10}"
+      isi nama     = baca("Masukan nama: ").rapiin()
+      isi email    = baca("Masukan email: ").rapiin()
+      isi password = baca("Masukan password: ").rapiin()
+
+      coba {
+        gue.pengguna = gue.server.daftar(nama, email, password)
+        isi tanya_masuk = baca('Berhasil daftar. Mau langung masuk? (ya/tidak) ').rapiin()
+        harus_masuk = tanya_masuk itu 'ya'
+        stop
+      } tangkap gagal {
+        kalo gagal.nama itu 'GagalDaftar' {
+          ulangi = baca("{gagal.pesan}. Ulangi lagi? (ya/tidak) ").rapiin()
+        } yaudah lempar gagal
+      }
+    }
+
+    kalo harus_masuk gue.masuk(
+      email    = gue.pengguna.email,
+      password = gue.pengguna.password
+    )
+  }
+
+  aksi tampilin_pengguna {
+    spil "{"=" ulangin 10 } APLIKASI - PENGGUNA YANG SEDANG MASUK {"=" ulangin 10}"
+    spil "Nama: {gue.pengguna.nama}
+Email: {gue.pengguna.email}"
+  }
+
+  aksi tampilin_menu {
+    spil "{"=" ulangin 10 } APLIKASI - MENU {"=" ulangin 10}"
+    spil "1. Kirim pesan
+2. Buat postingan
+3. Tambah teman
+4. Buka menu pengaturan
+5. keluar"
+    isi menu = baca("Masukan menu (1/2/3/4/5) ")
+    spil "menu: {menu}"
+  }
+}
+
+isi fb = Aplikasi()
+fb.masuk()
+spil fb
