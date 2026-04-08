@@ -488,10 +488,7 @@ export class Parser {
     const position = this.peekPosition();
     const nameToken = this.next();
 
-    if (
-      nameToken !== TokenValue.kIdentifier &&
-      nameToken !== TokenValue.kAwal
-    ) {
+    if (nameToken !== TokenValue.kIdentifier) {
       this.reportUnexpectedToken(nameToken);
       return undefined;
     }
@@ -529,10 +526,7 @@ export class Parser {
     position: number
   ): Statement | undefined {
     const methodToken = this.next();
-    if (
-      methodToken !== TokenValue.kIdentifier &&
-      methodToken !== TokenValue.kAwal
-    ) {
+    if (methodToken !== TokenValue.kIdentifier) {
       this.reportUnexpectedToken(methodToken);
       return undefined;
     }
@@ -564,7 +558,7 @@ export class Parser {
   }
 
   private parseParameterList(): Parameter[] | undefined {
-    if (!this.check(TokenValue.kAmbil)) {
+    if (!this.check(TokenValue.kLeftParen)) {
       return [];
     }
 
@@ -573,8 +567,7 @@ export class Parser {
 
     do {
       if (this.peek() !== TokenValue.kIdentifier) {
-        this.reportUnexpectedTokenAt(this.scanner.peekLocation(), this.peek());
-        return undefined;
+        break;
       }
 
       this.next();
@@ -595,22 +588,15 @@ export class Parser {
       parameters.push(this.factory.newParameter(variable, defaultValue));
     } while (this.check(TokenValue.kComma));
 
+    this.expect(TokenValue.kRightParen);
     return parameters;
   }
 
   /**
-   * Parse a function body. Accepts either a `{ block }` or a single statement
-   * and normalising the latter into a Block
+   * Parse a function body.
    */
   private parseFunctionBody(): Block | undefined {
-    const body = this.parseStatement();
-    if (!body) return undefined;
-
-    if (body.isBlock()) return body;
-
-    const block = this.factory.newBlock();
-    block.initializeStatements([body]);
-    return block;
+    return this.parseBlock();
   }
 
   parseClassDeclaration(): Statement | undefined {
