@@ -5,13 +5,12 @@
 // The order of imports is not significant because each module registers
 // different name. BuiltinRegistry will throw an error if there are duplicates.
 
-export * from "./io";
-export * from "./inspect";
-export * from "./range";
-export * from "./errors";
-export * from "./functional";
-export * from "./string-methods";
-export * from "./list-methods";
-export * from "./number-methods";
-export * from "./range-methods";
-export * from "./sistem";
+export * from "./builtins-teks";
+export * from "./builtins-angka";
+export * from "./builtins-daftar";
+export * from "./builtins-rentang";
+
+export * from "./builtins-io";
+export * from "./builtins-global-functional";
+export * from "./builtins-global-class";
+export * from "./builtins-sistem";

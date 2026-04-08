@@ -1,8 +1,19 @@
 // Copyright (c) [2025-2026] [Diki Djatar]
 // SPDX-License-Identifier: MIT
 
+import { assert } from "../base/asserts";
 import { Factory, SantaiObject } from "../objects/object";
 import { arg, defineGlobalFunction } from "./builtin";
+import { optional, required } from "./paramSpec";
+
+defineGlobalFunction(
+  "panjang",
+  (self, args) => {
+    assert(!self);
+    return Factory.NewNumber(args[0].getLength());
+  },
+  [required("nilai")]
+);
 
 defineGlobalFunction("saring", (_, args, callsite) => {
   const iterable = arg(args, 0);
@@ -47,3 +58,13 @@ defineGlobalFunction("olah", (_, args, callsite) => {
 
   return Factory.NewList(result);
 });
+
+defineGlobalFunction(
+  "daftar_metode",
+  (self, args) => {
+    assert(!self);
+    const names = args[0].dir();
+    return Factory.NewList(names.map((name) => Factory.NewString(name)));
+  },
+  [optional("objek", Factory.Kosong)]
+);
