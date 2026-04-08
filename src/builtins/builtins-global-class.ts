@@ -152,7 +152,7 @@ const tipe: ClassArg = [
 ];
 const angka: ClassArg = ["angka", SantaiType.kNumber, Angka];
 const teks: ClassArg = ["teks", SantaiType.kString, Teks];
-const logika: ClassArg = ["logika", SantaiType.kBoolen, Logika];
+const logika: ClassArg = ["logika", SantaiType.kBoolean, Logika];
 const daftar: ClassArg = ["daftar", SantaiType.kList, Daftar];
 const rentang: ClassArg = ["rentang", SantaiType.kRange, Rentang];
 const masalah: ClassArg = ["masalah", SantaiType.kError, Masalah];

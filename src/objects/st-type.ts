@@ -3,7 +3,7 @@
 
 export const enum SantaiType {
   kKosong,
-  kBoolen,
+  kBoolean,
   kNumber,
   kString,
   kFunction,

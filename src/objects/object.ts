@@ -42,7 +42,7 @@ export abstract class SantaiObject {
     return this.type === SantaiType.kKosong;
   }
   isBoolean(): this is SantaiBoolean {
-    return this.type === SantaiType.kBoolen;
+    return this.type === SantaiType.kBoolean;
   }
   isNumber(): this is SantaiNumber {
     return this.type === SantaiType.kNumber;
@@ -144,7 +144,7 @@ export class SantaiBoolean extends SantaiObject {
   }
 
   private constructor(readonly value: boolean) {
-    super(SantaiType.kBoolen);
+    super(SantaiType.kBoolean);
   }
 
   override isTruthy(): boolean {
