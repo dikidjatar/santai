@@ -14,3 +14,4 @@ export * from "./builtins-io";
 export * from "./builtins-global-functional";
 export * from "./builtins-global-class";
 export * from "./builtins-sistem";
+export * from "./builtins-matematika";

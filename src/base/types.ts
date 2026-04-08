@@ -5,6 +5,10 @@ export function isNumber(value: unknown): value is number {
   return typeof value === "number";
 }
 
+export function isString(value: unknown): value is string {
+  return typeof value === "string";
+}
+
 /**
  * @returns whether the provided parameter is of type `object` but **not**
  *	`null`, an `array`, a `regexp`, nor a `date`.
