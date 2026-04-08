@@ -348,7 +348,7 @@ class ListIterator extends SantaiIterator {
 export class SantaiList extends SantaiObject {
   override typeName: string = "daftar";
 
-  get elements(): SantaiObject[] {
+  get elements(): readonly SantaiObject[] {
     return this._elements;
   }
 
@@ -358,6 +358,26 @@ export class SantaiList extends SantaiObject {
 
   override getLength(): number {
     return this.elements.length;
+  }
+
+  push(...items: SantaiObject[]): number {
+    return this._elements.push(...items);
+  }
+
+  remove(index: number): SantaiObject {
+    if (index < 0 || index >= this._elements.length) {
+      return Factory.Kosong;
+    }
+    return this._elements.splice(index, 1)[0];
+  }
+
+  clear(): void {
+    this._elements.splice(0, this._elements.length);
+  }
+
+  reverse(): this {
+    this._elements.reverse();
+    return this;
   }
 
   override inspect(): string {
