@@ -3,6 +3,7 @@
 
 import { assert, assertDefined } from "../base/asserts";
 import {
+  CallSite,
   Factory,
   GlobalMethodParam,
   SantaiList,
@@ -17,16 +18,20 @@ const methods = new MethodTable();
 
 function define(
   name: string,
-  fn: (self: SantaiList, args: SantaiObject[]) => SantaiObject,
+  fn: (
+    self: SantaiList,
+    args: SantaiObject[],
+    callsite: CallSite
+  ) => SantaiObject,
   params?: readonly GlobalMethodParam[]
 ) {
   methods.define(
     name,
-    (self, args) => {
+    (self, args, callsite) => {
       assertDefined(self);
       assert(self.isList());
 
-      return fn(self, args);
+      return fn(self, args, callsite);
     },
     params
   );
@@ -102,6 +107,20 @@ define(
     return Factory.NewList(result);
   },
   []
+);
+
+define(
+  "cariin",
+  (self, args, callsite) => {
+    const fn = args[0];
+    if (!Factory.IsCallable(fn)) return Factory.Kosong;
+    const elememts: readonly SantaiObject[] = self.elements;
+    const result = elememts.find((element) => {
+      return callsite.invoke(fn, [element]).isTruthy();
+    });
+    return result ? result : Factory.Kosong;
+  },
+  [required("aksi_cari")]
 );
 
 methods.registerFor(SantaiType.kList);
