@@ -86,6 +86,10 @@ export abstract class SantaiObject {
     return lookupProperty(this.type, name, this) as SantaiObject | undefined;
   }
 
+  setProperty(_name: string, _value: SantaiObject): boolean {
+    return false;
+  }
+
   getSubscript(_obj: SantaiObject): SantaiObject | undefined {
     return undefined;
   }
@@ -617,8 +621,9 @@ export class SantaiInstance extends SantaiObject {
     return this.clazz;
   }
 
-  setProperty(name: string, value: SantaiObject): void {
+  override setProperty(name: string, value: SantaiObject): boolean {
     this._properties.set(name, value);
+    return true;
   }
 
   override setSubscript(obj: SantaiObject, value: SantaiObject): boolean {
