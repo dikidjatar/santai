@@ -568,7 +568,7 @@ export class SantaiClass extends SantaiObject {
     for (const method of methods) {
       map.set(method.name, method);
       //TODO: check constructor automatically
-      if (method.name === "awal") {
+      if (method.name === "__awal__") {
         ctor = method;
       }
     }
