@@ -706,7 +706,7 @@ export class Interpreter extends AstVisitor<SantaiObject> implements CallSite {
       if (propertyKey.isLiteral() && propertyKey.isStringLiteral()) {
         const propertyName = propertyKey.asStringLiteral();
 
-        if (!obj.isInstance()) {
+        if (!obj.setProperty(propertyName, value)) {
           this.reportAndThrow(
             target,
             MessageTemplate.kCannotSetProperty,
@@ -715,7 +715,6 @@ export class Interpreter extends AstVisitor<SantaiObject> implements CallSite {
           );
         }
 
-        obj.setProperty(propertyName, value);
         return true;
       } else {
         const keyObj = this.evaluate(propertyKey);
