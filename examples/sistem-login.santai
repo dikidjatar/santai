@@ -7,7 +7,7 @@ isi pengguna_tidak_ditemukan = 'pengguna_tidak_ditemukan'
 isi pengguna_sudah_terdaftar = 'pengguna_sudah_terdaftar'
 
 gue Gagal {
-  aksi awal ambil pesan, nama, tipe {
+  aksi __awal__(gue, pesan, nama, tipe) {
     gue.pesan = pesan
     gue.nama = nama
     gue.tipe = tipe
@@ -15,7 +15,7 @@ gue Gagal {
 }
 
 gue Pengguna {
-  aksi awal bawa nama, email, password {
+  aksi __awal__(gue, nama, email, password) {
     gue.nama = nama
     gue.email = email
     gue.password = password
@@ -23,25 +23,25 @@ gue Pengguna {
 }
 
 gue Database {
-  aksi awal {
+  aksi __awal__(gue) {
     gue.daftar_pengguna = []
   }
 
-  aksi tambah_penguna bawa pengguna_baru {
+  aksi tambah_penguna(gue, pengguna_baru) {
     gue.daftar_pengguna.tambah(pengguna_baru);
   }
 
-  aksi ambil_pengguna_dengan_email bawa email {
+  aksi ambil_pengguna_dengan_email(gue, email) {
     balikin gue.daftar_pengguna.cariin(pengguna -> pengguna.email == email)
   }
 }
 
 gue Server {
-  aksi awal {
+  aksi __awal__(gue) {
     gue.database = Database()
   }
 
-  aksi masuk bawa email, password {
+  aksi masuk(gue, email, password) {
     isi pengguna = gue.database.ambil_pengguna_dengan_email(email)
     kalo pengguna itu gak kosong {
       kalo pengguna.password == password {
@@ -61,7 +61,7 @@ gue Server {
     )
   }
 
-  aksi daftar bawa nama, email, password {
+  aksi daftar(gue, nama, email, password) {
     isi pengguna_baru = Pengguna(
       nama     = nama,
       email    = email,
@@ -81,12 +81,12 @@ gue Server {
 }
 
 gue Aplikasi {
-  aksi awal {
+  aksi __awal__(gue) {
     gue.server = Server()
     gue.pengguna = kosong
   }
 
-  aksi masuk bawa email = kosong, password = kosong {
+  aksi masuk(gue, email = kosong, password = kosong) {
     spil "\n{"=" ulangin 10} APLIKASI - LOGIN {"=" ulangin 10}"
     kalo email itu kosong email = baca('Masukan email: ').rapiin()
     kalo password itu kosong password = baca('Masukan password: ').rapiin()
@@ -104,7 +104,7 @@ gue Aplikasi {
     }
   }
 
-  aksi daftar {
+  aksi daftar(gue) {
     titip ulangi = benar
     titip harus_masuk = salah
     selama ulangi itu benar {
@@ -131,13 +131,13 @@ gue Aplikasi {
     )
   }
 
-  aksi tampilin_pengguna {
+  aksi tampilin_pengguna(gue) {
     spil "{"=" ulangin 10 } APLIKASI - PENGGUNA YANG SEDANG MASUK {"=" ulangin 10}"
     spil "Nama: {gue.pengguna.nama}
 Email: {gue.pengguna.email}"
   }
 
-  aksi tampilin_menu {
+  aksi tampilin_menu(gue) {
     spil "{"=" ulangin 10 } APLIKASI - MENU {"=" ulangin 10}"
     spil "1. Kirim pesan
 2. Buat postingan
