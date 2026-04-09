@@ -329,7 +329,6 @@ export interface ClassMethod {
   readonly name: string;
   readonly params: readonly Parameter[];
   readonly body: Block;
-  readonly isConstructor: boolean;
   readonly position: number;
 }
 
@@ -340,14 +339,6 @@ export class ClassDeclaration extends Declaration {
     position: number
   ) {
     super(NodeType.kClassDeclaration, position);
-  }
-
-  getConstructor(): ClassMethod | undefined {
-    return this.methods.find((method) => method.isConstructor);
-  }
-
-  getInstanceMethods(): ClassMethod[] {
-    return this.methods.filter((method) => !method.isConstructor);
   }
 }
 

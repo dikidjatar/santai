@@ -625,9 +625,6 @@ export class Parser {
         return undefined;
       }
 
-      const ahead = this.scanner.peekAhead();
-      const isConstructor = ahead === TokenValue.kAwal;
-
       const fn = this.parseFunctionDeclaration();
       if (!fn || !fn.isFunctionDeclaration()) {
         return undefined;
@@ -635,7 +632,6 @@ export class Parser {
 
       const method = {
         name: fn.variable()!.name,
-        isConstructor,
         body: fn.body,
         params: fn.params,
         position: fn.position,
