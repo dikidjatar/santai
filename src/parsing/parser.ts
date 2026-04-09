@@ -566,7 +566,8 @@ export class Parser {
     let seenDefault = false;
 
     do {
-      if (this.peek() !== TokenValue.kIdentifier) {
+      const peek = this.peek();
+      if (peek !== TokenValue.kIdentifier && peek !== TokenValue.kGue) {
         break;
       }
 
@@ -1007,9 +1008,7 @@ export class Parser {
       case TokenValue.kLeftBracket:
         return this.parseList();
       case TokenValue.kGue: {
-        const position = this.position();
         const context = this.currentClassContext;
-
         this.next();
 
         if (isUndefined(context)) {
@@ -1018,7 +1017,10 @@ export class Parser {
           return undefined;
         }
 
-        return this.factory.newThisExpression(context.className, position);
+        return this.factory.newVariableExpression(
+          this.currentLiteral(),
+          this.position()
+        );
       }
       // FuncionLiteral :
       //    'ambil' Identifier ':' Expression

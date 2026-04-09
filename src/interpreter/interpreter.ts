@@ -29,7 +29,6 @@ import {
   ReturnStatement,
   Statement,
   TemplateLiteral,
-  ThisExpression,
   ThrowStatement,
   TryStatement,
   UnaryOp,
@@ -67,17 +66,6 @@ import { makeLocation, ScannerLocation } from "../parsing/scanner";
 import { Token, TokenValue } from "../parsing/token";
 import { ServiceContainer } from "../runtime/serviceContainer";
 import { Environment, VariableSlot } from "./environment";
-
-/**
- * The implicit slot name in the Environment for the receiver (`gue`).
- * Declared by `callFunction` when the class method is called.
- *
- * The parser already guarantees that `ThisExpression` only appears inside
- * class method — so that `visitThisExpression` can be looked up directly
- * without needing to check context. `GUE_SLOT` is still needed because of the interpreter
- * which places the value in the environment, not the parser.
- */
-const GUE_SLOT = "__gue__" as const;
 
 class ReturnSignal extends Signal<ReturnStatement> {
   constructor(
@@ -281,8 +269,6 @@ export class Interpreter extends AstVisitor<SantaiObject> implements CallSite {
         return this.visitExtensionFunctionDeclaration(node);
       case node.isProperty():
         return this.visitProperty(node);
-      case node.isThisExpression():
-        return this.visitThisExpression(node);
       case node.isFunctionLiteral():
         return this.visitFunctionLiteral(node);
       case node.isEmptyParentheses():
@@ -509,18 +495,6 @@ export class Interpreter extends AstVisitor<SantaiObject> implements CallSite {
     }
 
     return Factory.Kosong;
-  }
-
-  override visitThisExpression(_node: ThisExpression): SantaiObject {
-    const receiver = this.env.get(GUE_SLOT);
-
-    if (receiver !== undefined) {
-      return receiver;
-    }
-
-    // It should never have gotten here
-    // if the parser was working correctly.
-    unreachable();
   }
 
   override visitFunctionLiteral(node: FunctionLiteral): SantaiObject {
@@ -1010,7 +984,14 @@ export class Interpreter extends AstVisitor<SantaiObject> implements CallSite {
     node: AstNode
   ): SantaiObject {
     const resolved = this.resolveUserParams(fn.parameters, fn.closure);
-    const bound = this.bindArguments(fn.name, resolved, args, node);
+    const bound = this.bindArguments(
+      fn.name,
+      resolved,
+      !isUndefined(fn.boundThis)
+        ? [{ evaluatedValue: fn.boundThis }, ...args]
+        : args,
+      node
+    );
     if (!bound) return Factory.Kosong;
 
     const fnEnv = Environment.new(fn.closure);
@@ -1024,13 +1005,6 @@ export class Interpreter extends AstVisitor<SantaiObject> implements CallSite {
           params[i]!.name
         );
       }
-    }
-
-    // If method boundThis exists, declare `__gue__` in this frame.
-    // The variable is created by kConst so that it cannot be reassigned from Santai code.
-    if (!isUndefined(fn.boundThis)) {
-      const gueVar = new Variable(GUE_SLOT, VariableMode.kConst);
-      fnEnv.declare(gueVar, fn.boundThis);
     }
 
     this.callStack.push({
