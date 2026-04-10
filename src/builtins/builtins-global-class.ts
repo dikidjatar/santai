@@ -57,10 +57,10 @@ function Angka(args: SantaiObject[]): SantaiObject {
 
   if (obj.isString()) {
     const n = Number(obj.value.trim());
-    return Factory.NewNumber(isNaN(n) ? 0 : n);
+    return Factory.NewNumber(isNaN(n) ? -1 : n);
   }
 
-  return Factory.NewNumber(0);
+  return Factory.NewNumber(-1);
 }
 
 function Teks(args: SantaiObject[]): SantaiObject {
