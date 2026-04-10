@@ -1,0 +1,22 @@
+# Program Tabel Angka Matematika
+# Ditulis menggunakan bahasa pemrograman Santai
+# https://github.com/dikidjatar/santai
+
+titip x = 0
+tiap i di 0 sampai 10 {
+  tulis '|'
+  tiap j di 0 sampai 10 {
+    isi hasil = i + j
+    kalo i == j {
+      tulis("\033[92m{hasil}\033[90m")
+    } yaudah {
+      tulis("{hasil}")
+    }
+    kalo i > j {
+      tulis '  '
+    } yaudah {
+      tulis '   '
+    }
+  }
+  tulis '|\n'
+}

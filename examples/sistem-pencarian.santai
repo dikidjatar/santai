@@ -1,0 +1,48 @@
+# Program Sistem Pencarian Sederhana
+# Ditulis menggunakan bahasa pemrograman Santai
+# https://github.com/dikidjatar/santai
+
+isi HIJAU   = "\033[92m"
+isi PUTIH   = "\033[0m"
+
+gue MesinPencarian {
+  aksi __awal__(gue, data) {
+    gue.data = data
+    gue.hasil_pencarian = []
+  }
+
+  aksi cari(gue, kata_kunci) {
+    kata_kunci = kata_kunci.kecilin()
+    tiap data di gue.data {
+      kalo data.kecilin() berisi kata_kunci {
+        isi posisi_awal = data.kecilin().posisi(kata_kunci)
+        isi part_1 = data.subteks(0, posisi_awal)
+        isi highlight = data.subteks(posisi_awal, posisi_awal + panjang(kata_kunci))
+        isi part_2 = data.subteks(posisi_awal + panjang(kata_kunci))
+        isi hasil = "{part_1}{HIJAU}{highlight}{PUTIH}{part_2}"
+        gue.hasil_pencarian.tambah(hasil)
+      }
+    }
+  }
+
+  aksi tampilkan_hasil_pencarian(gue) {
+    spil "{"=" ulangin 10} HASIL PENCARIAN {"=" ulangin 10}"
+    isi jumlah_hasil = panjang(gue.hasil_pencarian)
+    kalo jumlah_hasil > 0
+      spil "ditemukan ({panjang(gue.hasil_pencarian)}) hasil:"
+    yaudah
+      spil "Tidak ada hasil ditemukan"
+      
+    tiap hasil di gue.hasil_pencarian {
+      spil "- {hasil}"
+    }
+  }
+}
+
+isi data = [
+  'Apel', 'Pisang', 'Mangga', 'Stroberi',
+  'Pepaya', 'Pir', 'Ceri'
+]
+isi pencarian = MesinPencarian(data)
+pencarian.cari('ri')
+pencarian.tampilkan_hasil_pencarian()
