@@ -140,5 +140,23 @@ define(
   },
   [required("iterable")]
 );
+define(
+  "posisi",
+  (value, args) => {
+    const searchString = args[0].inspect();
+    const position = args[1].isNumber() ? args[1].value : undefined;
+    return Factory.NewNumber(value.indexOf(searchString, position));
+  },
+  [required("teks"), optional("posisi", Factory.Kosong)]
+);
+define(
+  "subteks",
+  (value, args) => {
+    const start = args[0].isNumber() ? args[0].value : 0;
+    const end = args[1].isNumber() ? args[1].value : undefined;
+    return Factory.NewString(value.substring(start, end));
+  },
+  [required("mulai"), optional("akhir", Factory.Kosong)]
+);
 
 stringMethod.registerFor(SantaiType.kString);
