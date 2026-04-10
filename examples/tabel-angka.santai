@@ -2,21 +2,48 @@
 # Ditulis menggunakan bahasa pemrograman Santai
 # https://github.com/dikidjatar/santai
 
-titip x = 0
-tiap i di 0 sampai 10 {
-  tulis '|'
-  tiap j di 0 sampai 10 {
-    isi hasil = i + j
-    kalo i == j {
-      tulis("\033[92m{hasil}\033[90m")
-    } yaudah {
-      tulis("{hasil}")
-    }
-    kalo i > j {
-      tulis '  '
-    } yaudah {
-      tulis '   '
-    }
-  }
-  tulis '|\n'
+isi N = 10
+
+aksi gambar_garis(awal, tengah, akhir = '') {
+  tulis awal
+  tiap k di 0 sampai N
+    kalo tipe(tengah) itu teks
+      tulis tengah
+    yaudah
+      tulis(tengah(k))
+  tulis akhir + '\n'
 }
+
+aksi angka.sel(gue) {
+  kalo gue < N
+    balikin " {gue} "
+  balikin "{gue} "
+}
+
+gambar_garis('┌───', '┬───', '┐')
+gambar_garis('│ + │', n -> n.sel() + '│')
+gambar_garis('├───', '┼───', '┤')
+
+tiap i di 0 sampai N {
+  tulis("│{i.sel()}│")
+  
+  tiap j di 0 sampai N {
+    isi hasil = i + j
+    
+    kalo i == j
+      tulis "\033[92m"
+
+    tulis(hasil.sel())
+
+    kalo i == j
+      tulis "\033[0m"
+
+    tulis "│"
+  }
+  tulis "\n"
+
+  kalo i < N - 1
+    gambar_garis('├───', '┼───', '┤')
+}
+
+gambar_garis('└───', '┴───', '┘')
