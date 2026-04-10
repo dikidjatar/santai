@@ -565,7 +565,8 @@ export class Interpreter extends AstVisitor<SantaiObject> implements CallSite {
 
   override visitBlock(node: Block): SantaiObject {
     const blockEnv = Environment.new(this.env);
-    return this.evaluateStatements(node.statements(), blockEnv);
+    this.evaluateStatements(node.statements(), blockEnv);
+    return Factory.Kosong;
   }
 
   override visitReturnStatement(node: ReturnStatement): SantaiObject {
@@ -1012,7 +1013,8 @@ export class Interpreter extends AstVisitor<SantaiObject> implements CallSite {
     });
 
     try {
-      return this.evaluateStatements(fn.body.statements(), fnEnv);
+      this.evaluateStatements(fn.body.statements(), fnEnv);
+      return Factory.Kosong;
     } catch (signal) {
       if (isReturnSignal(signal)) {
         return signal.value;
@@ -1157,20 +1159,17 @@ export class Interpreter extends AstVisitor<SantaiObject> implements CallSite {
   private evaluateStatements(
     statements: readonly Statement[],
     env: Environment
-  ): SantaiObject {
+  ): void {
     const previousEnv = this.env;
     this.env = env;
-    let result: SantaiObject = Factory.Kosong;
 
     try {
       for (const statement of statements) {
-        result = this.evaluate(statement);
+        this.evaluate(statement);
       }
     } finally {
       this.env = previousEnv;
     }
-
-    return result;
   }
 
   reportAndThrow(
