@@ -83,7 +83,6 @@ function isInfixArgStart(token: TokenValue): boolean {
     case TokenValue.kKosongLiteral:
     case TokenValue.kIdentifier:
     case TokenValue.kLeftParen: // allows: x method (a + b)
-    case TokenValue.kGue:
       return true;
     default:
       return false;
@@ -1305,7 +1304,9 @@ export class Parser {
     return (
       this.peek() === TokenValue.kIdentifier &&
       !this.scanner.hasLineTerminator() &&
-      isInfixArgStart(this.scanner.peekAhead())
+      (isInfixArgStart(this.scanner.peekAhead()) ||
+        (this.scanner.peekAhead() === TokenValue.kGue &&
+          !isUndefined(this.currentClassContext)))
     );
   }
 
