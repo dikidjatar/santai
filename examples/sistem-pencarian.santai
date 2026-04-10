@@ -2,47 +2,209 @@
 # Ditulis menggunakan bahasa pemrograman Santai
 # https://github.com/dikidjatar/santai
 
-isi HIJAU   = "\033[92m"
-isi PUTIH   = "\033[0m"
+# Warna-warna
+isi H   = "\033[92m" # Hijau
+isi K   = "\033[93m" # Kuning
+isi MA  = "\033[95m" # Magenta
+isi M   = "\033[91m" # Merah
+isi A   = "\033[90m" # Abu-abu
+isi P   = "\033[0m"  # Putih
 
-gue MesinPencarian {
-  aksi __awal__(gue, data) {
-    gue.data = data
-    gue.hasil_pencarian = []
+isi Data = tipe(teks)
+
+# Aksi-aksi ekstensi sebagai bantuan
+aksi jumlah(item) { balikin panjang(item) }
+aksi teks.garis(gue, jumlah = 10) { balikin gue ulangin jumlah }
+aksi teks.nya(gue, nilai) { balikin gue.kecilin() itu teks(nilai).kecilin() }
+aksi daftar.ambilin(gue, menu) {
+  titip indeks = menu;
+  kalo tipe(menu) itu teks {
+    indeks = angka(menu)
+  }
+  isi hasil = gue[indeks]
+  kalo hasil itu kosong balikin teks(menu)
+  balikin hasil
+}
+
+gue BasisData {
+  aksi __awal__(gue, nama, simbol = '🖥️') {
+    gue.nama = nama
+    gue.simbol = simbol
+    gue.data = []
   }
 
-  aksi cari(gue, kata_kunci) {
-    kata_kunci = kata_kunci.kecilin()
-    tiap data di gue.data {
-      kalo data.kecilin() berisi kata_kunci {
-        isi posisi_awal = data.kecilin().posisi(kata_kunci)
-        isi part_1 = data.subteks(0, posisi_awal)
-        isi highlight = data.subteks(posisi_awal, posisi_awal + panjang(kata_kunci))
-        isi part_2 = data.subteks(posisi_awal + panjang(kata_kunci))
-        isi hasil = "{part_1}{HIJAU}{highlight}{PUTIH}{part_2}"
+  aksi tambah(gue, data) {
+    kalo tipe(data) itu daftar {
+      tiap item di data {
+        gue.cek_tipe_data(item)
+        gue.data.tambah(item)
+      }
+      balikin
+    }
+    gue.cek_tipe_data(data)
+    gue.data.tambah(data)
+  }
+
+  aksi cek_tipe_data(gue, data) {
+    kalo tipe(data) itu gak Data {
+      lempar Masalah("Data dengan tipe '{tipe(data)}' tidak didukung")
+    }
+  }
+}
+
+gue MesinPencarian {
+  aksi __awal__(gue) {
+    gue.basis_data = []
+    gue.hasil_pencarian = []
+    gue.kata_kunci = ''
+    gue.menu_awal = ['keluar', 'basis data', 'pencarian']
+  }
+
+  aksi mulai(gue) {
+    gue.tampilin_menu_awal()
+  }
+
+  aksi tampilin_menu_awal(gue) {
+    gue.judul("MESIN PENCARIAN")
+    tiap nomor di 0 sampai jumlah(gue.menu_awal) {
+      spil "{A}({nomor}){P} {gue.menu_awal[nomor]}"
+    }
+    isi menu = gue.tanya(" > Pilih menu: ")
+    gue.eksekusi_menu_awal(gue.menu_awal ambilin menu)
+  }
+
+  aksi eksekusi_menu_awal(gue, menu) {
+    kalo menu nya 'keluar' {
+      gue.keluar()
+    } yaudah kalo menu nya 'basis data' {
+      gue.tampilin_basis_data()
+    } yaudah kalo menu nya 'pencarian' {
+      gue.tampilin_menu_pencarian();
+    } yaudah {
+      gue.kesalahan("\nMenu yang Anda masukan salah: {menu}\n")
+    }
+    
+    gue.tampilin_menu_awal()
+  }
+
+  aksi tampilin_basis_data(gue, judul = "BASIS DATA") {
+    kalo panjang(gue.basis_data) > 0 {
+      gue.judul(judul)
+      tiap nomor di 0 sampai jumlah(gue.basis_data) {
+        isi data = gue.basis_data[nomor]
+        spil "{A}({nomor}){P} {data.nama} {data.simbol}"
+      }
+    } yaudah {
+      gue.peringatan("\nTIdak ada basis data yang ditemukan\n")
+    }
+  }
+
+  aksi tampilin_menu_pencarian(gue) {
+    kalo jumlah(gue.basis_data) itu 0 {
+      gue.kesalahan("\nTidak ada basis data untuk dicari\n")
+      balikin
+    }
+    gue.kosongin_hasil_pencarian()
+    gue.reset_kata_kunci()
+    gue.tampilin_basis_data(judul = "PENCARIAN - PILIH BASIS DATA")
+    isi nomor_basis_data = angka(gue.tanya(" > Pilih basis data untuk dicari: "))
+    isi basis_data = gue.basis_data[nomor_basis_data]
+    kalo basis_data itu kosong {
+      gue.kesalahan("\nBasis data yang Anda masukan tidak sesuai: {nomor_basis_data}\n")
+      balikin
+    }
+
+    isi kata_kunci = gue.tanya(" > Kata kunci: ")
+    gue.kata_kunci = kata_kunci;
+    gue.cariin(basis_data, kata_kunci)
+    gue.tampilin_hasil_pencarian()
+  }
+
+  aksi cariin(gue, basis_data, kata_kunci) {
+    isi kata_kunci_kecil = kata_kunci.kecilin()
+    tiap data di basis_data.data {
+      kalo data.kecilin() berisi kata_kunci_kecil {
+        isi posisi_awal = data.kecilin().posisi(kata_kunci_kecil)
+        isi part_1      = data.subteks(0, posisi_awal)
+        isi sorotan     = data.subteks(posisi_awal, posisi_awal + panjang(kata_kunci_kecil))
+        isi part_2      = data.subteks(posisi_awal + panjang(kata_kunci_kecil))
+        isi hasil       = "{part_1}{H}{sorotan}{P}{part_2}"
         gue.hasil_pencarian.tambah(hasil)
       }
     }
   }
 
-  aksi tampilkan_hasil_pencarian(gue) {
-    spil "{"=" ulangin 10} HASIL PENCARIAN {"=" ulangin 10}"
+  aksi tampilin_hasil_pencarian(gue) {
+    gue.judul("HASIL PENCARIAN");
     isi jumlah_hasil = panjang(gue.hasil_pencarian)
     kalo jumlah_hasil > 0
       spil "ditemukan ({panjang(gue.hasil_pencarian)}) hasil:"
-    yaudah
-      spil "Tidak ada hasil ditemukan"
-      
+    yaudah {
+      spil "Tidak ada hasil ditemukan dengan kata kunci: {gue.kata_kunci}"
+      spil "Coba cari menggunakan kata kunci yang lain"
+    }
+
     tiap hasil di gue.hasil_pencarian {
       spil "- {hasil}"
     }
   }
+
+  aksi kosongin_hasil_pencarian(gue) {
+    kalo jumlah(gue.hasil_pencarian) > 0 {
+      gue.hasil_pencarian.kosongin()
+    }
+  }
+
+  aksi reset_kata_kunci(gue) {
+    gue.kata_kunci = '';
+  }
+
+  aksi tambah_basis_data(gue, basis_data) {
+    gue.basis_data tambah basis_data
+  }
+
+  aksi tanya(gue, pesan) {
+    balikin baca(pesan).rapiin()
+  }
+
+  aksi judul(gue, judul) {
+    spil "=".garis(10) + " {judul} " + "=".garis(10)
+  }
+
+  aksi kesalahan(gue, pesan) {
+    spil "{M}{pesan}{P}"
+  }
+
+  aksi peringatan(gue, pesan) {
+    spil "{K}{pesan}{P}"
+  }
+
+  aksi keluar(gue, pesan = "Bye😼") {
+    spil "{H}{pesan}"
+    sistem.keluar(0)
+  }
 }
 
-isi data = [
-  'Apel', 'Pisang', 'Mangga', 'Stroberi',
-  'Pepaya', 'Pir', 'Ceri'
-]
-isi pencarian = MesinPencarian(data)
-pencarian.cari('ri')
-pencarian.tampilkan_hasil_pencarian()
+isi data_buah  = BasisData(nama = 'Buah',  simbol = '🍎')
+isi data_orang = BasisData(nama = 'Orang', simbol = '👥')
+isi data_bunga = BasisData(nama = 'Bunga', simbol = '🍀')
+
+data_buah tambah ([
+  'Apel', 'Pisang', 'Pepaya', 'Pir', 'Ceri', 'Delima',
+  'Mangga', 'Nangka', 'Jeruk', 'Alpukat'
+])
+data_orang tambah ([
+  'Amelia', 'Tasya', 'Sarah', 'Mia', 'Ayu', 'Rahayu',
+  'Doni', 'Stamet', 'Tilly', 'Budi', 'Angga', 'Beni',
+  'Arka', 'Evan', 'Susi', 'Lia', 'Andini', 'Ayumi'
+])
+data_bunga tambah ([
+  'Lily', 'Mawar', 'Matahari', 'Melati'
+])
+
+isi mesin_pencarian = MesinPencarian()
+mesin_pencarian tambah_basis_data data_buah
+mesin_pencarian tambah_basis_data data_orang
+mesin_pencarian tambah_basis_data data_bunga
+
+mesin_pencarian.mulai()
