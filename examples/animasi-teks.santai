@@ -216,9 +216,9 @@ Z = [
 ];
 
 # Metode ekstensi untuk bantuan
-aksi daftar.itu_kosong(gue) { panjang(gue) itu 0 }
-aksi daftar.ke(gue, indeks) { gue[indeks] }
-aksi angka.bulatin(gue) { matematika.bulatin_kebawah(gue) }
+aksi daftar.itu_kosong(gue) { balikin panjang(gue) itu 0 }
+aksi daftar.ke(gue, indeks) { balikin gue[indeks] }
+aksi angka.bulatin(gue) { balikin matematika.bulatin_kebawah(gue) }
 
 aksi gabung_huruf_matrix(daftar_matrix = [], jarak = 2) {
   kalo daftar_matrix.itu_kosong() balikin []

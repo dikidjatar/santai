@@ -10,7 +10,7 @@ isi M   = "\033[91m" # Merah
 isi A   = "\033[90m" # Abu-abu
 isi P   = "\033[0m"  # Putih
 
-isi Data = tipe(teks)
+isi Data = tipe(teks())
 
 # Aksi-aksi ekstensi sebagai bantuan
 aksi jumlah(item) { balikin panjang(item) }
