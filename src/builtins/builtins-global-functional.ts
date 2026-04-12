@@ -2,46 +2,39 @@
 // SPDX-License-Identifier: MIT
 
 import { MessageTemplate } from "../base/messageTemplate";
-import { isUndefined } from "../base/types";
-import { Factory, SantaiFunction, SantaiObject } from "../objects/object";
+import { Factory, SantaiObject } from "../objects/object";
 import { ObjectUtil } from "../objects/object-util";
 import { SpecialName } from "../objects/specialNames";
+import { evaluateSpecialMethod } from "./builtin-util";
 import { defineGlobal } from "./globalProvider";
 import { required } from "./paramSpec";
 
 defineGlobal("panjang", () => {
   return Factory.NewBuiltinFunction(
     "panjang",
-    ObjectUtil.wrapCallable((callsite, value) => {
-      if (value.isInstance()) {
-        const lengthMethod = value.getPropertyAs(SpecialName.__panjang__);
-        if (isUndefined(lengthMethod)) {
-          return callsite.throw(
-            MessageTemplate.kObjectHasNoMember,
-            value.typeName,
-            "panjang"
-          );
-        }
-        const returnValue = callsite.invoke(lengthMethod, []);
-        if (!returnValue.isNumber()) {
-          return callsite.throw(
-            MessageTemplate.kInvalidReturnValue,
-            (lengthMethod as SantaiFunction).name,
-            `bukan-angka (tipenya ${returnValue.typeName})`
-          );
-        }
-        return returnValue;
+    ObjectUtil.wrapCallable((callsite, object) => {
+      if (object.isInstance()) {
+        return evaluateSpecialMethod(
+          callsite,
+          object,
+          SpecialName.__panjang__,
+          (returnValue) => {
+            return !returnValue.isNumber()
+              ? `bukan-angka (tipenya ${returnValue.typeName})`
+              : undefined;
+          }
+        );
       }
 
-      if (!value.hasLength()) {
+      if (!object.hasLength()) {
         callsite.throw(
           MessageTemplate.kObjectHasNoMember,
-          value.typeName,
+          object.typeName,
           "panjang"
         );
       }
 
-      return Factory.NewNumber(value.getLength());
+      return Factory.NewNumber(object.getLength());
     }),
     undefined,
     [required("nilai")]
