@@ -2,10 +2,10 @@
 // SPDX-License-Identifier: MIT
 
 import { Block, Parameter } from "../ast/ast";
+import { assertDefined } from "../base/asserts";
 import { MessageTemplate } from "../base/messageTemplate";
 import { isUndefined } from "../base/types";
 import { Environment } from "../interpreter/environment";
-import { SantaiIterator } from "./iterator";
 import { listPropertyNames, lookupProperty } from "./propertyRegistry";
 import { SpecialName } from "./specialNames";
 import { SantaiType } from "./st-type";
@@ -81,6 +81,9 @@ export abstract class SantaiObject {
   isBuiltinClass(): this is BuiltinClass {
     return this.type === SantaiType.kBuiltinClass;
   }
+  isError(): this is SantaiError {
+    return this.type === SantaiType.kError;
+  }
 
   /**
    * Returns `true` if the object can be iterated over.
@@ -134,6 +137,30 @@ export abstract class SantaiObject {
    */
   dir(): readonly string[] {
     return listPropertyNames(this.type);
+  }
+}
+
+export abstract class SantaiIterator
+  extends SantaiObject
+  implements Iterator<SantaiObject>, Iterable<SantaiObject>
+{
+  override readonly typeName: string = "SantaiIterator";
+  constructor() {
+    super(SantaiType.kIterator);
+  }
+  abstract hasNext(): boolean;
+  abstract next(): IteratorResult<SantaiObject, any>;
+
+  override isTruthy(): boolean {
+    return this.hasNext();
+  }
+
+  override inspect(): string {
+    return `<gue ${this.typeName}>`;
+  }
+
+  [Symbol.iterator](): Iterator<SantaiObject> {
+    return this;
   }
 }
 
@@ -634,6 +661,26 @@ export class SantaiClass extends SantaiObject {
   }
 }
 
+export class SantaiInstanceIterator extends SantaiIterator {
+  constructor(private readonly method: SantaiFunction) {
+    super();
+  }
+
+  override hasNext(): boolean {
+    return true;
+  }
+
+  override next(): IteratorResult<SantaiObject> {
+    return { value: this.method, done: true };
+  }
+}
+
+export function isInstanceIterator(
+  iterator: SantaiIterator
+): iterator is SantaiInstanceIterator {
+  return iterator instanceof SantaiInstanceIterator;
+}
+
 export class SantaiInstance extends SantaiObject {
   override readonly typeName: string;
 
@@ -699,6 +746,24 @@ export class SantaiInstance extends SantaiObject {
     }
 
     return method;
+  }
+
+  override isIterable(): boolean {
+    return !isUndefined(this.getIteratorMethod());
+  }
+
+  override iterate(): SantaiIterator {
+    const method = this.getIteratorMethod();
+    assertDefined(method);
+    return new SantaiInstanceIterator(method);
+  }
+
+  private getIteratorMethod(): SantaiFunction | undefined {
+    const method = this.getProperty(SpecialName.__iterasi__);
+    if (!isUndefined(method) && method.isFunction()) {
+      return method;
+    }
+    return undefined;
   }
 
   override dir(): readonly string[] {

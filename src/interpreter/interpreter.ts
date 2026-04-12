@@ -52,15 +52,17 @@ import {
   lookupExtension,
   registerExtension,
 } from "../objects/extensionRegistry";
-import { SantaiIterator } from "../objects/iterator";
 import {
   BuiltinFunction,
   CallSite,
   Factory,
   GlobalMethodParam,
+  isInstanceIterator,
   SantaiClass,
   SantaiError,
   SantaiFunction,
+  SantaiInstanceIterator,
+  SantaiIterator,
   SantaiObject,
 } from "../objects/object";
 import {
@@ -235,15 +237,18 @@ export class Interpreter extends AstVisitor<SantaiObject> implements CallSite {
       this.visit(program);
     } catch (error) {
       if (isReturnSignal(error)) {
-        this.reportAndThrow(
-          error.node,
+        this.errorHandler.reportErrorAt(
+          getLocationForNode(error.node),
           MessageTemplate.kIllegalReturnStatement
         );
       } else if (isBreakSignal(error)) {
-        this.reportAndThrow(error.node, MessageTemplate.kIllegalBreakStatement);
+        this.errorHandler.reportErrorAt(
+          getLocationForNode(error.node),
+          MessageTemplate.kIllegalBreakStatement
+        );
       } else if (isContinueSignal(error)) {
-        this.reportAndThrow(
-          error.node,
+        this.errorHandler.reportErrorAt(
+          getLocationForNode(error.node),
           MessageTemplate.kIllegalContinueStatement
         );
       } else if (isThrowSignal(error)) {
@@ -419,6 +424,17 @@ export class Interpreter extends AstVisitor<SantaiObject> implements CallSite {
       );
     }
 
+    const isInstance = isInstanceIterator(iterator);
+    if (isInstance) {
+      return this.executeSantaiIntanceIterator(
+        iterator,
+        variable,
+        loopEnv,
+        previousEnv,
+        node
+      );
+    }
+
     try {
       while (iterator.hasNext()) {
         const next = iterator.next();
@@ -442,6 +458,46 @@ export class Interpreter extends AstVisitor<SantaiObject> implements CallSite {
       }
     } finally {
       this.env = previousEnv;
+    }
+
+    return Factory.Kosong;
+  }
+
+  private executeSantaiIntanceIterator(
+    iterator: SantaiInstanceIterator,
+    variable: Variable,
+    loopEnv: Environment,
+    envToRestore: Environment,
+    node: ForInStatement
+  ): SantaiObject {
+    const iteratorObj: SantaiObject = iterator.next().value;
+    assert(iteratorObj.isFunction());
+    const returnValue = this.dispatch(iteratorObj, [], node.iterable);
+    const nextMethod = returnValue.getProperty(SpecialName.__lanjut__);
+    if (isUndefined(nextMethod)) {
+      this.reportAndThrow(
+        node.iterable,
+        MessageTemplate.kNotIterable,
+        returnValue.typeName
+      );
+    }
+
+    try {
+      while (true) {
+        try {
+          const value = this.dispatch(nextMethod, [], node.iterable);
+          loopEnv.update(variable, value);
+          this.evaluate(node.body);
+        } catch (signal) {
+          if (isBreakSignal(signal)) {
+            break;
+          }
+
+          throw signal;
+        }
+      }
+    } finally {
+      this.env = envToRestore;
     }
 
     return Factory.Kosong;

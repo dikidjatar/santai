@@ -47,6 +47,8 @@ export const enum SpecialName {
 
   // Iteration
   __daftarproperti__ = "__daftarproperti__",
+  __iterasi__ = "__iterasi__",
+  __lanjut__ = "__lanjut__",
 }
 
 export const TokenToSpecialName: Readonly<Record<number, SpecialName>> = {
