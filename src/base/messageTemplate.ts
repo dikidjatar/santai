@@ -35,6 +35,7 @@ export const enum MessageTemplate {
   kDuplicateArgument,
   kInvaidObjectDescriptor,
   kInvalidReturnValue,
+  kObjectHasNoMember,
   // Control flow
   kIllegalReturnStatement,
   kIllegalBreakStatement,
@@ -130,6 +131,7 @@ export const MessageTemplateString: Record<MessageTemplate, string> = {
   [MessageTemplate.kInvaidObjectDescriptor]:
     "objek tidak valid, harus '%s' tapi yang diberikan '%s'",
   [MessageTemplate.kInvalidReturnValue]: "%s mengembalikan %s",
+  [MessageTemplate.kObjectHasNoMember]: "objek '%s' tidak memiliki %s",
 
   // Control flow
   [MessageTemplate.kIllegalReturnStatement]:
@@ -213,5 +215,6 @@ export const MessageTemplateMood: Record<MessageTemplate, Mood> = {
   [MessageTemplate.kDuplicateArgument]:            Mood.Marah,
   [MessageTemplate.kUnterminatedTemplate]:         Mood.Bingung,
   [MessageTemplate.kInvaidObjectDescriptor]:       Mood.Marah,
-  [MessageTemplate.kInvalidReturnValue]:           Mood.Panik
+  [MessageTemplate.kInvalidReturnValue]:           Mood.Panik,
+  [MessageTemplate.kObjectHasNoMember]:            Mood.Sedih
 };

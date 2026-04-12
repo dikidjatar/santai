@@ -95,6 +95,10 @@ export abstract class SantaiObject {
     return lookupProperty(this.type, name, this) as SantaiObject | undefined;
   }
 
+  getPropertyAs<T extends SantaiObject>(name: string): T | undefined {
+    return this.getProperty(name) as T;
+  }
+
   setProperty(_name: string, _value: SantaiObject): boolean {
     return false;
   }
@@ -114,6 +118,10 @@ export abstract class SantaiObject {
    */
   iterate(): SantaiIterator {
     throw new Error(`'${this.typeName}' is not iterable`);
+  }
+
+  hasLength(): boolean {
+    return false;
   }
 
   getLength(): number {
@@ -225,16 +233,20 @@ export class SantaiString extends SantaiObject {
     return this.value;
   }
 
+  override hasLength(): boolean {
+    return true;
+  }
+
+  override getLength(): number {
+    return this.value.length;
+  }
+
   override isIterable(): boolean {
     return true;
   }
 
   override iterate(): SantaiIterator {
     return new StringIterator(this);
-  }
-
-  override getLength(): number {
-    return this.value.length;
   }
 
   override getSubscript(obj: SantaiObject): SantaiObject | undefined {
@@ -369,10 +381,6 @@ export class SantaiList extends SantaiObject {
     super(SantaiType.kList);
   }
 
-  override getLength(): number {
-    return this.elements.length;
-  }
-
   push(...items: SantaiObject[]): number {
     return this._elements.push(...items);
   }
@@ -416,6 +424,14 @@ export class SantaiList extends SantaiObject {
 
   override isTruthy(): boolean {
     return this.elements.length !== 0;
+  }
+
+  override hasLength(): boolean {
+    return true;
+  }
+
+  override getLength(): number {
+    return this.elements.length;
   }
 
   override isIterable(): boolean {
@@ -485,10 +501,6 @@ export class SantaiRange extends SantaiObject {
     this.step = step;
   }
 
-  override getLength(): number {
-    return this.size;
-  }
-
   get size(): number {
     if (this.step > 0) {
       return Math.max(0, Math.ceil((this.stop - this.start) / this.step));
@@ -499,6 +511,14 @@ export class SantaiRange extends SantaiObject {
 
   override isTruthy(): boolean {
     return this.size > 0;
+  }
+
+  override hasLength(): boolean {
+    return true;
+  }
+
+  override getLength(): number {
+    return this.size;
   }
 
   override inspect(): string {
@@ -609,6 +629,10 @@ export class SantaiClass extends SantaiObject {
 
   override dir(): readonly string[] {
     return this.methodNames();
+  }
+
+  override hasLength(): boolean {
+    return false;
   }
 
   override isTruthy(): boolean {
@@ -733,12 +757,12 @@ export class BuiltinClass extends SantaiObject {
     }
   }
 
-  getMethod(name: string): BuiltinFunction | undefined {
+  override getProperty(name: string): SantaiObject | undefined {
     return this._methods.get(name);
   }
 
-  override getProperty(name: string): SantaiObject | undefined {
-    return this._methods.get(name);
+  override hasLength(): boolean {
+    return false;
   }
 
   override isTruthy(): boolean {

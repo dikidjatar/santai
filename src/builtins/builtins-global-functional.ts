@@ -1,75 +1,117 @@
 // Copyright (c) [2025-2026] [Diki Djatar]
 // SPDX-License-Identifier: MIT
 
-import { assert } from "../base/asserts";
-import { Factory, SantaiObject } from "../objects/object";
+import { MessageTemplate } from "../base/messageTemplate";
+import { isUndefined } from "../base/types";
+import { Factory, SantaiFunction, SantaiObject } from "../objects/object";
+import { ObjectUtil } from "../objects/object-util";
 import { SpecialName } from "../objects/specialNames";
-import { arg, defineGlobalFunction } from "./builtin";
+import { defineGlobal } from "./globalProvider";
 import { required } from "./paramSpec";
 
-defineGlobalFunction(
-  "panjang",
-  (self, args) => {
-    assert(!self);
-    return Factory.NewNumber(args[0].getLength());
-  },
-  [required("nilai")]
-);
+defineGlobal("panjang", () => {
+  return Factory.NewBuiltinFunction(
+    "panjang",
+    ObjectUtil.wrapCallable((callsite, value) => {
+      if (value.isInstance()) {
+        const lengthMethod = value.getPropertyAs(SpecialName.__panjang__);
+        if (isUndefined(lengthMethod)) {
+          return callsite.throw(
+            MessageTemplate.kObjectHasNoMember,
+            value.typeName,
+            "panjang"
+          );
+        }
+        const returnValue = callsite.invoke(lengthMethod, []);
+        if (!returnValue.isNumber()) {
+          return callsite.throw(
+            MessageTemplate.kInvalidReturnValue,
+            (lengthMethod as SantaiFunction).name,
+            `bukan-angka (tipenya ${returnValue.typeName})`
+          );
+        }
+        return returnValue;
+      }
 
-defineGlobalFunction("saring", (_, args, callsite) => {
-  const iterable = arg(args, 0);
-  const fn = arg(args, 1);
+      if (!value.hasLength()) {
+        callsite.throw(
+          MessageTemplate.kObjectHasNoMember,
+          value.typeName,
+          "panjang"
+        );
+      }
 
-  if (!iterable.isIterable() || !Factory.IsCallable(fn)) {
-    return Factory.NewList([]);
-  }
-
-  const result: SantaiObject[] = [];
-  const iter = iterable.iterate();
-
-  let next = iter.next();
-  while (!next.done) {
-    const item = next.value;
-    const keep = callsite.invoke(fn, [item]);
-    if (keep.isTruthy()) {
-      result.push(item);
-    }
-    next = iter.next();
-  }
-
-  return Factory.NewList(result);
+      return Factory.NewNumber(value.getLength());
+    }),
+    undefined,
+    [required("nilai")]
+  );
 });
 
-defineGlobalFunction("olah", (_, args, callsite) => {
-  const iterable = arg(args, 0);
-  const fn = arg(args, 1);
+defineGlobal("saring", () => {
+  return Factory.NewBuiltinFunction(
+    "saring",
+    ObjectUtil.wrapCallable((callsite, iterable, fn) => {
+      if (!iterable.isIterable() || !Factory.IsCallable(fn)) {
+        return Factory.NewList([]);
+      }
 
-  if (!iterable.isIterable() || !Factory.IsCallable(fn)) {
-    return Factory.NewList([]);
-  }
+      const result: SantaiObject[] = [];
+      const iter = iterable.iterate();
 
-  const result: SantaiObject[] = [];
-  const iter = iterable.iterate();
+      let next = iter.next();
+      while (!next.done) {
+        const item = next.value;
+        const keep = callsite.invoke(fn, [item]);
+        if (keep.isTruthy()) {
+          result.push(item);
+        }
+        next = iter.next();
+      }
 
-  let next = iter.next();
-  while (!next.done) {
-    result.push(callsite.invoke(fn, [next.value]));
-    next = iter.next();
-  }
-
-  return Factory.NewList(result);
+      return Factory.NewList(result);
+    }),
+    undefined,
+    [required("nilai"), required("_aksi")]
+  );
 });
 
-defineGlobalFunction(
-  "daftar_properti",
-  (self, args, callsite) => {
-    assert(!self);
-    const propertyMethod = args[0].getProperty(SpecialName.__daftarproperti__);
-    if (propertyMethod) {
-      const result = callsite.invoke(propertyMethod, []);
-      return result;
-    }
-    return Factory.NewList([]);
-  },
-  [required("objek")]
-);
+defineGlobal("olah", () => {
+  return Factory.NewBuiltinFunction(
+    "olah",
+    ObjectUtil.wrapCallable((callsite, iterable, fn) => {
+      if (!iterable.isIterable() || !Factory.IsCallable(fn)) {
+        return Factory.NewList([]);
+      }
+
+      const result: SantaiObject[] = [];
+      const iter = iterable.iterate();
+
+      let next = iter.next();
+      while (!next.done) {
+        result.push(callsite.invoke(fn, [next.value]));
+        next = iter.next();
+      }
+
+      return Factory.NewList(result);
+    }),
+    undefined,
+    [required("nilai"), required("_aksi")]
+  );
+});
+
+defineGlobal("daftar_properti", () => {
+  return Factory.NewBuiltinFunction(
+    "daftar_properti",
+    ObjectUtil.wrapCallable((callsite, object) => {
+      const propertyMethod = object.getProperty(SpecialName.__daftarproperti__);
+      if (propertyMethod) {
+        const result = callsite.invoke(propertyMethod, []);
+        return result;
+      }
+      return Factory.NewList([]);
+    }),
+    undefined,
+    [required("objek")]
+  );
+});

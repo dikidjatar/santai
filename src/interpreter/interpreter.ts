@@ -951,9 +951,9 @@ export class Interpreter extends AstVisitor<SantaiObject> implements CallSite {
     node: AstNode
   ): SantaiObject {
     if (fn.isBuiltinClass()) {
-      const initMethod: BuiltinFunction | undefined = fn.getMethod(
-        SpecialName.__awal__
-      );
+      const initMethod = fn.getProperty(SpecialName.__awal__) as
+        | BuiltinFunction
+        | undefined;
       if (!isUndefined(initMethod)) {
         initMethod.bind(fn);
         return this.callBuiltinFunction(initMethod, args, node);
