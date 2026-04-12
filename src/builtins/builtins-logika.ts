@@ -7,13 +7,25 @@ import { registerPropertyProvider } from "../objects/propertyRegistry";
 import { SpecialName } from "../objects/specialNames";
 import { SantaiType } from "../objects/st-type";
 import { TypeRegistry } from "../objects/typeRegistry";
-import { method } from "./builtin-util";
+import { evaluateSpecialMethod, method } from "./builtin-util";
 import { defineGlobal } from "./globalProvider";
 import { optional, required } from "./paramSpec";
 
 const logika__awal__: MethodArg = [
   SpecialName.__awal__,
-  ObjectUtil.wrapCallable((_, __, value) => Factory.Boolean(value.isTruthy())),
+  ObjectUtil.wrapCallable((callsite, __, value) => {
+    if (value.isInstance()) {
+      const specialMethod = value.getProperty(SpecialName.__logika__);
+      if (specialMethod) {
+        return evaluateSpecialMethod(callsite, specialMethod, (returnValue) =>
+          !returnValue.isBoolean()
+            ? `bukan-logika (tipenya ${returnValue.typeName})`
+            : undefined
+        );
+      }
+    }
+    return Factory.Boolean(value.isTruthy());
+  }),
   undefined,
   [required("gue"), optional("nilai", Factory.Kosong)],
 ];

@@ -8,13 +8,13 @@ import { SpecialName } from "../objects/specialNames";
 import { SantaiType } from "../objects/st-type";
 import { TypeRegistry } from "../objects/typeRegistry";
 import { TokenValue } from "../parsing/token";
-import { method } from "./builtin-util";
+import { evaluateObjectSpecialMethod, method } from "./builtin-util";
 import { defineGlobal } from "./globalProvider";
 import { optional, required } from "./paramSpec";
 
 const angka__awal__: MethodArg = [
   SpecialName.__awal__,
-  ObjectUtil.wrapCallable((_, __, value) => {
+  ObjectUtil.wrapCallable((callsite, __, value) => {
     if (value.isNumber()) {
       return value;
     }
@@ -26,6 +26,18 @@ const angka__awal__: MethodArg = [
     if (value.isString()) {
       const n = Number(value.value.trim());
       return Factory.NewNumber(isNaN(n) ? -1 : n);
+    }
+
+    if (value.isInstance()) {
+      return evaluateObjectSpecialMethod(
+        callsite,
+        value,
+        SpecialName.__angka__,
+        (returnValue) =>
+          !returnValue.isNumber()
+            ? `bukan-angka (tipenya ${returnValue.typeName})`
+            : undefined
+      );
     }
 
     return Factory.NewNumber(-1);

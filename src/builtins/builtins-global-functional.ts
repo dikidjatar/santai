@@ -5,7 +5,7 @@ import { MessageTemplate } from "../base/messageTemplate";
 import { Factory, SantaiObject } from "../objects/object";
 import { ObjectUtil } from "../objects/object-util";
 import { SpecialName } from "../objects/specialNames";
-import { evaluateSpecialMethod } from "./builtin-util";
+import { evaluateObjectSpecialMethod } from "./builtin-util";
 import { defineGlobal } from "./globalProvider";
 import { required } from "./paramSpec";
 
@@ -14,7 +14,7 @@ defineGlobal("panjang", () => {
     "panjang",
     ObjectUtil.wrapCallable((callsite, object) => {
       if (object.isInstance()) {
-        return evaluateSpecialMethod(
+        return evaluateObjectSpecialMethod(
           callsite,
           object,
           SpecialName.__panjang__,

@@ -8,17 +8,25 @@ import { SpecialName } from "../objects/specialNames";
 import { SantaiType } from "../objects/st-type";
 import { TypeRegistry } from "../objects/typeRegistry";
 import { TokenValue } from "../parsing/token";
-import { method } from "./builtin-util";
+import { evaluateSpecialMethod, method } from "./builtin-util";
 import { defineGlobal } from "./globalProvider";
 import { optional, required } from "./paramSpec";
 
 const teks__awal__: MethodArg = [
   SpecialName.__awal__,
-  ObjectUtil.wrapCallable((_, __, val) => {
-    if (val.isString()) {
-      return val;
+  ObjectUtil.wrapCallable((callsite, __, value) => {
+    if (value.isString()) return value;
+    if (value.isInstance()) {
+      const specialMethod = value.getProperty(SpecialName.__teks__);
+      if (specialMethod) {
+        return evaluateSpecialMethod(callsite, specialMethod, (returnValue) =>
+          !returnValue.isString()
+            ? `bukan-teks (tipenya ${returnValue.typeName})`
+            : undefined
+        );
+      }
     }
-    return Factory.NewString(val.inspect());
+    return Factory.NewString(value.inspect());
   }),
   undefined,
   [required("gue"), optional("nilai", Factory.NewString(""))],

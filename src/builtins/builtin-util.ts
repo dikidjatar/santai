@@ -97,6 +97,24 @@ export namespace method {
 
 export function evaluateSpecialMethod<T extends SantaiObject>(
   callsite: CallSite,
+  specialMethod: SantaiObject,
+  checkReturnValue: (value: SantaiObject) => string | undefined,
+  args: SantaiObject[] = []
+): T {
+  const returnValue = callsite.invoke(specialMethod, args);
+  const checkResult = checkReturnValue(returnValue as T);
+  if (!isUndefined(checkResult)) {
+    return callsite.throw(
+      MessageTemplate.kInvalidReturnValue,
+      (specialMethod as SantaiFunction).name,
+      checkResult
+    );
+  }
+  return returnValue as T;
+}
+
+export function evaluateObjectSpecialMethod<T extends SantaiObject>(
+  callsite: CallSite,
   object: SantaiObject,
   specialName: SpecialName,
   checkReturnValue: (value: SantaiObject) => string | undefined,
@@ -110,14 +128,5 @@ export function evaluateSpecialMethod<T extends SantaiObject>(
       specialName
     );
   }
-  const returnValue = callsite.invoke(specialMethod, args);
-  const checkResult = checkReturnValue(returnValue as T);
-  if (!isUndefined(checkResult)) {
-    return callsite.throw(
-      MessageTemplate.kInvalidReturnValue,
-      (specialMethod as SantaiFunction).name,
-      checkResult
-    );
-  }
-  return returnValue as T;
+  return evaluateSpecialMethod(callsite, specialMethod, checkReturnValue, args);
 }
