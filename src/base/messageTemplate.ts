@@ -46,6 +46,7 @@ export const enum MessageTemplate {
   kGueOutsideClass,
   kPropertyNotFound,
   kCannotSetProperty,
+  KCannotGetSubscript,
 }
 
 /**
@@ -152,6 +153,7 @@ export const MessageTemplateString: Record<MessageTemplate, string> = {
     "'%s' gak ada di %s — salah panggil atau belum lo bikin?",
   [MessageTemplate.kCannotSetProperty]:
     "gak bisa ngubah '%s' di %s — ini bukan objek kelas, jangan maksa dong",
+  [MessageTemplate.KCannotGetSubscript]: "gak bisa ambil item di %s",
 };
 
 export const MessageTemplateNote: Partial<Record<MessageTemplate, string>> = {
@@ -216,5 +218,6 @@ export const MessageTemplateMood: Record<MessageTemplate, Mood> = {
   [MessageTemplate.kUnterminatedTemplate]:         Mood.Bingung,
   [MessageTemplate.kInvaidObjectDescriptor]:       Mood.Marah,
   [MessageTemplate.kInvalidReturnValue]:           Mood.Panik,
-  [MessageTemplate.kObjectHasNoMember]:            Mood.Sedih
+  [MessageTemplate.kObjectHasNoMember]:            Mood.Sedih,
+  [MessageTemplate.KCannotGetSubscript]:           Mood.Sedih
 };

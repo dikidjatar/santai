@@ -37,6 +37,14 @@ export const enum SpecialName {
   __kurangsama__ = "__kurangsama__",
   __lebihsama__ = "__lebihsama__",
 
+  // Container / subscript
+  __ambil__ = "__ambil__",
+  __atur__ = "__atur__",
+  __berisi__ = "__berisi__",
+
+  // Property access
+  __ambilproperti__ = "__ambilproperti__",
+
   // Iteration
   __daftarproperti__ = "__daftarproperti__",
 }
@@ -54,6 +62,7 @@ export const TokenToSpecialName: Readonly<Record<number, SpecialName>> = {
   [TokenValue.kGreaterThan]: SpecialName.__lebihdari__,
   [TokenValue.kLessThanEq]: SpecialName.__kurangsama__,
   [TokenValue.kGreaterThanEq]: SpecialName.__lebihsama__,
+  [TokenValue.kDi]: SpecialName.__berisi__,
 };
 
 /**

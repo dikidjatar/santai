@@ -474,8 +474,20 @@ export class Interpreter extends AstVisitor<SantaiObject> implements CallSite {
 
     if (propertyNode.isLiteral() && propertyNode.isStringLiteral()) {
       const propertyName = propertyNode.asStringLiteral();
-      const property = obj.getProperty(propertyName);
 
+      if (obj.isInstance()) {
+        const getAttr = obj.getProperty(SpecialName.__ambilproperti__);
+        if (getAttr) {
+          assertDefined(this.currentCallNode);
+          return this.dispatch(
+            getAttr,
+            [{ evaluatedValue: Factory.NewString(propertyName) }],
+            this.currentCallNode
+          );
+        }
+      }
+
+      const property = obj.getProperty(propertyName);
       if (!isUndefined(property)) {
         return property;
       }
@@ -493,14 +505,31 @@ export class Interpreter extends AstVisitor<SantaiObject> implements CallSite {
       );
     } else {
       const keyObj: SantaiObject = this.evaluate(propertyNode);
+
+      if (obj.isInstance()) {
+        const getItem = obj.getProperty(SpecialName.__ambil__);
+        if (getItem) {
+          assertDefined(this.currentCallNode);
+          return this.dispatch(
+            getItem,
+            [{ evaluatedValue: keyObj }],
+            this.currentCallNode
+          );
+        }
+      }
+
       const result = obj.getSubscript(keyObj);
 
       if (!isUndefined(result)) {
         return result;
       }
-    }
 
-    return Factory.Kosong;
+      this.reportAndThrow(
+        node,
+        MessageTemplate.KCannotGetSubscript,
+        obj.typeName
+      );
+    }
   }
 
   override visitFunctionLiteral(node: FunctionLiteral): SantaiObject {
@@ -725,6 +754,17 @@ export class Interpreter extends AstVisitor<SantaiObject> implements CallSite {
         return true;
       } else {
         const keyObj = this.evaluate(propertyKey);
+        if (obj.isInstance()) {
+          const setItem = obj.getProperty(SpecialName.__atur__);
+          if (setItem) {
+            this.dispatch(
+              setItem,
+              [{ evaluatedValue: keyObj }, { evaluatedValue: value }],
+              target
+            );
+            return true;
+          }
+        }
         return obj.setSubscript(keyObj, value);
       }
     } else {
