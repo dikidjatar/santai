@@ -432,7 +432,7 @@ export class Interpreter extends AstVisitor<SantaiObject> {
       );
     });
 
-    const klass = Factory.NewClas(node.className, methods);
+    const klass = Factory.NewClass(node.className, methods);
 
     if (!this.env.declare(variable, klass)) {
       this.reportAndThrow(
@@ -918,7 +918,7 @@ export class Interpreter extends AstVisitor<SantaiObject> {
       }
     }
 
-    if (fn.isCLass()) return this.instantiateClass(fn, args, node);
+    if (fn.isClass()) return this.instantiateClass(fn, args, node);
     if (fn.isFunction()) return this.callFunction(fn, args, node);
     if (fn.isBuiltinFunction()) return this.callBuiltinFunction(fn, args, node);
 

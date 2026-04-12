@@ -88,7 +88,7 @@ export abstract class SantaiObject {
   isRange(): this is SantaiRange {
     return this.type === SantaiType.kRange;
   }
-  isCLass(): this is SantaiClass {
+  isClass(): this is SantaiClass {
     return this.type === SantaiType.kClass;
   }
   isInstance(): this is SantaiInstance {
@@ -909,7 +909,7 @@ export namespace Factory {
     return new BuiltinFunction(name, callable, self, params);
   }
 
-  export function NewClas(
+  export function NewClass(
     name: string,
     methods: readonly SantaiFunction[]
   ): SantaiClass {
@@ -935,7 +935,7 @@ export namespace Factory {
     return (
       obj.isFunction() ||
       obj.isBuiltinFunction() ||
-      obj.isCLass() ||
+      obj.isClass() ||
       obj.isBuiltinClass()
     );
   }
