@@ -5,7 +5,7 @@ import { isUndefined } from "../base/types";
 import { BuiltinFunction, Factory, MethodArg } from "../objects/object";
 import { ObjectUtil } from "../objects/object-util";
 import { registerPropertyProvider } from "../objects/propertyRegistry";
-import { callSpecialMethod } from "../objects/protocol";
+import { callObjectSpecialMethod } from "../objects/protocol";
 import { SpecialName } from "../objects/specialNames";
 import { SantaiType } from "../objects/st-type";
 import { TypeRegistry } from "../objects/typeRegistry";
@@ -19,14 +19,16 @@ const teks__awal__: MethodArg = [
   ObjectUtil.wrapCallable((callsite, __, value) => {
     if (value.isString()) return value;
     if (value.isInstance()) {
-      const specialMethod = value.getProperty(SpecialName.__teks__);
-      if (specialMethod) {
-        return callSpecialMethod(callsite, specialMethod, (returnValue) =>
+      const result = callObjectSpecialMethod(
+        callsite,
+        value,
+        SpecialName.__teks__,
+        (returnValue) =>
           !returnValue.isString()
             ? `bukan-teks (tipenya ${returnValue.typeName})`
             : undefined
-        );
-      }
+      );
+      if (!isUndefined(result)) return result;
     }
     return Factory.NewString(value.inspect());
   }),

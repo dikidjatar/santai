@@ -5,7 +5,7 @@ import { isUndefined } from "../base/types";
 import { BuiltinFunction, Factory, MethodArg } from "../objects/object";
 import { ObjectUtil } from "../objects/object-util";
 import { registerPropertyProvider } from "../objects/propertyRegistry";
-import { callSpecialMethod } from "../objects/protocol";
+import { callObjectSpecialMethod } from "../objects/protocol";
 import { SpecialName } from "../objects/specialNames";
 import { SantaiType } from "../objects/st-type";
 import { TypeRegistry } from "../objects/typeRegistry";
@@ -17,14 +17,16 @@ const logika__awal__: MethodArg = [
   SpecialName.__awal__,
   ObjectUtil.wrapCallable((callsite, __, value) => {
     if (value.isInstance()) {
-      const specialMethod = value.getProperty(SpecialName.__logika__);
-      if (specialMethod) {
-        return callSpecialMethod(callsite, specialMethod, (returnValue) =>
+      const result = callObjectSpecialMethod(
+        callsite,
+        value,
+        SpecialName.__logika__,
+        (returnValue) =>
           !returnValue.isBoolean()
             ? `bukan-logika (tipenya ${returnValue.typeName})`
             : undefined
-        );
-      }
+      );
+      if (!isUndefined(result)) return result;
     }
     return Factory.Boolean(value.isTruthy());
   }),

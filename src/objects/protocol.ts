@@ -10,22 +10,9 @@ import { SpecialName } from "./specialNames";
  * Invokes a special method with validation of its return value.
  *
  * @template T - The expected return type that extends SantaiObject
- * @param callsite - The call site context for invoking the method
- * @param specialMethod - The special method object to be invoked
  * @param checkReturnValue - A validation function that checks the return value and returns an error message if invalid, or undefined if valid
- * @param args - Optional array of arguments to pass to the special method (defaults to empty array)
- * @returns The validated return value of type T
  * @throws Throws an error if the return value validation fails, using the template MessageTemplate.kInvalidReturnValue
  *
- * @example
- * ```typescript
- * const result = callSpecialMethod<MyType>(
- *   callsite,
- *   myMethod,
- *   (value) => typeof value === 'string' ? undefined : 'Expected string',
- *   [arg1, arg2]
- * );
- * ```
  */
 export function callSpecialMethod<T extends SantaiObject>(
   callsite: CallSite,
@@ -46,18 +33,25 @@ export function callSpecialMethod<T extends SantaiObject>(
 }
 
 /**
- * Calls a special method on a SantaiObject with type checking and error handling.
- *
- * @template T - The expected return type of the special method, must extend SantaiObject
- * @param callsite - The call site context for error reporting
- * @param object - The SantaiObject instance on which to call the special method
- * @param specialName - The name of the special method to invoke
- * @param checkReturnValue - A function that validates the return value and returns an error message if invalid
- * @param args - Optional array of SantaiObject arguments to pass to the special method (defaults to empty array)
- * @returns The result of the special method call, cast to type T
- * @throws Throws an error via callsite if the object does not have the specified special method (kObjectHasNoMember)
+ * Calls a special method on a SantaiObject
  */
 export function callObjectSpecialMethod<T extends SantaiObject>(
+  callsite: CallSite,
+  object: SantaiObject,
+  specialName: SpecialName,
+  checkReturnValue: (value: SantaiObject) => string | undefined,
+  args: SantaiObject[] = []
+): T | undefined {
+  const method = object.getProperty(specialName);
+  if (isUndefined(method)) return undefined;
+  return callSpecialMethod<T>(callsite, method, checkReturnValue, args);
+}
+
+/**
+ * Calls a special method on a SantaiObject with throw.
+ * @throws Throws an error via callsite if the object does not have the specified special method (kObjectHasNoMember)
+ */
+export function callObjectSpecialMethodWithThrow<T extends SantaiObject>(
   callsite: CallSite,
   object: SantaiObject,
   specialName: SpecialName,
@@ -72,5 +66,5 @@ export function callObjectSpecialMethod<T extends SantaiObject>(
       specialName
     );
   }
-  return callSpecialMethod(callsite, specialMethod, checkReturnValue, args);
+  return callSpecialMethod<T>(callsite, specialMethod, checkReturnValue, args);
 }

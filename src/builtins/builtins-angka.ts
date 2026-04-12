@@ -5,7 +5,7 @@ import { isUndefined } from "../base/types";
 import { BuiltinFunction, Factory, MethodArg } from "../objects/object";
 import { ObjectUtil } from "../objects/object-util";
 import { registerPropertyProvider } from "../objects/propertyRegistry";
-import { callObjectSpecialMethod } from "../objects/protocol";
+import { callObjectSpecialMethodWithThrow } from "../objects/protocol";
 import { SpecialName } from "../objects/specialNames";
 import { SantaiType } from "../objects/st-type";
 import { TypeRegistry } from "../objects/typeRegistry";
@@ -31,7 +31,7 @@ const angka__awal__: MethodArg = [
     }
 
     if (value.isInstance()) {
-      return callObjectSpecialMethod(
+      return callObjectSpecialMethodWithThrow(
         callsite,
         value,
         SpecialName.__angka__,
