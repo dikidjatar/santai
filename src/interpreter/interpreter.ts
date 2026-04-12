@@ -49,6 +49,7 @@ import {
 } from "../objects/extensionRegistry";
 import { SantaiIterator } from "../objects/iterator";
 import {
+  BuiltinFunction,
   CallSite,
   Factory,
   GlobalMethodParam,
@@ -62,6 +63,11 @@ import {
   OperationError,
   OperationResult,
 } from "../objects/operations";
+import {
+  ReflectedSpecialName,
+  SpecialName,
+  TokenToSpecialName,
+} from "../objects/specialNames";
 import { makeLocation, ScannerLocation } from "../parsing/scanner";
 import { Token, TokenValue } from "../parsing/token";
 import { ServiceContainer } from "../runtime/serviceContainer";
@@ -808,8 +814,32 @@ export class Interpreter extends AstVisitor<SantaiObject> implements CallSite {
     right: SantaiObject,
     node: AstNode
   ): SantaiObject {
-    const resolve = (r: OperationResult) => this.resolveOp(r, node);
+    if (left.isInstance()) {
+      const prevNode = this.currentCallNode;
+      this.currentCallNode = node;
 
+      try {
+        const specialName = TokenToSpecialName[op];
+        if (!isUndefined(specialName)) {
+          const method = left.getProperty(specialName);
+          if (method) {
+            return this.dispatch(method, [{ evaluatedValue: right }], node);
+          }
+
+          const reflectedSpecialName = ReflectedSpecialName[specialName];
+          if (reflectedSpecialName) {
+            const rmethod = right.getProperty(reflectedSpecialName);
+            if (rmethod) {
+              return this.dispatch(rmethod, [{ evaluatedValue: left }], node);
+            }
+          }
+        }
+      } finally {
+        this.currentCallNode = prevNode;
+      }
+    }
+
+    const resolve = (r: OperationResult) => this.resolveOp(r, node);
     switch (op) {
       case TokenValue.kAdd:
         return resolve(Operation.Add(left, right));
@@ -921,28 +951,18 @@ export class Interpreter extends AstVisitor<SantaiObject> implements CallSite {
     node: AstNode
   ): SantaiObject {
     if (fn.isBuiltinClass()) {
-      if (fn.hasSignature()) {
-        const resolvedParams = this.resolveBuiltinParams(fn.params!);
-        const bound = this.bindArguments(fn.name, resolvedParams, args, node);
-        if (!bound) return Factory.Kosong;
-        return fn.construct(bound);
+      const initMethod: BuiltinFunction | undefined = fn.getMethod(
+        SpecialName.__awal__
+      );
+      if (!isUndefined(initMethod)) {
+        initMethod.bind(fn);
+        return this.callBuiltinFunction(initMethod, args, node);
       }
-      return fn.construct(this.evalPositional(args));
     }
 
     if (fn.isCLass()) return this.instantiateClass(fn, args, node);
     if (fn.isFunction()) return this.callFunction(fn, args, node);
-
-    if (fn.isBuiltinFunction()) {
-      if (fn.hasSignature()) {
-        const resolvedParams = this.resolveBuiltinParams(fn.params!);
-        const bound = this.bindArguments(fn.name, resolvedParams, args, node);
-        if (!bound) return Factory.Kosong;
-        return fn.call(fn.self, bound, this);
-      }
-      // No signature: legacy positional (varargs, backward compat)
-      return fn.call(fn.self, this.evalPositional(args), this);
-    }
+    if (fn.isBuiltinFunction()) return this.callBuiltinFunction(fn, args, node);
 
     this.reportAndThrow(node, MessageTemplate.kCalledNoCallable, fn.typeName);
   }
@@ -954,6 +974,25 @@ export class Interpreter extends AstVisitor<SantaiObject> implements CallSite {
     return args.map((a) =>
       isDirectArg(a) ? a.evaluatedValue : this.evaluate(a.value)
     );
+  }
+
+  private callBuiltinFunction(
+    fn: BuiltinFunction,
+    args: AnyArg[],
+    node: AstNode
+  ): SantaiObject {
+    if (fn.hasSignature()) {
+      const resolvedParams = this.resolveBuiltinParams(fn.params!);
+      const bound = this.bindArguments(
+        fn.name,
+        resolvedParams,
+        fn.self ? [{ evaluatedValue: fn.self }, ...args] : args,
+        node
+      );
+      if (!bound) return Factory.Kosong;
+      return fn.call(fn.self, bound, this);
+    }
+    return fn.call(fn.self, this.evalPositional(args), this);
   }
 
   private instantiateClass(
@@ -1170,6 +1209,12 @@ export class Interpreter extends AstVisitor<SantaiObject> implements CallSite {
     } finally {
       this.env = previousEnv;
     }
+  }
+
+  throw(message: MessageTemplate, ...args: unknown[]): never {
+    const node = this.currentCallNode;
+    assertDefined(node);
+    this.reportAndThrow(node, message, ...args);
   }
 
   reportAndThrow(

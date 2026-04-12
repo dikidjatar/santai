@@ -9,9 +9,11 @@ export * from "./builtins-teks";
 export * from "./builtins-angka";
 export * from "./builtins-daftar";
 export * from "./builtins-rentang";
+export * from "./builtins-logika";
+export * from "./builtins-masalah";
+export * from "./builtins-tipe";
 
 export * from "./builtins-io";
 export * from "./builtins-global-functional";
-export * from "./builtins-global-class";
 export * from "./builtins-sistem";
 export * from "./builtins-matematika";

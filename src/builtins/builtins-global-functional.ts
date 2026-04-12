@@ -3,8 +3,9 @@
 
 import { assert } from "../base/asserts";
 import { Factory, SantaiObject } from "../objects/object";
+import { SpecialName } from "../objects/specialNames";
 import { arg, defineGlobalFunction } from "./builtin";
-import { optional, required } from "./paramSpec";
+import { required } from "./paramSpec";
 
 defineGlobalFunction(
   "panjang",
@@ -60,11 +61,15 @@ defineGlobalFunction("olah", (_, args, callsite) => {
 });
 
 defineGlobalFunction(
-  "daftar_metode",
-  (self, args) => {
+  "daftar_properti",
+  (self, args, callsite) => {
     assert(!self);
-    const names = args[0].dir();
-    return Factory.NewList(names.map((name) => Factory.NewString(name)));
+    const propertyMethod = args[0].getProperty(SpecialName.__daftarproperti__);
+    if (propertyMethod) {
+      const result = callsite.invoke(propertyMethod, []);
+      return result;
+    }
+    return Factory.NewList([]);
   },
-  [optional("objek", Factory.Kosong)]
+  [required("objek")]
 );

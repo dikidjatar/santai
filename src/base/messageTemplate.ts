@@ -33,6 +33,8 @@ export const enum MessageTemplate {
   kTooManyArguments,
   kMissingArgument,
   kDuplicateArgument,
+  kInvaidObjectDescriptor,
+  kInvalidReturnValue,
   // Control flow
   kIllegalReturnStatement,
   kIllegalBreakStatement,
@@ -125,6 +127,9 @@ export const MessageTemplateString: Record<MessageTemplate, string> = {
     "parameter '%s' di aksi '%s' wajib diisi — jangan dikosongkan dong",
   [MessageTemplate.kDuplicateArgument]:
     "parameter '%s' dapat nilai dua kali — pilih salah satu, jangan serakah",
+  [MessageTemplate.kInvaidObjectDescriptor]:
+    "objek tidak valid, harus '%s' tapi yang diberikan '%s'",
+  [MessageTemplate.kInvalidReturnValue]: "%s mengembalikan %s",
 
   // Control flow
   [MessageTemplate.kIllegalReturnStatement]:
@@ -207,4 +212,6 @@ export const MessageTemplateMood: Record<MessageTemplate, Mood> = {
   [MessageTemplate.kUnexpectedKeywordArgument]:    Mood.Bingung,
   [MessageTemplate.kDuplicateArgument]:            Mood.Marah,
   [MessageTemplate.kUnterminatedTemplate]:         Mood.Bingung,
+  [MessageTemplate.kInvaidObjectDescriptor]:       Mood.Marah,
+  [MessageTemplate.kInvalidReturnValue]:           Mood.Panik
 };

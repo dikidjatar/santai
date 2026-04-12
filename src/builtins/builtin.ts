@@ -7,10 +7,8 @@ import {
   Callable,
   Factory,
   GlobalMethodParam,
-  SantaiBuiltinClass,
   SantaiObject,
 } from "../objects/object";
-import { TypeRegistry } from "../objects/typeRegistry";
 import { defineBatchGlobals } from "./globalProvider";
 
 export function arg(args: SantaiObject[], index: number): SantaiObject {
@@ -63,11 +61,6 @@ export class BuiltinRegistry {
     this._globals.set(name, builtin);
   }
 
-  public registerClass(clazz: SantaiBuiltinClass): void {
-    assert(!this._globals.has(clazz.name), "cannot redeclare: " + clazz.name);
-    this._globals.set(clazz.name, clazz);
-  }
-
   /**
    * @internal — only called by the batch provider registered below
    */
@@ -89,12 +82,4 @@ export function defineGlobalFunction(
   params?: readonly GlobalMethodParam[]
 ): void {
   BuiltinRegistry.getInstance().registerFunction(name, callable, params);
-}
-
-export function defineGlobalClass(clazz: SantaiBuiltinClass): void {
-  BuiltinRegistry.getInstance().registerClass(clazz);
-}
-
-export function defineAndRegisterGlobalClass(clazz: SantaiBuiltinClass): void {
-  defineGlobalClass(TypeRegistry.registerType(clazz));
 }

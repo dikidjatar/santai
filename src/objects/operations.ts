@@ -1,6 +1,8 @@
 // Copyright (c) [2025-2026] [Diki Djatar]
 // SPDX-License-Identifier: MIT
 
+import { assert } from "../base/asserts";
+import { TokenValue } from "../parsing/token";
 import { Factory, SantaiObject } from "./object";
 
 export interface OperationError {
@@ -115,6 +117,12 @@ export const Operation = {
 
     return ok(Factory.Boolean(left === right));
   },
+  Ne: (left: SantaiObject, right: SantaiObject): OperationResult => {
+    const eq = Operation.Eq(left, right);
+    if (!eq.ok) return eq;
+    assert(eq.value.isBoolean());
+    return ok(Factory.Boolean(!eq.value.value));
+  },
   Lt: (left: SantaiObject, right: SantaiObject): OperationResult => {
     if (left.isNumber() && right.isNumber()) {
       return ok(Factory.Boolean(left.value < right.value));
@@ -135,4 +143,35 @@ export const Operation = {
     }
     return err({ op: ">", left, right });
   },
+  Lte: (left: SantaiObject, right: SantaiObject): OperationResult => {
+    // a <= b  =  !(a > b)
+    const gt = Operation.Gt(left, right);
+    if (!gt.ok) return gt;
+    assert(gt.value.isBoolean());
+    return ok(Factory.Boolean(!gt.value.value));
+  },
+  Gte: (left: SantaiObject, right: SantaiObject): OperationResult => {
+    // a >= b  =  !(a < b)
+    const lt = Operation.Lt(left, right);
+    if (!lt.ok) return lt;
+    assert(lt.value.isBoolean());
+    return ok(Factory.Boolean(!lt.value.value));
+  },
+};
+
+export type Operation = (typeof Operation)[keyof typeof Operation];
+
+export const TokenToOperation: Readonly<Record<number, Operation>> = {
+  [TokenValue.kAdd]: Operation.Add,
+  [TokenValue.kSub]: Operation.Sub,
+  [TokenValue.kMul]: Operation.Mul,
+  [TokenValue.kDiv]: Operation.Div,
+  [TokenValue.kMod]: Operation.Mod,
+  [TokenValue.kExp]: Operation.Exp,
+  [TokenValue.kEq]: Operation.Eq,
+  [TokenValue.kNotEq]: Operation.Ne,
+  [TokenValue.kLessThan]: Operation.Lt,
+  [TokenValue.kGreaterThan]: Operation.Gt,
+  [TokenValue.kLessThanEq]: Operation.Lte,
+  [TokenValue.kGreaterThanEq]: Operation.Gte,
 };

@@ -2,36 +2,60 @@
 // SPDX-License-Identifier: MIT
 
 import fs from "fs";
+import { assertNever } from "../base/asserts";
+import { MessageTemplate } from "../base/messageTemplate";
 import { writeLineToStdout, writeToStdout } from "../base/output";
-import { Factory, SantaiObject } from "../objects/object";
-import { defineGlobalFunction } from "./builtin";
-import { optional } from "./paramSpec";
+import { CallSite, Factory, SantaiObject } from "../objects/object";
+import { SpecialName } from "../objects/specialNames";
+import { defineGlobal } from "./globalProvider";
 
-function joinArgs(args: SantaiObject[]): string {
-  return args.map((a) => a.inspect()).join(" ");
+function getOutput(callsite: CallSite, args: SantaiObject[]): string {
+  return args
+    .map((arg) => {
+      if (arg.isInstance()) {
+        const teksMethod = arg.getProperty(SpecialName.__teks__);
+        if (teksMethod && teksMethod.isFunction()) {
+          const returnValue = callsite.invoke(teksMethod, []);
+          if (!returnValue.isString()) {
+            assertNever(
+              callsite.throw(
+                MessageTemplate.kInvalidReturnValue,
+                teksMethod.name,
+                `bukan-teks (tipenya ${returnValue.typeName})`
+              )
+            );
+          }
+          return returnValue.value;
+        }
+      }
+      return arg.inspect();
+    })
+    .join(" ");
 }
 
 // print arguments to stdout without newline.
-defineGlobalFunction("tulis", (_self, args) => {
-  writeToStdout(joinArgs(args));
-  return Factory.Kosong;
+defineGlobal("tulis", () => {
+  return Factory.NewBuiltinFunction("tulis", (_, args, callsite) => {
+    writeToStdout(getOutput(callsite, args));
+    return Factory.Kosong;
+  });
 });
 
 // print arguments to stdout and add a newline.
-defineGlobalFunction("spil", (_self, args) => {
-  writeLineToStdout(joinArgs(args));
-  return Factory.Kosong;
+defineGlobal("spil", () => {
+  return Factory.NewBuiltinFunction("spil", (_, args, callsite) => {
+    writeLineToStdout(getOutput(callsite, args));
+    return Factory.Kosong;
+  });
 });
 
 // Simple implementation for input
-defineGlobalFunction(
-  "baca",
-  (_, args) => {
+defineGlobal("baca", () => {
+  return Factory.NewBuiltinFunction("baca", (_, args) => {
     const prompt = args[0].inspect();
     if (prompt) writeToStdout(prompt);
     const buf = Buffer.alloc(1024);
     const n = fs.readSync(0, buf, 0, buf.length, null);
     return Factory.NewString(buf.subarray(0, n).toString().trimEnd());
-  },
-  [optional("pesan", Factory.NewString(""))]
-);
+  });
+});

@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: MIT
 
 import { Block, Parameter } from "../ast/ast";
+import { MessageTemplate } from "../base/messageTemplate";
 import { isUndefined } from "../base/types";
 import { Environment } from "../interpreter/environment";
 import { SantaiIterator } from "./iterator";
@@ -10,6 +11,7 @@ import { SantaiType } from "./st-type";
 
 export interface CallSite {
   invoke(fn: SantaiObject, args: SantaiObject[]): SantaiObject;
+  throw(message: MessageTemplate, ...args: unknown[]): never;
 }
 
 export type Callable = (
@@ -29,6 +31,13 @@ export interface GlobalMethodParam {
    */
   readonly defaultValue?: SantaiObject;
 }
+
+export type MethodArg = [
+  name: string,
+  callable: Callable,
+  self?: SantaiObject,
+  params?: readonly GlobalMethodParam[],
+];
 
 export abstract class SantaiObject {
   abstract readonly typeName: string;
@@ -68,7 +77,7 @@ export abstract class SantaiObject {
   isInstance(): this is SantaiInstance {
     return this.type === SantaiType.kInstance;
   }
-  isBuiltinClass(): this is SantaiBuiltinClass {
+  isBuiltinClass(): this is BuiltinClass {
     return this.type === SantaiType.kBuiltinClass;
   }
 
@@ -300,7 +309,7 @@ export class BuiltinFunction extends SantaiObject {
   }
 
   override inspect(): string {
-    return `<bawaan aksi ${this.name}>`;
+    return `<bawaan aksi ${this.self ? `${this.self.typeName}.` : ""}${this.name}>`;
   }
 
   override isTruthy(): boolean {
@@ -594,6 +603,10 @@ export class SantaiClass extends SantaiObject {
     return [...this._methods.keys()].sort();
   }
 
+  override getProperty(name: string): SantaiObject | undefined {
+    return this.getMethod(name);
+  }
+
   override dir(): readonly string[] {
     return this.methodNames();
   }
@@ -668,19 +681,10 @@ export class SantaiInstance extends SantaiObject {
     // 2. Look in the class method, bind it to this instance
     const method = this.clazz.getMethod(name);
     if (!isUndefined(method)) {
-      // Create a new SantaiFunction with boundThis = this instance.
-      // Each access creates a new object
-      // TODO: caching
-      return new SantaiFunction(
-        method.name,
-        method.parameters,
-        method.body,
-        method.closure,
-        this // boundThis
-      );
+      return method.bindAndCopy(this);
     }
 
-    return undefined;
+    return method;
   }
 
   override dir(): readonly string[] {
@@ -713,25 +717,28 @@ export class SantaiInstance extends SantaiObject {
   }
 }
 
-export class SantaiBuiltinClass extends SantaiObject {
+export class BuiltinClass extends SantaiObject {
   override readonly typeName: string;
+
+  private readonly _methods: Map<string, BuiltinFunction> = new Map();
 
   constructor(
     readonly name: string,
-    readonly santaiType: SantaiType,
-    private readonly _construct: (args: SantaiObject[]) => SantaiObject,
-    readonly params?: readonly GlobalMethodParam[]
+    methods: readonly BuiltinFunction[]
   ) {
     super(SantaiType.kBuiltinClass);
     this.typeName = name;
+    for (const method of methods) {
+      this._methods.set(method.name, method);
+    }
   }
 
-  construct(args: SantaiObject[]): SantaiObject {
-    return this._construct(args);
+  getMethod(name: string): BuiltinFunction | undefined {
+    return this._methods.get(name);
   }
 
-  hasSignature(): boolean {
-    return !isUndefined(this.params);
+  override getProperty(name: string): SantaiObject | undefined {
+    return this._methods.get(name);
   }
 
   override isTruthy(): boolean {
@@ -739,7 +746,7 @@ export class SantaiBuiltinClass extends SantaiObject {
   }
 
   override inspect(): string {
-    return `<gue ${this.typeName}>`;
+    return `<gue ${this.name}>`;
   }
 }
 
@@ -839,11 +846,9 @@ export namespace Factory {
 
   export function NewBuiltinClass(
     name: string,
-    santaiType: SantaiType,
-    construct: (args: SantaiObject[]) => SantaiObject,
-    params?: readonly GlobalMethodParam[]
-  ): SantaiBuiltinClass {
-    return new SantaiBuiltinClass(name, santaiType, construct, params);
+    methods: readonly BuiltinFunction[]
+  ): BuiltinClass {
+    return new BuiltinClass(name, methods);
   }
 
   export function IsCallable(obj: SantaiObject): boolean {

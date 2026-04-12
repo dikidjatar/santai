@@ -1,100 +1,133 @@
 // Copyright (c) [2026] [Diki Djatar]
 // SPDX-License-Identifier: MIT
 
-import { assert, assertDefined } from "../base/asserts";
 import {
-  CallSite,
+  BuiltinFunction,
   Factory,
-  GlobalMethodParam,
+  MethodArg,
   SantaiList,
   SantaiObject,
 } from "../objects/object";
 import { ObjectUtil } from "../objects/object-util";
+import { registerPropertyProvider } from "../objects/propertyRegistry";
+import { SpecialName } from "../objects/specialNames";
 import { SantaiType } from "../objects/st-type";
-import { MethodTable } from "./methods";
-import { required } from "./paramSpec";
+import { TypeRegistry } from "../objects/typeRegistry";
+import { method } from "./builtin-util";
+import { defineGlobal } from "./globalProvider";
+import { optional, required } from "./paramSpec";
 
-const methods = new MethodTable();
+const daftar__awal__: MethodArg = [
+  SpecialName.__awal__,
+  ObjectUtil.wrapCallable((_, __, value) => {
+    if (value.isList()) return value;
+    if (value.isIterable()) {
+      const iterator = value.iterate();
+      const elements: SantaiObject[] = [];
 
-function define(
-  name: string,
-  fn: (
-    self: SantaiList,
-    args: SantaiObject[],
-    callsite: CallSite
-  ) => SantaiObject,
-  params?: readonly GlobalMethodParam[]
-) {
-  methods.define(
-    name,
-    (self, args, callsite) => {
-      assertDefined(self);
-      assert(self.isList());
+      let result = iterator.next();
 
-      return fn(self, args, callsite);
-    },
-    params
-  );
-}
+      while (!result.done) {
+        elements.push(result.value);
+        result = iterator.next();
+      }
 
-define("tambah", (self, args) => Factory.NewNumber(self.push(...args)), [
-  required("data"),
-]);
+      return Factory.NewList(elements);
+    }
+    return Factory.NewList([value]);
+  }),
+  undefined,
+  [required("gue"), optional("nilai", Factory.NewList([]))],
+];
+const daftar__teks__: MethodArg = [
+  SpecialName.__teks__,
+  method.list((self) => {
+    const elements: readonly SantaiObject[] = self.elements;
+    let str: string = "[";
 
-define(
+    for (let i = 0; i < elements.length; i++) {
+      const element = elements[i] ?? Factory.Kosong;
+
+      if (element.isString()) {
+        str += "'" + element.inspect() + "'";
+      } else {
+        str += element.inspect();
+      }
+
+      if (i < elements.length - 1) {
+        str += ", ";
+      }
+    }
+
+    str += "]";
+    return Factory.NewString(str);
+  }),
+  undefined,
+  [required("gue")],
+];
+const daftar_tambah: MethodArg = [
+  "tambah",
+  method.list((self, ...args) => Factory.NewNumber(self.push(...args))),
+  undefined,
+  [required("gue"), required("item")],
+];
+const daftar_hapus: MethodArg = [
   "hapus",
-  (self, args) => {
-    const target = args[0];
-    const index = self.elements.findIndex((e) => ObjectUtil.Equals(e, target));
+  method.list((self, item) => {
+    const index = self.elements.findIndex((e) => ObjectUtil.Equals(e, item));
     self.remove(index);
     return Factory.Kosong;
-  },
-  [required("item")]
-);
-
-define(
+  }),
+  undefined,
+  [required("gue"), required("item")],
+];
+const daftar_hapus_ke: MethodArg = [
   "hapus_ke",
-  (self, args) => {
-    const index = args[0].isNumber() ? args[0].value : -1;
+  method.list((self, position) => {
+    const index = position.isNumber() ? position.value : -1;
     return self.remove(index);
-  },
-  [required("posisi")]
-);
-
-define(
+  }),
+  undefined,
+  [required("gue"), required("posisi")],
+];
+const daftar_kosongin: MethodArg = [
   "kosongin",
-  (self) => {
+  method.list((self) => {
     self.clear();
     return Factory.Kosong;
-  },
-  []
-);
-
-define(
+  }),
+  undefined,
+  [required("gue")],
+];
+const daftar_berisi: MethodArg = [
   "berisi",
-  (self, args) => {
-    return Factory.Boolean(
-      self.elements.some((e) => ObjectUtil.Equals(e, args[0]))
-    );
-  },
-  [required("item")]
-);
-
-define(
+  method.list((self, item) =>
+    Factory.Boolean(
+      self.elements.some((element) => ObjectUtil.Equals(element, item))
+    )
+  ),
+  undefined,
+  [required("gue"), required("item")],
+];
+const daftar_posisi: MethodArg = [
   "posisi",
-  (self, args) => {
-    return Factory.NewNumber(
-      self.elements.findIndex((e) => ObjectUtil.Equals(e, args[0]))
-    );
-  },
-  [required("item")]
-);
-
-define("balik", (self) => self.reverse(), []);
-
-define(
+  method.list((self, item) =>
+    Factory.NewNumber(
+      self.elements.findIndex((element) => ObjectUtil.Equals(element, item))
+    )
+  ),
+  undefined,
+  [required("gue"), required("item")],
+];
+const daftar_balik: MethodArg = [
+  "balik",
+  method.list((self) => self.reverse()),
+  undefined,
+  [required("gue")],
+];
+const daftar_unik: MethodArg = [
   "unik",
-  (self) => {
+  method.list((self) => {
     const seen = new Set<string>();
     const result: SantaiObject[] = [];
     for (const el of self.elements) {
@@ -105,22 +138,67 @@ define(
       }
     }
     return Factory.NewList(result);
-  },
-  []
-);
-
-define(
+  }),
+  undefined,
+  [required("gue")],
+];
+const daftar_cariin: MethodArg = [
   "cariin",
-  (self, args, callsite) => {
-    const fn = args[0];
-    if (!Factory.IsCallable(fn)) return Factory.Kosong;
-    const elememts: readonly SantaiObject[] = self.elements;
-    const result = elememts.find((element) => {
-      return callsite.invoke(fn, [element]).isTruthy();
-    });
-    return result ? result : Factory.Kosong;
-  },
-  [required("aksi_cari")]
-);
+  ObjectUtil.wrapMethod<SantaiList>({
+    fn: (callsite, self, fn) => {
+      if (!Factory.IsCallable(fn)) return Factory.Kosong;
+      const elememts: readonly SantaiObject[] = self.elements;
+      const result = elememts.find((element) => {
+        return callsite.invoke(fn, [element]).isTruthy();
+      });
+      return result ? result : Factory.Kosong;
+    },
+    assertDescriptor: (callsite, self) =>
+      ObjectUtil.checkObjectDescriptor(
+        callsite,
+        self,
+        SantaiType.kList,
+        "daftar"
+      ),
+  }),
+  undefined,
+  [required("gue"), required("aksi_cari")],
+];
 
-methods.registerFor(SantaiType.kList);
+const list__daftarproperti__: MethodArg = [
+  SpecialName.__daftarproperti__,
+  ObjectUtil.wrapCallable(() =>
+    Factory.NewList(listMethods.map((method) => Factory.NewString(method.name)))
+  ),
+  undefined,
+];
+
+const listMethods: BuiltinFunction[] = [
+  Factory.NewBuiltinFunction(...daftar__awal__),
+  Factory.NewBuiltinFunction(...daftar__teks__),
+  Factory.NewBuiltinFunction(...daftar_tambah),
+  Factory.NewBuiltinFunction(...daftar_hapus),
+  Factory.NewBuiltinFunction(...daftar_hapus_ke),
+  Factory.NewBuiltinFunction(...daftar_kosongin),
+  Factory.NewBuiltinFunction(...daftar_berisi),
+  Factory.NewBuiltinFunction(...daftar_posisi),
+  Factory.NewBuiltinFunction(...daftar_balik),
+  Factory.NewBuiltinFunction(...daftar_unik),
+  Factory.NewBuiltinFunction(...daftar_cariin),
+  Factory.NewBuiltinFunction(...list__daftarproperti__),
+];
+
+registerPropertyProvider(SantaiType.kList, (name, self) => {
+  const method = listMethods.find((n) => n.name === name);
+  if (method) {
+    method.bind(self);
+  }
+  return method;
+});
+
+defineGlobal("daftar", () => {
+  return TypeRegistry.registerType(
+    Factory.NewBuiltinClass("daftar", listMethods),
+    SantaiType.kList
+  );
+});

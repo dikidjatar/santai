@@ -1,162 +1,232 @@
 // Copyright (c) [2026] [Diki Djatar]
 // SPDX-License-Identifier: MIT
 
-import { assert, assertDefined } from "../base/asserts";
-import { Factory, GlobalMethodParam, SantaiObject } from "../objects/object";
+import { BuiltinFunction, Factory, MethodArg } from "../objects/object";
+import { ObjectUtil } from "../objects/object-util";
+import { registerPropertyProvider } from "../objects/propertyRegistry";
+import { SpecialName } from "../objects/specialNames";
 import { SantaiType } from "../objects/st-type";
-import { arg0 } from "./builtin";
-import { MethodTable } from "./methods";
+import { TypeRegistry } from "../objects/typeRegistry";
+import { TokenValue } from "../parsing/token";
+import { method } from "./builtin-util";
+import { defineGlobal } from "./globalProvider";
 import { optional, required } from "./paramSpec";
 
-const stringMethod = new MethodTable();
-
-function define(
-  name: string,
-  fn: (value: string, args: SantaiObject[]) => SantaiObject,
-  params?: readonly GlobalMethodParam[]
-) {
-  stringMethod.define(
-    name,
-    (self, args) => {
-      assertDefined(self);
-      assert(self.isString());
-
-      return fn(self.value, args);
-    },
-    params
-  );
-}
-
-define(
+const teks__awal__: MethodArg = [
+  SpecialName.__awal__,
+  ObjectUtil.wrapCallable((_, __, val) => {
+    if (val.isString()) {
+      return val;
+    }
+    return Factory.NewString(val.inspect());
+  }),
+  undefined,
+  [required("gue"), optional("nilai", Factory.NewString(""))],
+];
+const teks__teks__: MethodArg = [
+  SpecialName.__teks__,
+  method.string((self) => self),
+  undefined,
+  [required("gue")],
+];
+const teks__tambah__ = method.op(
+  SantaiType.kString,
+  "teks",
+  SpecialName.__tambah__,
+  TokenValue.kAdd
+);
+const teks_kapital: MethodArg = [
   "kapital",
-  (value, args) => {
-    const arg = arg0(args);
-    const allWord = arg.isBoolean() && arg.isTruthy();
+  method.string(({ value }, all) => {
+    const allWord = all.isBoolean() && all.isTruthy();
 
     const result = allWord
       ? value.replace(/\S+/g, (w) => w[0]!.toUpperCase() + w.slice(1))
       : value.replace(/\S/, (c) => c.toUpperCase());
 
     return Factory.NewString(result);
-  },
-  [optional("semua", Factory.Boolean(false))]
-);
-
-define("gedein", (value) => Factory.NewString(value.toUpperCase()), []);
-define("kecilin", (value) => Factory.NewString(value.toLowerCase()), []);
-define("rapiin", (value) => Factory.NewString(value.trim()), []);
-define(
+  }),
+  undefined,
+  [required("gue"), optional("semua", Factory.Boolean(false))],
+];
+const teks_gedein: MethodArg = [
+  "gedein",
+  method.string(({ value }) => Factory.NewString(value.toUpperCase())),
+  undefined,
+  [required("gue")],
+];
+const teks_kecilin: MethodArg = [
+  "kecilin",
+  method.string(({ value }) => Factory.NewString(value.toLowerCase())),
+  undefined,
+  [required("gue")],
+];
+const teks_rapiin: MethodArg = [
+  "rapiin",
+  method.string(({ value }) => Factory.NewString(value.trim())),
+  undefined,
+  [required("gue")],
+];
+const teks_diawali: MethodArg = [
   "diawali",
-  (value, args) => {
-    const searchString = arg0(args);
+  method.string(({ value }, searchString) => {
     if (!searchString.isNumber() && !searchString.isString()) {
       return Factory.Boolean(false);
     }
     return Factory.Boolean(value.startsWith(searchString.value as string));
-  },
-  [required("teks")]
-);
-define(
+  }),
+  undefined,
+  [required("gue"), required("teks")],
+];
+const teks_diakhiri: MethodArg = [
   "diakhiri",
-  (value, args) => {
-    const searchString = arg0(args);
+  method.string(({ value }, searchString) => {
     if (!searchString.isNumber() && !searchString.isString()) {
       return Factory.Boolean(false);
     }
     return Factory.Boolean(value.endsWith(searchString.value as string));
-  },
-  [required("teks")]
-);
-define(
+  }),
+  undefined,
+  [required("gue"), required("teks")],
+];
+const teks_karakter_ke: MethodArg = [
   "karakter_ke",
-  (value, args) => {
-    const position = arg0(args);
+  method.string(({ value }, position) => {
     if (!position.isNumber()) {
       return Factory.NewString(value.charAt(0));
     }
-
     return Factory.NewString(value.charAt(position.value));
-  },
-  [required("indeks")]
-);
-define(
-  "ganti",
-  (value, args) => {
-    const searchValue = args[0];
-    const replaceValue = args[1];
+  }),
+  undefined,
+  [required("gue"), required("indeks")],
+];
+const teks_ganti: MethodArg = [
+  "karakter_ke",
+  method.string(({ value }, searchValue, replaceValue) => {
     const newValue = value.replace(
       searchValue.inspect(),
       replaceValue.inspect()
     );
     return Factory.NewString(newValue);
-  },
-  [required("teks"), required("ganti")]
-);
-define(
+  }),
+  undefined,
+  [required("gue"), required("teks"), required("ganti")],
+];
+const teks_pisahin: MethodArg = [
   "pisahin",
-  (value, args) => {
-    const limit = args[1].isNumber() ? args[1].value : undefined;
-    const elements = value.split(args[0].inspect(), limit);
+  method.string(({ value }, pemisah, _limit) => {
+    const limit = _limit.isNumber() ? _limit.value : undefined;
+    const elements = value.split(pemisah.inspect(), limit);
     return Factory.NewList(elements.map((e) => Factory.NewString(e)));
-  },
-  [required("pemisah"), optional("batas", Factory.NewNumber(-1))]
-);
-define(
+  }),
+  undefined,
+  [
+    required("gue"),
+    required("pemisah"),
+    optional("batas", Factory.NewNumber(-1)),
+  ],
+];
+const teks_berisi: MethodArg = [
   "berisi",
-  (value, args) => {
-    const searchString = args[0];
-    const position = args[1].isNumber() ? args[1].value : undefined;
+  method.string(({ value }, searchString, _position) => {
+    const position = _position.isNumber() ? _position.value : undefined;
     return Factory.Boolean(value.includes(searchString.inspect(), position));
-  },
-  [required("teks"), optional("posisi", Factory.Kosong)]
-);
-define(
+  }),
+  undefined,
+  [required("gue"), required("teks"), optional("posisi", Factory.Kosong)],
+];
+const teks_mirip: MethodArg = [
   "mirip",
-  (value, args) => {
-    if (!args[0].isString()) {
+  method.string(({ value }, str) => {
+    if (!str.isString()) {
       return Factory.Boolean(false);
     }
-    return Factory.Boolean(value.toLowerCase() === args[0].value.toLowerCase());
-  },
-  [required("teks")]
-);
-define(
+    return Factory.Boolean(value.toLowerCase() === str.value.toLowerCase());
+  }),
+  undefined,
+  [required("gue"), required("teks")],
+];
+const teks_ulangin: MethodArg = [
   "ulangin",
-  (value, args) => {
-    return Factory.NewString(
-      value.repeat(args[0].isNumber() ? args[0].value : 1)
-    );
-  },
-  [required("jumlah")]
-);
-define(
+  method.string(({ value }, count) => {
+    return Factory.NewString(value.repeat(count.isNumber() ? count.value : 1));
+  }),
+  undefined,
+  [required("gue"), required("jumlah")],
+];
+const teks_gabungin: MethodArg = [
   "gabungin",
-  (separator, args) => {
-    if (!args[0].isIterable()) return Factory.NewString("");
-    const iterator = args[0].iterate();
+  method.string(({ value: separator }, iter) => {
+    if (!iter.isIterable()) return Factory.NewString("");
+    const iterator = iter.iterate();
     return Factory.NewString(
       [...iterator].map((v) => v.inspect()).join(separator)
     );
-  },
-  [required("iterable")]
-);
-define(
+  }),
+  undefined,
+  [required("gue"), required("iter")],
+];
+const teks_posisi: MethodArg = [
   "posisi",
-  (value, args) => {
-    const searchString = args[0].inspect();
-    const position = args[1].isNumber() ? args[1].value : undefined;
+  method.string(({ value }, _searchString, _position) => {
+    const searchString = _searchString.inspect();
+    const position = _position.isNumber() ? _position.value : undefined;
     return Factory.NewNumber(value.indexOf(searchString, position));
-  },
-  [required("teks"), optional("posisi", Factory.Kosong)]
-);
-define(
+  }),
+  undefined,
+  [required("gue"), required("teks"), optional("posisi", Factory.Kosong)],
+];
+const teks_subteks: MethodArg = [
   "subteks",
-  (value, args) => {
-    const start = args[0].isNumber() ? args[0].value : 0;
-    const end = args[1].isNumber() ? args[1].value : undefined;
+  method.string(({ value }, _start, _end) => {
+    const start = _start.isNumber() ? _start.value : 0;
+    const end = _end.isNumber() ? _end.value : undefined;
     return Factory.NewString(value.substring(start, end));
-  },
-  [required("mulai"), optional("akhir", Factory.Kosong)]
-);
+  }),
+  undefined,
+  [required("gue"), required("mulai"), optional("akhir", Factory.Kosong)],
+];
+const teks__daftarproperti__: MethodArg = [
+  SpecialName.__daftarproperti__,
+  ObjectUtil.wrapCallable(() =>
+    Factory.NewList(textMethods.map((method) => Factory.NewString(method.name)))
+  ),
+  undefined,
+];
 
-stringMethod.registerFor(SantaiType.kString);
+const textMethods: BuiltinFunction[] = [
+  Factory.NewBuiltinFunction(...teks__awal__),
+  Factory.NewBuiltinFunction(...teks__teks__),
+  Factory.NewBuiltinFunction(...teks__tambah__),
+  Factory.NewBuiltinFunction(...teks_kapital),
+  Factory.NewBuiltinFunction(...teks_gedein),
+  Factory.NewBuiltinFunction(...teks_kecilin),
+  Factory.NewBuiltinFunction(...teks_rapiin),
+  Factory.NewBuiltinFunction(...teks_diawali),
+  Factory.NewBuiltinFunction(...teks_diakhiri),
+  Factory.NewBuiltinFunction(...teks_karakter_ke),
+  Factory.NewBuiltinFunction(...teks_ganti),
+  Factory.NewBuiltinFunction(...teks_pisahin),
+  Factory.NewBuiltinFunction(...teks_berisi),
+  Factory.NewBuiltinFunction(...teks_mirip),
+  Factory.NewBuiltinFunction(...teks_ulangin),
+  Factory.NewBuiltinFunction(...teks_gabungin),
+  Factory.NewBuiltinFunction(...teks_posisi),
+  Factory.NewBuiltinFunction(...teks_subteks),
+  Factory.NewBuiltinFunction(...teks__daftarproperti__),
+];
+
+registerPropertyProvider(SantaiType.kString, (name, self) => {
+  const method = textMethods.find((n) => n.name === name);
+  if (method) {
+    method.bind(self);
+  }
+  return method;
+});
+
+defineGlobal("teks", () => {
+  return TypeRegistry.registerType(
+    Factory.NewBuiltinClass("teks", textMethods),
+    SantaiType.kString
+  );
+});

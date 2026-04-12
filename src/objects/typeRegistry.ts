@@ -2,26 +2,31 @@
 // SPDX-License-Identifier: MIT
 
 import { SantaiObject } from "./object";
+import { SantaiType } from "./st-type";
 
 export interface ITypeRegistry {
-  registerType<T extends SantaiObject>(obj: T): T;
+  registerType<T extends SantaiObject>(obj: T, type: SantaiType): T;
   getTypeOf(obj: SantaiObject): SantaiObject | undefined;
 }
 
 class TypeRegistryImpl implements ITypeRegistry {
   private readonly _types = new Map<string, SantaiObject>();
 
-  registerType<T extends SantaiObject>(obj: T): T {
-    this._types.set(this.id(obj), obj);
+  registerType<T extends SantaiObject>(obj: T, type: SantaiType): T {
+    const id = this.id(obj, type);
+    if (this._types.has(id)) {
+      throw new TypeError(`type ${id} already exsists`);
+    }
+    this._types.set(id, obj);
     return obj;
   }
 
   getTypeOf(obj: SantaiObject): SantaiObject | undefined {
-    return this._types.get(this.id(obj));
+    return this._types.get(this.id(obj, obj.type));
   }
 
-  private id(obj: SantaiObject): string {
-    return `${obj.isBuiltinClass() ? obj.santaiType : obj.type}-${obj.typeName}`;
+  private id(obj: SantaiObject, type: SantaiType): string {
+    return `${type}-${obj.typeName}`;
   }
 }
 
