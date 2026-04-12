@@ -5,11 +5,12 @@ import { isUndefined } from "../base/types";
 import { BuiltinFunction, Factory, MethodArg } from "../objects/object";
 import { ObjectUtil } from "../objects/object-util";
 import { registerPropertyProvider } from "../objects/propertyRegistry";
+import { callObjectSpecialMethod } from "../objects/protocol";
 import { SpecialName } from "../objects/specialNames";
 import { SantaiType } from "../objects/st-type";
 import { TypeRegistry } from "../objects/typeRegistry";
 import { TokenValue } from "../parsing/token";
-import { evaluateObjectSpecialMethod, method } from "./builtin-util";
+import { method } from "./builtin-util";
 import { defineGlobal } from "./globalProvider";
 import { optional, required } from "./paramSpec";
 
@@ -30,7 +31,7 @@ const angka__awal__: MethodArg = [
     }
 
     if (value.isInstance()) {
-      return evaluateObjectSpecialMethod(
+      return callObjectSpecialMethod(
         callsite,
         value,
         SpecialName.__angka__,
