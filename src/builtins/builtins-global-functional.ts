@@ -102,7 +102,9 @@ defineGlobal("daftar_properti", () => {
         const result = callsite.invoke(propertyMethod, []);
         return result;
       }
-      return Factory.NewList([]);
+      return Factory.NewList(
+        object.dir().map((name) => Factory.NewString(name))
+      );
     }),
     undefined,
     [required("objek")]
