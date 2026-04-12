@@ -45,7 +45,7 @@ import {
   StackFrame,
 } from "../base/errorHandler";
 import { MessageTemplate } from "../base/messageTemplate";
-import { isNumber, isObject, isUndefined } from "../base/types";
+import { isUndefined } from "../base/types";
 import { globalProvideRegistry } from "../builtins/globalProvider";
 import "../builtins/globals";
 import {
@@ -1206,37 +1206,5 @@ export class Interpreter extends AstVisitor<SantaiObject> {
     throw new RuntimeErrorSignal(
       Factory.NewError(formatted, ErrorTypeNameFromTemplate(message))
     );
-  }
-
-  reportAt(
-    location: ScannerLocation,
-    message: MessageTemplate,
-    ...args: unknown[]
-  ): void;
-  reportAt(
-    locationOrBegin: ScannerLocation | number,
-    messageOrEnd: MessageTemplate | number,
-    messageTemplate: MessageTemplate,
-    ...args: unknown[]
-  ): void {
-    let location: ScannerLocation;
-    let message: MessageTemplate;
-
-    if (typeof locationOrBegin === "number") {
-    } else {
-      location = locationOrBegin;
-    }
-
-    if (isNumber(locationOrBegin)) {
-      assert(isNumber(messageOrEnd));
-      location = makeLocation(locationOrBegin, messageOrEnd);
-      message = messageTemplate;
-    } else {
-      assert(isObject(locationOrBegin));
-      location = locationOrBegin;
-      message = messageOrEnd;
-    }
-
-    this.errorHandler.reportErrorAt(location, message, ...args);
   }
 }
