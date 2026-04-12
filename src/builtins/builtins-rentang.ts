@@ -117,10 +117,8 @@ const rangeMethods: BuiltinFunction[] = [
 
 registerPropertyProvider(SantaiType.kRange, (name, self) => {
   const method = rangeMethods.find((n) => n.name === name);
-  if (method) {
-    method.bind(self);
-  }
-  return method;
+  if (isUndefined(method)) return undefined;
+  return method.bindAndCopy(self);
 });
 
 defineGlobal("rentang", () => {

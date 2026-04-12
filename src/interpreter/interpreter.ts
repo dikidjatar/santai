@@ -981,8 +981,7 @@ export class Interpreter extends AstVisitor<SantaiObject> implements CallSite {
         | BuiltinFunction
         | undefined;
       if (!isUndefined(initMethod)) {
-        initMethod.bind(fn);
-        return this.callBuiltinFunction(initMethod, args, node);
+        return this.callBuiltinFunction(initMethod.bindAndCopy(fn), args, node);
       }
     }
 

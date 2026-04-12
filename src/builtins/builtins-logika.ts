@@ -1,6 +1,7 @@
 // Copyright (c) [2026] [Diki Djatar]
 // SPDX-License-Identifier: MIT
 
+import { isUndefined } from "../base/types";
 import { BuiltinFunction, Factory, MethodArg } from "../objects/object";
 import { ObjectUtil } from "../objects/object-util";
 import { registerPropertyProvider } from "../objects/propertyRegistry";
@@ -53,10 +54,8 @@ const boolenMethods: BuiltinFunction[] = [
 
 registerPropertyProvider(SantaiType.kBoolean, (name, self) => {
   const method = boolenMethods.find((n) => n.name === name);
-  if (method) {
-    method.bind(self);
-  }
-  return method;
+  if (isUndefined(method)) return undefined;
+  return method.bindAndCopy(self);
 });
 
 defineGlobal("logika", () => {

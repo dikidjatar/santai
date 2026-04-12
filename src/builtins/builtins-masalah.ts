@@ -1,6 +1,7 @@
 // Copyright (c) [2026] [Diki Djatar]
 // SPDX-License-Identifier: MIT
 
+import { isUndefined } from "../base/types";
 import {
   BuiltinFunction,
   Factory,
@@ -55,10 +56,8 @@ const MasalahMethods: BuiltinFunction[] = [
 
 registerPropertyProvider(SantaiType.kError, (name, self) => {
   const method = MasalahMethods.find((n) => n.name === name);
-  if (method) {
-    method.bind(self);
-  }
-  return method;
+  if (isUndefined(method)) return undefined;
+  return method.bindAndCopy(self);
 });
 
 defineGlobal("Masalah", () => {

@@ -43,10 +43,8 @@ const typeMethods: BuiltinFunction[] = [
 
 registerPropertyProvider(SantaiType.kBuiltinClass, (name, self) => {
   const method = typeMethods.find((n) => n.name === name);
-  if (method) {
-    method.bind(self);
-  }
-  return method;
+  if (isUndefined(method)) return undefined;
+  return method.bindAndCopy(self);
 });
 
 defineGlobal("tipe", () => {

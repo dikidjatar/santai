@@ -1,6 +1,7 @@
 // Copyright (c) [2026] [Diki Djatar]
 // SPDX-License-Identifier: MIT
 
+import { isUndefined } from "../base/types";
 import { InstanceIteratorResult } from "../objects/instanceIteratorResult";
 import {
   BuiltinFunction,
@@ -190,10 +191,8 @@ const listMethods: BuiltinFunction[] = [
 
 registerPropertyProvider(SantaiType.kList, (name, self) => {
   const method = listMethods.find((n) => n.name === name);
-  if (method) {
-    method.bind(self);
-  }
-  return method;
+  if (isUndefined(method)) return undefined;
+  return method.bindAndCopy(self);
 });
 
 defineGlobal("daftar", () => {

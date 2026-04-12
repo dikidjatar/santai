@@ -368,11 +368,8 @@ export class BuiltinFunction extends SantaiObject {
     return this.callable(self, args, callsite);
   }
 
-  bind(self: SantaiObject): void {
-    if (this._self === self) {
-      return;
-    }
-    this._self = self;
+  bindAndCopy(receiver: SantaiObject): BuiltinFunction {
+    return new BuiltinFunction(this.name, this.callable, receiver, this.params);
   }
 }
 
