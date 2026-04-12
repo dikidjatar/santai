@@ -63,9 +63,9 @@ import {
   SantaiObject,
 } from "../objects/object";
 import {
-  Operation,
   OperationError,
   OperationResult,
+  TokenToOperation,
 } from "../objects/operations";
 import { createIterator } from "../objects/protocolIterator";
 import {
@@ -829,73 +829,42 @@ export class Interpreter extends AstVisitor<SantaiObject> {
     right: SantaiObject,
     node: AstNode
   ): SantaiObject {
-    if (left.isInstance()) {
-      const specialName = TokenToSpecialName[op];
-      if (!isUndefined(specialName)) {
-        const method = left.getProperty(specialName);
-        if (method) {
-          return this.dispatch(method, [{ evaluatedValue: right }], node);
-        }
+    if (op === TokenValue.kDi) {
+      const method = right.getProperty(SpecialName.__berisi__);
+      if (method) {
+        return this.dispatch(method, [{ evaluatedValue: left }], node);
+      }
+    }
 
-        const reflectedSpecialName = ReflectedSpecialName[specialName];
-        if (reflectedSpecialName) {
-          const rmethod = right.getProperty(reflectedSpecialName);
-          if (rmethod) {
-            return this.dispatch(rmethod, [{ evaluatedValue: left }], node);
-          }
+    const specialName = TokenToSpecialName[op];
+    if (!isUndefined(specialName)) {
+      const method = left.getProperty(specialName);
+      if (method) {
+        return this.dispatch(method, [{ evaluatedValue: right }], node);
+      }
+
+      const reflectedSpecialName = ReflectedSpecialName[specialName];
+      if (reflectedSpecialName) {
+        const rmethod = right.getProperty(reflectedSpecialName);
+        if (rmethod) {
+          return this.dispatch(rmethod, [{ evaluatedValue: left }], node);
         }
       }
     }
 
-    const resolve = (r: OperationResult) => this.resolveOp(r, node);
-    switch (op) {
-      case TokenValue.kAdd:
-        return resolve(Operation.Add(left, right));
-      case TokenValue.kSub:
-        return resolve(Operation.Sub(left, right));
-      case TokenValue.kMul:
-        return resolve(Operation.Mul(left, right));
-      case TokenValue.kDiv:
-        return resolve(Operation.Div(left, right));
-      case TokenValue.kMod:
-        return resolve(Operation.Mod(left, right));
-      case TokenValue.kExp:
-        return resolve(Operation.Exp(left, right));
-
-      case TokenValue.kEq:
-        return resolve(Operation.Eq(left, right));
-      case TokenValue.kNotEq: {
-        const eq = resolve(Operation.Eq(left, right));
-        assert(eq.isBoolean());
-        return Factory.Boolean(!eq.value);
-      }
-
-      case TokenValue.kLessThan:
-        return resolve(Operation.Lt(left, right));
-      case TokenValue.kGreaterThan:
-        return resolve(Operation.Gt(left, right));
-      case TokenValue.kLessThanEq: {
-        // a <= b  =  !(a > b)
-        const gt = resolve(Operation.Gt(left, right));
-        assert(gt.isBoolean());
-        return Factory.Boolean(!gt.value);
-      }
-      case TokenValue.kGreaterThanEq: {
-        // a >= b  =  !(a < b)
-        const lt = resolve(Operation.Lt(left, right));
-        assert(lt.isBoolean());
-        return Factory.Boolean(!lt.value);
-      }
-
-      default:
-        this.reportAndThrow(
-          node,
-          MessageTemplate.kUnsupportedBinaryOperation,
-          Token.string(op),
-          left.typeName,
-          right.typeName
-        );
+    // Reached only for types that have NOT registered special methods.
+    const opFn = TokenToOperation[op];
+    if (opFn) {
+      return this.resolveOp(opFn(left, right), node);
     }
+
+    this.reportAndThrow(
+      node,
+      MessageTemplate.kUnsupportedBinaryOperation,
+      Token.string(op),
+      left.typeName,
+      right.typeName
+    );
   }
 
   private resolveOp(result: OperationResult, node: AstNode): SantaiObject {
