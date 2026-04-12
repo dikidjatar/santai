@@ -2,17 +2,16 @@
 // SPDX-License-Identifier: MIT
 
 import { isUndefined } from "../base/types";
-import { InstanceIteratorResult } from "../objects/instanceIteratorResult";
 import {
   BuiltinFunction,
   Factory,
-  isInstanceIterator,
   MethodArg,
   SantaiList,
   SantaiObject,
 } from "../objects/object";
 import { ObjectUtil } from "../objects/object-util";
 import { registerPropertyProvider } from "../objects/propertyRegistry";
+import { createIterator } from "../objects/protocolIterator";
 import { SpecialName } from "../objects/specialNames";
 import { SantaiType } from "../objects/st-type";
 import { TypeRegistry } from "../objects/typeRegistry";
@@ -25,14 +24,9 @@ const daftar__awal__: MethodArg = [
   ObjectUtil.wrapCallable((callsite, __, value) => {
     if (value.isList()) return value;
     if (value.isIterable()) {
-      let iterator = value.iterate();
       const elements: SantaiObject[] = [];
-
-      if (isInstanceIterator(iterator)) {
-        iterator = new InstanceIteratorResult(callsite, iterator);
-      }
-
-      doIterator(iterator, (value) => elements.push(value));
+      const iterator = createIterator(callsite, value);
+      doIterator(iterator, (item) => elements.push(item));
       return Factory.NewList(elements);
     }
     return Factory.NewList([value]);

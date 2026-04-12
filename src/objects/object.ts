@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: MIT
 
 import { Block, Parameter } from "../ast/ast";
-import { assertDefined } from "../base/asserts";
 import { MessageTemplate } from "../base/messageTemplate";
 import { isUndefined } from "../base/types";
 import { Environment } from "../interpreter/environment";
@@ -11,10 +10,24 @@ import { SpecialName } from "./specialNames";
 import { SantaiType } from "./st-type";
 
 export interface CallSite {
+  /**
+   * Invoke a Santai callable
+   */
   invoke(fn: SantaiObject, args: SantaiObject[]): SantaiObject;
+
+  /**
+   * Report a runtime error at this call site and throw.
+   */
   throw(message: MessageTemplate, ...args: unknown[]): never;
 }
 
+/**
+ * The function signature that every builtin callable implements.
+ *
+ * `self`     — the bound receiver (undefined for global functions).
+ * `args`     — positional arguments, already evaluated and bound
+ * `callsite` — scoped context for this particular call.
+ */
 export type Callable = (
   self: SantaiObject | undefined,
   args: SantaiObject[],
@@ -33,6 +46,9 @@ export interface GlobalMethodParam {
   readonly defaultValue?: SantaiObject;
 }
 
+/**
+ * Tuple type for the four-argument form of `Factory.NewBuiltinFunction`.
+ */
 export type MethodArg = [
   name: string,
   callable: Callable,
@@ -658,26 +674,6 @@ export class SantaiClass extends SantaiObject {
   }
 }
 
-export class SantaiInstanceIterator extends SantaiIterator {
-  constructor(private readonly method: SantaiFunction) {
-    super();
-  }
-
-  override hasNext(): boolean {
-    return true;
-  }
-
-  override next(): IteratorResult<SantaiObject> {
-    return { value: this.method, done: true };
-  }
-}
-
-export function isInstanceIterator(
-  iterator: SantaiIterator
-): iterator is SantaiInstanceIterator {
-  return iterator instanceof SantaiInstanceIterator;
-}
-
 export class SantaiInstance extends SantaiObject {
   override readonly typeName: string;
 
@@ -749,10 +745,15 @@ export class SantaiInstance extends SantaiObject {
     return !isUndefined(this.getIteratorMethod());
   }
 
+  /**
+   * Not called directly for instances.
+   * The interpreter uses `createIterator(callsite, instance)` instead so that
+   * `__iterasi__` and `__lanjut__` receive a properly-scoped CallSite.
+   */
   override iterate(): SantaiIterator {
-    const method = this.getIteratorMethod();
-    assertDefined(method);
-    return new SantaiInstanceIterator(method);
+    throw new Error(
+      `'${this.typeName}': call createIterator(callsite, obj) instead of iterate() directly`
+    );
   }
 
   private getIteratorMethod(): SantaiFunction | undefined {

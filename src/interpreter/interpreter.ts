@@ -52,16 +52,13 @@ import {
   lookupExtension,
   registerExtension,
 } from "../objects/extensionRegistry";
-import { InstanceIteratorResult } from "../objects/instanceIteratorResult";
 import {
   BuiltinFunction,
   CallSite,
   Factory,
   GlobalMethodParam,
-  isInstanceIterator,
   SantaiClass,
   SantaiFunction,
-  SantaiInstanceIterator,
   SantaiIterator,
   SantaiObject,
 } from "../objects/object";
@@ -70,6 +67,7 @@ import {
   OperationError,
   OperationResult,
 } from "../objects/operations";
+import { createIterator } from "../objects/protocolIterator";
 import {
   ReflectedSpecialName,
   SpecialName,
@@ -165,13 +163,9 @@ interface ResolvedParam {
   readonly resolveDefault?: () => SantaiObject;
 }
 
-export class Interpreter extends AstVisitor<SantaiObject> implements CallSite {
+export class Interpreter extends AstVisitor<SantaiObject> {
   private readonly globalEnv: Environment;
   private env: Environment;
-
-  // Save the currently active node for callbacks from the builtin
-  // still have location context for error reporting.
-  private currentCallNode: AstNode | undefined;
 
   /**
    * Call stack for runtime one entry per active user-defined function.
@@ -231,6 +225,27 @@ export class Interpreter extends AstVisitor<SantaiObject> implements CallSite {
 
   evaluate(node: AstNode): SantaiObject {
     return this.visit(node);
+  }
+
+  /**
+   * Creates an ephemeral CallSite scoped to `node`.
+   *
+   * The returned object is cheap (two closure functions over `node` and
+   * `this`) and is discarded after the call completes.  There is no
+   * reference-counting or manual clean-up needed.
+   */
+  private makeCallSite(node: AstNode): CallSite {
+    return {
+      invoke: (fn: SantaiObject, args: SantaiObject[]): SantaiObject => {
+        const directArgs: DirectArg[] = args.map((v) => ({
+          evaluatedValue: v,
+        }));
+        return this.dispatch(fn, directArgs, node);
+      },
+      throw: (message: MessageTemplate, ...args: unknown[]): never => {
+        return this.reportAndThrow(node, message, ...args);
+      },
+    };
   }
 
   override visit(node: AstNode): SantaiObject {
@@ -360,17 +375,10 @@ export class Interpreter extends AstVisitor<SantaiObject> implements CallSite {
 
   override visitForInStatement(node: ForInStatement): SantaiObject {
     const iterable: SantaiObject = this.evaluate(node.iterable);
+    const callsite = this.makeCallSite(node.iterable);
 
-    // Ensure the object supports iteration before starting the loop
-    if (!iterable.isIterable()) {
-      this.reportAndThrow(
-        node.iterable,
-        MessageTemplate.kNotIterable,
-        iterable.typeName
-      );
-    }
-
-    let iterator: SantaiIterator = iterable.iterate();
+    // createIterator throws via callsite if the object is not iterable.
+    const iterator: SantaiIterator = createIterator(callsite, iterable);
 
     // Special loop environment: iterator variable lives here, separate
     // from outer scope, but can still access outer scope variables.
@@ -378,9 +386,7 @@ export class Interpreter extends AstVisitor<SantaiObject> implements CallSite {
     const body = node.body;
     const loopEnv = Environment.new(this.env);
     const previousEnv = this.env;
-    const previousNode = this.currentCallNode;
     this.env = loopEnv;
-    this.currentCallNode = node.iterable;
 
     // Declare iteration variable in loop env with initial value kosong.
     // Value will be updated each iteration through loopEnv.update().
@@ -389,14 +395,6 @@ export class Interpreter extends AstVisitor<SantaiObject> implements CallSite {
         node,
         MessageTemplate.kVarRedeclaration,
         variable.name
-      );
-    }
-
-    const isInstance = isInstanceIterator(iterator);
-    if (isInstance) {
-      iterator = new InstanceIteratorResult(
-        this,
-        iterator as SantaiInstanceIterator
       );
     }
 
@@ -409,20 +407,13 @@ export class Interpreter extends AstVisitor<SantaiObject> implements CallSite {
           loopEnv.update(variable, next.value);
           this.evaluate(body);
         } catch (signal) {
-          if (isBreakSignal(signal)) {
-            break;
-          }
-
-          if (!isInstance && isContinueSignal(signal)) {
-            continue;
-          }
-
+          if (isBreakSignal(signal)) break;
+          if (isContinueSignal(signal)) continue;
           throw signal;
         }
       }
     } finally {
       this.env = previousEnv;
-      this.currentCallNode = previousNode;
     }
 
     return Factory.Kosong;
@@ -464,11 +455,10 @@ export class Interpreter extends AstVisitor<SantaiObject> implements CallSite {
       if (obj.isInstance()) {
         const getAttr = obj.getProperty(SpecialName.__ambilproperti__);
         if (getAttr) {
-          assertDefined(this.currentCallNode);
           return this.dispatch(
             getAttr,
             [{ evaluatedValue: Factory.NewString(propertyName) }],
-            this.currentCallNode
+            propertyNode
           );
         }
       }
@@ -495,11 +485,10 @@ export class Interpreter extends AstVisitor<SantaiObject> implements CallSite {
       if (obj.isInstance()) {
         const getItem = obj.getProperty(SpecialName.__ambil__);
         if (getItem) {
-          assertDefined(this.currentCallNode);
           return this.dispatch(
             getItem,
             [{ evaluatedValue: keyObj }],
-            this.currentCallNode
+            propertyNode
           );
         }
       }
@@ -841,27 +830,20 @@ export class Interpreter extends AstVisitor<SantaiObject> implements CallSite {
     node: AstNode
   ): SantaiObject {
     if (left.isInstance()) {
-      const prevNode = this.currentCallNode;
-      this.currentCallNode = node;
+      const specialName = TokenToSpecialName[op];
+      if (!isUndefined(specialName)) {
+        const method = left.getProperty(specialName);
+        if (method) {
+          return this.dispatch(method, [{ evaluatedValue: right }], node);
+        }
 
-      try {
-        const specialName = TokenToSpecialName[op];
-        if (!isUndefined(specialName)) {
-          const method = left.getProperty(specialName);
-          if (method) {
-            return this.dispatch(method, [{ evaluatedValue: right }], node);
-          }
-
-          const reflectedSpecialName = ReflectedSpecialName[specialName];
-          if (reflectedSpecialName) {
-            const rmethod = right.getProperty(reflectedSpecialName);
-            if (rmethod) {
-              return this.dispatch(rmethod, [{ evaluatedValue: left }], node);
-            }
+        const reflectedSpecialName = ReflectedSpecialName[specialName];
+        if (reflectedSpecialName) {
+          const rmethod = right.getProperty(reflectedSpecialName);
+          if (rmethod) {
+            return this.dispatch(rmethod, [{ evaluatedValue: left }], node);
           }
         }
-      } finally {
-        this.currentCallNode = prevNode;
       }
     }
 
@@ -947,28 +929,10 @@ export class Interpreter extends AstVisitor<SantaiObject> implements CallSite {
     return result.value;
   }
 
-  invoke(fn: SantaiObject, args: SantaiObject[]): SantaiObject {
-    const node = this.currentCallNode;
-    if (!node) return Factory.Kosong;
-
-    // builtins always call invoke() with positional args already
-    // evaluated (saring, olah, etc. Wrap as DirectArg
-    const directArgs: DirectArg[] = args.map((v) => ({ evaluatedValue: v }));
-    return this.dispatch(fn, directArgs, node);
-  }
-
   override visitCall(node: Call): SantaiObject {
     const fn = this.evaluate(node.expression);
     const args: CallArgument[] = node.arguments();
-
-    const previousCallNode = this.currentCallNode;
-    this.currentCallNode = node;
-
-    try {
-      return this.dispatch(fn, args, node);
-    } finally {
-      this.currentCallNode = previousCallNode;
-    }
+    return this.dispatch(fn, args, node);
   }
 
   private dispatch(
@@ -1006,6 +970,7 @@ export class Interpreter extends AstVisitor<SantaiObject> implements CallSite {
     args: AnyArg[],
     node: AstNode
   ): SantaiObject {
+    const callsite = this.makeCallSite(node);
     if (fn.hasSignature()) {
       const resolvedParams = this.resolveBuiltinParams(fn.params!);
       const bound = this.bindArguments(
@@ -1015,9 +980,9 @@ export class Interpreter extends AstVisitor<SantaiObject> implements CallSite {
         node
       );
       if (!bound) return Factory.Kosong;
-      return fn.call(fn.self, bound, this);
+      return fn.call(fn.self, bound, callsite);
     }
-    return fn.call(fn.self, this.evalPositional(args), this);
+    return fn.call(fn.self, this.evalPositional(args), callsite);
   }
 
   private instantiateClass(
@@ -1234,16 +1199,6 @@ export class Interpreter extends AstVisitor<SantaiObject> implements CallSite {
     } finally {
       this.env = previousEnv;
     }
-  }
-
-  getCurrentNode(): AstNode | undefined {
-    return this.currentCallNode;
-  }
-
-  throw(message: MessageTemplate, ...args: unknown[]): never {
-    const node = this.currentCallNode;
-    assertDefined(node);
-    this.reportAndThrow(node, message, ...args);
   }
 
   reportAndThrow(
