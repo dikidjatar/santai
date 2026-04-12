@@ -45,13 +45,14 @@ import {
   StackFrame,
 } from "../base/errorHandler";
 import { MessageTemplate } from "../base/messageTemplate";
-import { isNumber, isObject, isUndefined, Signal } from "../base/types";
+import { isNumber, isObject, isUndefined } from "../base/types";
 import { globalProvideRegistry } from "../builtins/globalProvider";
 import "../builtins/globals";
 import {
   lookupExtension,
   registerExtension,
 } from "../objects/extensionRegistry";
+import { InstanceIteratorResult } from "../objects/instanceIteratorResult";
 import {
   BuiltinFunction,
   CallSite,
@@ -59,7 +60,6 @@ import {
   GlobalMethodParam,
   isInstanceIterator,
   SantaiClass,
-  SantaiError,
   SantaiFunction,
   SantaiInstanceIterator,
   SantaiIterator,
@@ -79,52 +79,18 @@ import { makeLocation, ScannerLocation } from "../parsing/scanner";
 import { Token, TokenValue } from "../parsing/token";
 import { ServiceContainer } from "../runtime/serviceContainer";
 import { Environment, VariableSlot } from "./environment";
-
-class ReturnSignal extends Signal<ReturnStatement> {
-  constructor(
-    node: ReturnStatement,
-    readonly value: SantaiObject
-  ) {
-    super(node);
-  }
-}
-
-class BreakSignal extends Signal<BreakStatement> {}
-class ContinueSignal extends Signal<ContinueStatement> {}
-class ThrowSignal extends Signal<ThrowStatement> {
-  constructor(
-    node: ThrowStatement,
-    readonly value: SantaiObject
-  ) {
-    super(node);
-  }
-}
-
-class RuntimeErrorSignal extends Signal<void> {
-  constructor(readonly error: SantaiError) {
-    super();
-  }
-}
-
-function isReturnSignal(signal: unknown): signal is ReturnSignal {
-  return signal instanceof ReturnSignal;
-}
-
-function isBreakSignal(signal: unknown): signal is BreakSignal {
-  return signal instanceof BreakSignal;
-}
-
-function isContinueSignal(signal: unknown): signal is ContinueSignal {
-  return signal instanceof ContinueSignal;
-}
-
-function isThrowSignal(signal: unknown): signal is ThrowSignal {
-  return signal instanceof ThrowSignal;
-}
-
-function isRuntimeErrorSignal(signal: unknown): signal is RuntimeErrorSignal {
-  return signal instanceof RuntimeErrorSignal;
-}
+import {
+  BreakSignal,
+  ContinueSignal,
+  isBreakSignal,
+  isContinueSignal,
+  isReturnSignal,
+  isRuntimeErrorSignal,
+  isThrowSignal,
+  ReturnSignal,
+  RuntimeErrorSignal,
+  ThrowSignal,
+} from "./flows";
 
 function getLocationForNode(node: AstNode): ScannerLocation {
   const begin: number = node.position;
@@ -404,7 +370,7 @@ export class Interpreter extends AstVisitor<SantaiObject> implements CallSite {
       );
     }
 
-    const iterator: SantaiIterator = iterable.iterate();
+    let iterator: SantaiIterator = iterable.iterate();
 
     // Special loop environment: iterator variable lives here, separate
     // from outer scope, but can still access outer scope variables.
@@ -412,7 +378,9 @@ export class Interpreter extends AstVisitor<SantaiObject> implements CallSite {
     const body = node.body;
     const loopEnv = Environment.new(this.env);
     const previousEnv = this.env;
+    const previousNode = this.currentCallNode;
     this.env = loopEnv;
+    this.currentCallNode = node.iterable;
 
     // Declare iteration variable in loop env with initial value kosong.
     // Value will be updated each iteration through loopEnv.update().
@@ -426,30 +394,26 @@ export class Interpreter extends AstVisitor<SantaiObject> implements CallSite {
 
     const isInstance = isInstanceIterator(iterator);
     if (isInstance) {
-      return this.executeSantaiIntanceIterator(
-        iterator,
-        variable,
-        loopEnv,
-        previousEnv,
-        node
+      iterator = new InstanceIteratorResult(
+        this,
+        iterator as SantaiInstanceIterator
       );
     }
 
     try {
       while (iterator.hasNext()) {
-        const next = iterator.next();
-
-        // Set iteration variable value for this iteration.
-        loopEnv.update(variable, next.value);
-
         try {
+          const next = iterator.next();
+          if (next.done) break;
+          // Set iteration variable value for this iteration.
+          loopEnv.update(variable, next.value);
           this.evaluate(body);
         } catch (signal) {
           if (isBreakSignal(signal)) {
             break;
           }
 
-          if (isContinueSignal(signal)) {
+          if (!isInstance && isContinueSignal(signal)) {
             continue;
           }
 
@@ -458,46 +422,7 @@ export class Interpreter extends AstVisitor<SantaiObject> implements CallSite {
       }
     } finally {
       this.env = previousEnv;
-    }
-
-    return Factory.Kosong;
-  }
-
-  private executeSantaiIntanceIterator(
-    iterator: SantaiInstanceIterator,
-    variable: Variable,
-    loopEnv: Environment,
-    envToRestore: Environment,
-    node: ForInStatement
-  ): SantaiObject {
-    const iteratorObj: SantaiObject = iterator.next().value;
-    assert(iteratorObj.isFunction());
-    const returnValue = this.dispatch(iteratorObj, [], node.iterable);
-    const nextMethod = returnValue.getProperty(SpecialName.__lanjut__);
-    if (isUndefined(nextMethod)) {
-      this.reportAndThrow(
-        node.iterable,
-        MessageTemplate.kNotIterable,
-        returnValue.typeName
-      );
-    }
-
-    try {
-      while (true) {
-        try {
-          const value = this.dispatch(nextMethod, [], node.iterable);
-          loopEnv.update(variable, value);
-          this.evaluate(node.body);
-        } catch (signal) {
-          if (isBreakSignal(signal)) {
-            break;
-          }
-
-          throw signal;
-        }
-      }
-    } finally {
-      this.env = envToRestore;
+      this.currentCallNode = previousNode;
     }
 
     return Factory.Kosong;
@@ -1310,6 +1235,10 @@ export class Interpreter extends AstVisitor<SantaiObject> implements CallSite {
     } finally {
       this.env = previousEnv;
     }
+  }
+
+  getCurrentNode(): AstNode | undefined {
+    return this.currentCallNode;
   }
 
   throw(message: MessageTemplate, ...args: unknown[]): never {

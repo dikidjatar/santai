@@ -130,3 +130,12 @@ export function evaluateObjectSpecialMethod<T extends SantaiObject>(
   }
   return evaluateSpecialMethod(callsite, specialMethod, checkReturnValue, args);
 }
+
+export function doIterator<T>(
+  iterator: Iterable<T>,
+  fn: (value: T) => void
+): void {
+  for (const value of iterator) {
+    fn(value);
+  }
+}

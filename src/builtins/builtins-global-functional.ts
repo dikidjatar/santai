@@ -2,10 +2,11 @@
 // SPDX-License-Identifier: MIT
 
 import { MessageTemplate } from "../base/messageTemplate";
-import { Factory, SantaiObject } from "../objects/object";
+import { InstanceIteratorResult } from "../objects/instanceIteratorResult";
+import { Factory, isInstanceIterator, SantaiObject } from "../objects/object";
 import { ObjectUtil } from "../objects/object-util";
 import { SpecialName } from "../objects/specialNames";
-import { evaluateObjectSpecialMethod } from "./builtin-util";
+import { doIterator, evaluateObjectSpecialMethod } from "./builtin-util";
 import { defineGlobal } from "./globalProvider";
 import { required } from "./paramSpec";
 
@@ -50,17 +51,15 @@ defineGlobal("saring", () => {
       }
 
       const result: SantaiObject[] = [];
-      const iter = iterable.iterate();
-
-      let next = iter.next();
-      while (!next.done) {
-        const item = next.value;
-        const keep = callsite.invoke(fn, [item]);
-        if (keep.isTruthy()) {
-          result.push(item);
-        }
-        next = iter.next();
+      let iterator = iterable.iterate();
+      if (isInstanceIterator(iterator)) {
+        iterator = new InstanceIteratorResult(callsite, iterator);
       }
+
+      doIterator(iterator, (item) => {
+        const keep = callsite.invoke(fn, [item]);
+        if (keep.isTruthy()) result.push(item);
+      });
 
       return Factory.NewList(result);
     }),
@@ -78,14 +77,12 @@ defineGlobal("olah", () => {
       }
 
       const result: SantaiObject[] = [];
-      const iter = iterable.iterate();
-
-      let next = iter.next();
-      while (!next.done) {
-        result.push(callsite.invoke(fn, [next.value]));
-        next = iter.next();
+      let iterator = iterable.iterate();
+      if (isInstanceIterator(iterator)) {
+        iterator = new InstanceIteratorResult(callsite, iterator);
       }
 
+      doIterator(iterator, (item) => result.push(callsite.invoke(fn, [item])));
       return Factory.NewList(result);
     }),
     undefined,
