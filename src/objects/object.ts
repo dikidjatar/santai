@@ -765,14 +765,13 @@ export class BuiltinClass extends SantaiObject {
 }
 
 export class SantaiError extends SantaiObject {
-  override typeName: string;
+  override readonly typeName: string = "Masalah";
 
   constructor(
     readonly message: string,
     readonly name: string = "Masalah"
   ) {
     super(SantaiType.kError);
-    this.typeName = name;
   }
 
   override getProperty(name: string): SantaiObject | undefined {
