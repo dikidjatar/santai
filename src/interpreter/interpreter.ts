@@ -1002,7 +1002,7 @@ export class Interpreter extends AstVisitor<SantaiObject> implements CallSite {
   ): SantaiObject {
     const instance = Factory.NewInstance(klass);
 
-    const ctor = klass.constructorFn;
+    const ctor = klass.getConstructor();
     if (ctor) {
       const bound = Factory.NewFunction(
         ctor.name,

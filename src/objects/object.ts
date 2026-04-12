@@ -7,6 +7,7 @@ import { isUndefined } from "../base/types";
 import { Environment } from "../interpreter/environment";
 import { SantaiIterator } from "./iterator";
 import { listPropertyNames, lookupProperty } from "./propertyRegistry";
+import { SpecialName } from "./specialNames";
 import { SantaiType } from "./st-type";
 
 export interface CallSite {
@@ -586,28 +587,17 @@ export class SantaiClass extends SantaiObject {
    */
   private readonly _methods: ReadonlyMap<string, SantaiFunction>;
 
-  readonly constructorFn: SantaiFunction | undefined;
-
   constructor(
     readonly name: string,
     methods: readonly SantaiFunction[]
   ) {
     super(SantaiType.kClass);
     this.typeName = name;
+    this._methods = new Map(methods.map((method) => [method.name, method]));
+  }
 
-    const map = new Map<string, SantaiFunction>();
-    let ctor: SantaiFunction | undefined;
-
-    for (const method of methods) {
-      map.set(method.name, method);
-      //TODO: check constructor automatically
-      if (method.name === "__awal__") {
-        ctor = method;
-      }
-    }
-
-    this._methods = map;
-    this.constructorFn = ctor;
+  getConstructor(): SantaiFunction | undefined {
+    return this._methods.get(SpecialName.__awal__);
   }
 
   /**
