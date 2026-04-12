@@ -3,6 +3,7 @@
 
 import { CharacterStream, ScannerLocation } from "../parsing/scanner";
 import { decode } from "../utils/decode";
+import { isInRange } from "../utils/utils";
 import * as config from "./config";
 import {
   MessageTemplate,
@@ -26,6 +27,48 @@ const A = {
   cyan: "\x1b[96m",
   white: "\x1b[97m",
 } as const;
+
+export type ErrorTypeName =
+  | "MasalahSintaks"
+  | "MasalahTipe"
+  | "MasalahReferensi"
+  | "MasalahRuntime";
+
+export function isSyntaxError(template: MessageTemplate): boolean {
+  return isInRange(
+    template,
+    MessageTemplate.kInvalidNumericSeparator,
+    MessageTemplate.kUnexpectedEOS
+  );
+}
+
+export function isTypeError(template: MessageTemplate): boolean {
+  return isInRange(
+    template,
+    MessageTemplate.kUnsupportedUnaryOperation,
+    MessageTemplate.KCannotGetSubscript
+  );
+}
+
+export function isReferenceError(template: MessageTemplate): boolean {
+  return isInRange(
+    template,
+    MessageTemplate.kNotDefined,
+    MessageTemplate.kPropertyNotFound
+  );
+}
+
+export function ErrorTypeNameFromTemplate(
+  template: MessageTemplate
+): ErrorTypeName {
+  return isSyntaxError(template)
+    ? "MasalahSintaks"
+    : isTypeError(template)
+      ? "MasalahTipe"
+      : isReferenceError(template)
+        ? "MasalahReferensi"
+        : "MasalahRuntime";
+}
 
 interface MoodStyle {
   readonly emoji: string;
@@ -333,7 +376,10 @@ class DiagnosticRenderer {
         : "";
 
     const label = this.bold(
-      this.moodC(this.resolveMood(diagnostic), `${style.label}${templateId}`)
+      this.moodC(
+        this.resolveMood(diagnostic),
+        `${diagnostic.template ? ErrorTypeNameFromTemplate(diagnostic.template) : style.label}${templateId}`
+      )
     );
 
     out.push(`${style.emoji} ${label}: ${this.bold(diagnostic.message)}`);

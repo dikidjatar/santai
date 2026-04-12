@@ -3,50 +3,47 @@
 
 export const enum MessageTemplate {
   kNone,
-  // Lexical
+  // SyntaxError
   kInvalidNumericSeparator,
   kTrailingNumericSeparator,
   kInvalidOrUnexpectedToken,
   kZeroDigitNumericSeparator,
-  // Parsing
   kUnexpectedTokenNumber,
   kUnexpectedTokenString,
   kUnexpectedTokenIdentifier,
   kUnexpectedKeywordArgument,
   kUnterminatedTemplate,
-  kUnexpectedEOS,
-  // Declaration
   kConstDeclMissingInitialize,
   kVarRedeclaration,
-  // Expression
   kInvalidAssignmentTarget,
-  kUnsupportedUnaryOperation,
-  kUnsupportedBinaryOperation,
   kNonDefaultAfterDefault,
   kPositionalAfterNamed,
-  // Runtime
-  kNotDefined,
-  kCalledNoCallable,
   kAssignToContantVariable,
-  kDivisionByZero,
-  kIntegerModuleByZero,
-  kTooManyArguments,
-  kMissingArgument,
-  kDuplicateArgument,
-  kInvaidObjectDescriptor,
-  kInvalidReturnValue,
-  kObjectHasNoMember,
-  // Control flow
   kIllegalReturnStatement,
   kIllegalBreakStatement,
   kIllegalContinueStatement,
-  // Iteration
-  kNotIterable,
-  // Class and property
   kGueOutsideClass,
-  kPropertyNotFound,
+  kUnexpectedEOS,
+
+  // TypeError
+  kUnsupportedUnaryOperation,
+  kUnsupportedBinaryOperation,
+  kMissingArgument,
+  kTooManyArguments,
+  kIntegerModuleByZero,
+  kCalledNoCallable,
+  kDivisionByZero,
+  kInvaidObjectDescriptor,
+  kDuplicateArgument,
+  kInvalidReturnValue,
+  kNotIterable,
   kCannotSetProperty,
   KCannotGetSubscript,
+
+  // ReferenceError
+  kNotDefined,
+  kObjectHasNoMember,
+  kPropertyNotFound,
 }
 
 /**

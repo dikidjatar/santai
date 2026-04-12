@@ -38,7 +38,12 @@ import {
 } from "../ast/ast";
 import { Variable, VariableMode } from "../ast/variable";
 import { assert, assertDefined, unreachable } from "../base/asserts";
-import { ErrorHandler, formatMessage, StackFrame } from "../base/errorHandler";
+import {
+  ErrorHandler,
+  ErrorTypeNameFromTemplate,
+  formatMessage,
+  StackFrame,
+} from "../base/errorHandler";
 import { MessageTemplate } from "../base/messageTemplate";
 import { isNumber, isObject, isUndefined, Signal } from "../base/types";
 import { globalProvideRegistry } from "../builtins/globalProvider";
@@ -1290,7 +1295,9 @@ export class Interpreter extends AstVisitor<SantaiObject> implements CallSite {
       this.errorHandler.recordErrorAt(location, message, ...args);
     }
 
-    throw new RuntimeErrorSignal(new SantaiError(formatted, "MasalahRuntime"));
+    throw new RuntimeErrorSignal(
+      Factory.NewError(formatted, ErrorTypeNameFromTemplate(message))
+    );
   }
 
   reportAt(

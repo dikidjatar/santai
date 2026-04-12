@@ -865,6 +865,10 @@ export namespace Factory {
     return new BuiltinClass(name, methods);
   }
 
+  export function NewError(message: string, name: string): SantaiError {
+    return new SantaiError(message, name);
+  }
+
   export function IsCallable(obj: SantaiObject): boolean {
     return (
       obj.isFunction() ||
