@@ -1,12 +1,16 @@
 // Copyright (c) [2026] [Diki Djatar]
 // SPDX-License-Identifier: MIT
 
+import { MessageTemplate } from "../base/messageTemplate";
+import { isUndefined } from "../base/types";
 import {
   BuiltinClass,
   Callable,
+  CallSite,
   MethodArg,
   SantaiBoolean,
   SantaiError,
+  SantaiFunction,
   SantaiList,
   SantaiNumber,
   SantaiObject,
@@ -89,4 +93,31 @@ export namespace method {
   ): Callable {
     return wrapMethod(SantaiType.kBuiltinClass, "tipe", fn);
   }
+}
+
+export function evaluateSpecialMethod<T extends SantaiObject>(
+  callsite: CallSite,
+  object: SantaiObject,
+  specialName: SpecialName,
+  checkReturnValue: (value: SantaiObject) => string | undefined,
+  args: SantaiObject[] = []
+): T {
+  const specialMethod = object.getProperty(specialName);
+  if (isUndefined(specialMethod)) {
+    return callsite.throw(
+      MessageTemplate.kObjectHasNoMember,
+      object.typeName,
+      specialName
+    );
+  }
+  const returnValue = callsite.invoke(specialMethod, args);
+  const checkResult = checkReturnValue(returnValue as T);
+  if (!isUndefined(checkResult)) {
+    return callsite.throw(
+      MessageTemplate.kInvalidReturnValue,
+      (specialMethod as SantaiFunction).name,
+      checkResult
+    );
+  }
+  return returnValue as T;
 }
