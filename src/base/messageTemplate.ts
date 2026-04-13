@@ -74,7 +74,7 @@ export const MessageTemplateString: Record<MessageTemplate, string> = {
   [MessageTemplate.kTrailingNumericSeparator]:
     "jangan taruh underscore di ujung angka, nanggung banget",
   [MessageTemplate.kInvalidOrUnexpectedToken]:
-    "karakter ini apaan? gue gak ngerti sama sekali",
+    "karakter ini muncul disin? gue gak ngerti sama sekali",
   [MessageTemplate.kZeroDigitNumericSeparator]:
     "underscore gak boleh langsung nempel setelah nol di depan",
 
@@ -82,7 +82,7 @@ export const MessageTemplateString: Record<MessageTemplate, string> = {
   [MessageTemplate.kUnexpectedTokenNumber]:
     "angka muncul di sini? salah tempat, bro",
   [MessageTemplate.kUnexpectedTokenString]:
-    "teks muncul di sini? juga salah tempat",
+    "teks muncul di sini? salah tempat, bro",
   [MessageTemplate.kUnexpectedTokenIdentifier]:
     "gak expect '%s' di sini, gue bingung",
   [MessageTemplate.kUnexpectedEOS]:
@@ -111,7 +111,7 @@ export const MessageTemplateString: Record<MessageTemplate, string> = {
 
   // Runtime
   [MessageTemplate.kNotDefined]:
-    "'%s' belum pernah ada — kamu manggil siapa sih?",
+    "'%s' belum pernah ada — kamu manggil apa sih?",
   [MessageTemplate.kCalledNoCallable]:
     "%s itu bukan aksi, gak bisa dipanggil kayak gitu",
   [MessageTemplate.kAssignToContantVariable]:
@@ -141,7 +141,7 @@ export const MessageTemplateString: Record<MessageTemplate, string> = {
 
   // Iteration
   [MessageTemplate.kNotIterable]:
-    "%s itu gak bisa diiterasi — bukan Daftar atau Teks",
+    "%s itu gak bisa diiterasi — bukan objek yang bisa diiterasi",
 
   // Class and property
   [MessageTemplate.kGueOutsideClass]:
@@ -149,7 +149,7 @@ export const MessageTemplateString: Record<MessageTemplate, string> = {
   [MessageTemplate.kPropertyNotFound]:
     "'%s' gak ada di %s — salah panggil atau belum lo bikin?",
   [MessageTemplate.kCannotSetProperty]:
-    "gak bisa ngubah '%s' di %s — ini bukan objek kelas, jangan maksa dong",
+    "gak bisa ngubah '%s' di %s — jangan maksa dong",
   [MessageTemplate.KCannotGetSubscript]: "gak bisa ambil item di %s",
 };
 
@@ -169,9 +169,9 @@ export const MessageTemplateNote: Partial<Record<MessageTemplate, string>> = {
   [MessageTemplate.kIllegalContinueStatement]:
     "pindahin 'skip' ke dalam blok puter atau tiap { ... }",
   [MessageTemplate.kNotIterable]:
-    "pake Daftar [...] atau Teks '...' biar bisa diiterasi",
+    "tambahin aksi '__iterasi__' dan '__lanjut__' biar bisa diiterasi",
   [MessageTemplate.kCalledNoCallable]:
-    "bikin dulu pake: aksi namaAksi(...) { ... }",
+    "bikin dulu pake: aksi nama_aksi(...) { ... }",
   [MessageTemplate.kDivisionByZero]:
     "cek nilai pembaginya dulu, pastiin bukan nol sebelum dibagi",
   [MessageTemplate.kUnsupportedBinaryOperation]:
