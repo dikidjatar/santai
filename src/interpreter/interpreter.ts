@@ -67,6 +67,7 @@ import {
   OperationResult,
   TokenToOperation,
 } from "../objects/operations";
+import { coerceToString } from "../objects/protocol";
 import { createIterator } from "../objects/protocolIterator";
 import {
   ReflectedSpecialName,
@@ -468,6 +469,11 @@ export class Interpreter extends AstVisitor<SantaiObject> {
         return property;
       }
 
+      if (obj.isBuiltinClass() || obj.isClass()) {
+        const method = obj.getMethod(propertyName);
+        if (!isUndefined(method)) return method;
+      }
+
       const extensionFn = lookupExtension(obj.typeName, propertyName);
       if (!isUndefined(extensionFn)) {
         return extensionFn.bindAndCopy(obj);
@@ -536,8 +542,10 @@ export class Interpreter extends AstVisitor<SantaiObject> {
     let result = node.quasis[0];
 
     for (let i = 0; i < node.expressions.length; i++) {
-      const value = this.evaluate(node.expressions[i]!);
-      result += value.inspect();
+      const exprNode = node.expressions[i]!;
+      const value = this.evaluate(exprNode);
+      const callsite = this.makeCallSite(exprNode);
+      result += coerceToString(callsite, value);
       result += node.quasis[i + 1]!;
     }
 
@@ -910,7 +918,7 @@ export class Interpreter extends AstVisitor<SantaiObject> {
     node: AstNode
   ): SantaiObject {
     if (fn.isBuiltinClass()) {
-      const initMethod = fn.getProperty(SpecialName.__awal__) as
+      const initMethod = fn.getMethod(SpecialName.__awal__) as
         | BuiltinFunction
         | undefined;
       if (!isUndefined(initMethod)) {

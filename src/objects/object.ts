@@ -653,10 +653,6 @@ export class SantaiClass extends SantaiObject {
     return [...this._methods.keys()].sort();
   }
 
-  override getProperty(name: string): SantaiObject | undefined {
-    return this.getMethod(name);
-  }
-
   override dir(): readonly string[] {
     return this.methodNames();
   }
@@ -801,6 +797,7 @@ export class BuiltinClass extends SantaiObject {
 
   constructor(
     readonly name: string,
+    readonly santaiType: SantaiType,
     methods: readonly BuiltinFunction[]
   ) {
     super(SantaiType.kBuiltinClass);
@@ -810,7 +807,7 @@ export class BuiltinClass extends SantaiObject {
     }
   }
 
-  override getProperty(name: string): SantaiObject | undefined {
+  getMethod(name: string): SantaiObject | undefined {
     return this._methods.get(name);
   }
 
@@ -922,9 +919,10 @@ export namespace Factory {
 
   export function NewBuiltinClass(
     name: string,
+    santaiType: SantaiType,
     methods: readonly BuiltinFunction[]
   ): BuiltinClass {
-    return new BuiltinClass(name, methods);
+    return new BuiltinClass(name, santaiType, methods);
   }
 
   export function NewError(message: string, name: string): SantaiError {

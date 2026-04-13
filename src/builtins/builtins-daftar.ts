@@ -1,7 +1,6 @@
 // Copyright (c) [2026] [Diki Djatar]
 // SPDX-License-Identifier: MIT
 
-import { isUndefined } from "../base/types";
 import {
   BuiltinFunction,
   Factory,
@@ -15,7 +14,7 @@ import { createIterator } from "../objects/protocolIterator";
 import { SpecialName } from "../objects/specialNames";
 import { SantaiType } from "../objects/st-type";
 import { TypeRegistry } from "../objects/typeRegistry";
-import { doIterator, method } from "./builtin-util";
+import { asGetter, doIterator, mapParams, method } from "./builtin-util";
 import { defineGlobal } from "./globalProvider";
 import { optional, required } from "./paramSpec";
 
@@ -183,15 +182,15 @@ const listMethods: BuiltinFunction[] = [
   Factory.NewBuiltinFunction(...list__daftarproperti__),
 ];
 
-registerPropertyProvider(SantaiType.kList, (name, self) => {
-  const method = listMethods.find((n) => n.name === name);
-  if (isUndefined(method)) return undefined;
-  return method.bindAndCopy(self);
-});
+registerPropertyProvider(
+  SantaiType.kList,
+  asGetter(listMethods),
+  mapParams(listMethods)
+);
 
 defineGlobal("daftar", () => {
   return TypeRegistry.registerType(
-    Factory.NewBuiltinClass("daftar", listMethods),
+    Factory.NewBuiltinClass("daftar", SantaiType.kList, listMethods),
     SantaiType.kList
   );
 });

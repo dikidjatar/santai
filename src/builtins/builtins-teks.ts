@@ -1,36 +1,22 @@
 // Copyright (c) [2026] [Diki Djatar]
 // SPDX-License-Identifier: MIT
 
-import { isUndefined } from "../base/types";
 import { BuiltinFunction, Factory, MethodArg } from "../objects/object";
 import { ObjectUtil } from "../objects/object-util";
 import { registerPropertyProvider } from "../objects/propertyRegistry";
-import { callObjectSpecialMethod } from "../objects/protocol";
+import { coerceToString } from "../objects/protocol";
 import { SpecialName } from "../objects/specialNames";
 import { SantaiType } from "../objects/st-type";
 import { TypeRegistry } from "../objects/typeRegistry";
 import { TokenValue } from "../parsing/token";
-import { method } from "./builtin-util";
+import { asGetter, mapParams, method } from "./builtin-util";
 import { defineGlobal } from "./globalProvider";
 import { optional, required } from "./paramSpec";
 
 const teks__awal__: MethodArg = [
   SpecialName.__awal__,
   ObjectUtil.wrapCallable((callsite, __, value) => {
-    if (value.isString()) return value;
-    if (value.isInstance()) {
-      const result = callObjectSpecialMethod(
-        callsite,
-        value,
-        SpecialName.__teks__,
-        (returnValue) =>
-          !returnValue.isString()
-            ? `bukan-teks (tipenya ${returnValue.typeName})`
-            : undefined
-      );
-      if (!isUndefined(result)) return result;
-    }
-    return Factory.NewString(value.inspect());
+    return Factory.NewString(coerceToString(callsite, value));
   }),
   undefined,
   [required("gue"), optional("nilai", Factory.NewString(""))],
@@ -228,15 +214,15 @@ const textMethods: BuiltinFunction[] = [
   Factory.NewBuiltinFunction(...teks__daftarproperti__),
 ];
 
-registerPropertyProvider(SantaiType.kString, (name, self) => {
-  const method = textMethods.find((n) => n.name === name);
-  if (isUndefined(method)) return undefined;
-  return method.bindAndCopy(self);
-});
+registerPropertyProvider(
+  SantaiType.kString,
+  asGetter(textMethods),
+  mapParams(textMethods)
+);
 
 defineGlobal("teks", () => {
   return TypeRegistry.registerType(
-    Factory.NewBuiltinClass("teks", textMethods),
+    Factory.NewBuiltinClass("teks", SantaiType.kString, textMethods),
     SantaiType.kString
   );
 });

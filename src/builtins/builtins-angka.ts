@@ -1,7 +1,6 @@
 // Copyright (c) [2026] [Diki Djatar]
 // SPDX-License-Identifier: MIT
 
-import { isUndefined } from "../base/types";
 import { BuiltinFunction, Factory, MethodArg } from "../objects/object";
 import { ObjectUtil } from "../objects/object-util";
 import { registerPropertyProvider } from "../objects/propertyRegistry";
@@ -10,39 +9,29 @@ import { SpecialName } from "../objects/specialNames";
 import { SantaiType } from "../objects/st-type";
 import { TypeRegistry } from "../objects/typeRegistry";
 import { TokenValue } from "../parsing/token";
-import { method } from "./builtin-util";
+import { asGetter, mapParams, method } from "./builtin-util";
 import { defineGlobal } from "./globalProvider";
 import { optional, required } from "./paramSpec";
 
 const angka__awal__: MethodArg = [
   SpecialName.__awal__,
   ObjectUtil.wrapCallable((callsite, __, value) => {
-    if (value.isNumber()) {
-      return value;
-    }
-
-    if (value.isBoolean()) {
-      return Factory.NewNumber(value.value ? 1 : 0);
-    }
-
+    if (value.isNumber()) return value;
+    if (value.isBoolean()) return Factory.NewNumber(value.value ? 1 : 0);
     if (value.isString()) {
       const n = Number(value.value.trim());
       return Factory.NewNumber(isNaN(n) ? -1 : n);
     }
 
-    if (value.isInstance()) {
-      return callObjectSpecialMethodWithThrow(
-        callsite,
-        value,
-        SpecialName.__angka__,
-        (returnValue) =>
-          !returnValue.isNumber()
-            ? `bukan-angka (tipenya ${returnValue.typeName})`
-            : undefined
-      );
-    }
-
-    return Factory.NewNumber(-1);
+    return callObjectSpecialMethodWithThrow(
+      callsite,
+      value,
+      SpecialName.__angka__,
+      (returnValue) =>
+        !returnValue.isNumber()
+          ? `bukan-angka (tipenya ${returnValue.typeName})`
+          : undefined
+    );
   }),
   undefined,
   [required("gue"), optional("nilai", Factory.NewNumber(0))],
@@ -183,15 +172,15 @@ const numberMethods: BuiltinFunction[] = [
   Factory.NewBuiltinFunction(...angka__daftarproperti__),
 ];
 
-registerPropertyProvider(SantaiType.kNumber, (name, self) => {
-  const method = numberMethods.find((n) => n.name === name);
-  if (isUndefined(method)) return undefined;
-  return method.bindAndCopy(self);
-});
+registerPropertyProvider(
+  SantaiType.kNumber,
+  asGetter(numberMethods),
+  mapParams(numberMethods)
+);
 
 defineGlobal("angka", () => {
   return TypeRegistry.registerType(
-    Factory.NewBuiltinClass("angka", numberMethods),
+    Factory.NewBuiltinClass("angka", SantaiType.kNumber, numberMethods),
     SantaiType.kNumber
   );
 });

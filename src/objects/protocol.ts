@@ -3,7 +3,13 @@
 
 import { MessageTemplate } from "../base/messageTemplate";
 import { isUndefined } from "../base/types";
-import { CallSite, SantaiFunction, SantaiObject } from "./object";
+import {
+  CallSite,
+  SantaiBoolean,
+  SantaiFunction,
+  SantaiObject,
+  SantaiString,
+} from "./object";
 import { SpecialName } from "./specialNames";
 
 /**
@@ -67,4 +73,42 @@ export function callObjectSpecialMethodWithThrow<T extends SantaiObject>(
     );
   }
   return callSpecialMethod<T>(callsite, specialMethod, checkReturnValue, args);
+}
+
+/**
+ * Convert any Santai object to a JavaScript string.
+ */
+export function coerceToString(
+  callsite: CallSite,
+  object: SantaiObject
+): string {
+  const result = callObjectSpecialMethod<SantaiString>(
+    callsite,
+    object,
+    SpecialName.__teks__,
+    (returnValue) =>
+      returnValue.isString()
+        ? undefined
+        : `bukan-teks (tipenya ${returnValue.typeName})`
+  );
+  return result ? result.value : object.inspect();
+}
+
+/**
+ * Evaluate an object as a boolean
+ */
+export function evaluateTruthy(
+  callsite: CallSite,
+  object: SantaiObject
+): boolean {
+  const result = callObjectSpecialMethod<SantaiBoolean>(
+    callsite,
+    object,
+    SpecialName.__logika__,
+    (returnValue) =>
+      returnValue.isBoolean()
+        ? undefined
+        : `bukan-logika (tipenya ${returnValue.typeName})`
+  );
+  return result ? result.value : object.isTruthy();
 }

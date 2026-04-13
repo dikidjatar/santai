@@ -2,35 +2,13 @@
 // SPDX-License-Identifier: MIT
 
 import fs from "fs";
-import { assertNever } from "../base/asserts";
-import { MessageTemplate } from "../base/messageTemplate";
 import { writeLineToStdout, writeToStdout } from "../base/output";
 import { CallSite, Factory, SantaiObject } from "../objects/object";
-import { SpecialName } from "../objects/specialNames";
+import { coerceToString } from "../objects/protocol";
 import { defineGlobal } from "./globalProvider";
 
 function getOutput(callsite: CallSite, args: SantaiObject[]): string {
-  return args
-    .map((arg) => {
-      if (arg.isInstance()) {
-        const teksMethod = arg.getProperty(SpecialName.__teks__);
-        if (teksMethod && teksMethod.isFunction()) {
-          const returnValue = callsite.invoke(teksMethod, []);
-          if (!returnValue.isString()) {
-            assertNever(
-              callsite.throw(
-                MessageTemplate.kInvalidReturnValue,
-                teksMethod.name,
-                `bukan-teks (tipenya ${returnValue.typeName})`
-              )
-            );
-          }
-          return returnValue.value;
-        }
-      }
-      return arg.inspect();
-    })
-    .join(" ");
+  return args.map((arg) => coerceToString(callsite, arg)).join(" ");
 }
 
 // print arguments to stdout without newline.

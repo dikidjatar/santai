@@ -15,4 +15,5 @@ export const enum SantaiType {
   kBuiltinClass,
   kError,
   kIterator,
+  kType,
 }

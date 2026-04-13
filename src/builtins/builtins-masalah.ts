@@ -1,7 +1,6 @@
 // Copyright (c) [2026] [Diki Djatar]
 // SPDX-License-Identifier: MIT
 
-import { isUndefined } from "../base/types";
 import {
   BuiltinFunction,
   Factory,
@@ -13,7 +12,7 @@ import { registerPropertyProvider } from "../objects/propertyRegistry";
 import { SpecialName } from "../objects/specialNames";
 import { SantaiType } from "../objects/st-type";
 import { TypeRegistry } from "../objects/typeRegistry";
-import { method } from "./builtin-util";
+import { asGetter, mapParams, method } from "./builtin-util";
 import { defineGlobal } from "./globalProvider";
 import { optional, required } from "./paramSpec";
 
@@ -54,15 +53,15 @@ const MasalahMethods: BuiltinFunction[] = [
   Factory.NewBuiltinFunction(...Masalah__daftarproperti__),
 ];
 
-registerPropertyProvider(SantaiType.kError, (name, self) => {
-  const method = MasalahMethods.find((n) => n.name === name);
-  if (isUndefined(method)) return undefined;
-  return method.bindAndCopy(self);
-});
+registerPropertyProvider(
+  SantaiType.kError,
+  asGetter(MasalahMethods),
+  mapParams(MasalahMethods)
+);
 
 defineGlobal("Masalah", () => {
   return TypeRegistry.registerType(
-    Factory.NewBuiltinClass("Masalah", MasalahMethods),
+    Factory.NewBuiltinClass("Masalah", SantaiType.kError, MasalahMethods),
     SantaiType.kError
   );
 });

@@ -62,7 +62,7 @@ export namespace ObjectUtil {
 
   export function wrapMethodOp<T extends SantaiObject>(
     op: TokenValue,
-    assertDescriptor: WrapMethodOptions<T>["assertDescriptor"]
+    assertDescriptor?: WrapMethodOptions<T>["assertDescriptor"]
   ): Callable {
     return ObjectUtil.wrapMethod<T>({
       fn: (callsite, left, right) => {
@@ -78,7 +78,7 @@ export namespace ObjectUtil {
           )
         );
       },
-      assertDescriptor,
+      assertDescriptor: assertDescriptor || (() => {}),
     });
   }
 }

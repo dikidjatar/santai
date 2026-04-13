@@ -1,8 +1,10 @@
 // Copyright (c) [2026] [Diki Djatar]
 // SPDX-License-Identifier: MIT
 
+import { isUndefined } from "../base/types";
 import {
   BuiltinClass,
+  BuiltinFunction,
   Callable,
   MethodArg,
   SantaiBoolean,
@@ -14,10 +16,23 @@ import {
   SantaiString,
 } from "../objects/object";
 import { ObjectUtil } from "../objects/object-util";
+import { PropertyGetter } from "../objects/propertyRegistry";
 import { SpecialName } from "../objects/specialNames";
 import { SantaiType } from "../objects/st-type";
 import { TokenValue } from "../parsing/token";
 import { required } from "./paramSpec";
+
+export function mapParams(methods: readonly BuiltinFunction[]): string[] {
+  return methods.map((method) => method.name);
+}
+
+export function asGetter(methods: readonly BuiltinFunction[]): PropertyGetter {
+  return (name, self) => {
+    const method = methods.find((n) => n.name === name);
+    if (isUndefined(method)) return undefined;
+    return method.bindAndCopy(self);
+  };
+}
 
 export function wrapMethod<T extends SantaiObject>(
   type: SantaiType,

@@ -8,13 +8,13 @@ import { registerPropertyProvider } from "../objects/propertyRegistry";
 import { SpecialName } from "../objects/specialNames";
 import { SantaiType } from "../objects/st-type";
 import { TypeRegistry } from "../objects/typeRegistry";
-import { method } from "./builtin-util";
+import { asGetter, mapParams } from "./builtin-util";
 import { defineGlobal } from "./globalProvider";
 import { required } from "./paramSpec";
 
 const tipe__awal__: MethodArg = [
   SpecialName.__awal__,
-  method.type((self, object) => {
+  ObjectUtil.wrapCallable((_, self, object) => {
     if (object.isInstance()) {
       return object.getClass();
     }
@@ -41,15 +41,15 @@ const typeMethods: BuiltinFunction[] = [
   Factory.NewBuiltinFunction(...tipe__daftarproperti__),
 ];
 
-registerPropertyProvider(SantaiType.kBuiltinClass, (name, self) => {
-  const method = typeMethods.find((n) => n.name === name);
-  if (isUndefined(method)) return undefined;
-  return method.bindAndCopy(self);
-});
+registerPropertyProvider(
+  SantaiType.kType,
+  asGetter(typeMethods),
+  mapParams(typeMethods)
+);
 
 defineGlobal("tipe", () => {
   return TypeRegistry.registerType(
-    Factory.NewBuiltinClass("tipe", typeMethods),
-    SantaiType.kBuiltinClass
+    Factory.NewBuiltinClass("tipe", SantaiType.kType, typeMethods),
+    SantaiType.kType
   );
 });
