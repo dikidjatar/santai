@@ -12,6 +12,7 @@ export * from "./builtins-rentang";
 export * from "./builtins-logika";
 export * from "./builtins-masalah";
 export * from "./builtins-tipe";
+export * from "./builtins-builtin-class";
 
 export * from "./builtins-io";
 export * from "./builtins-global-functional";
