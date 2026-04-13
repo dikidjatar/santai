@@ -67,7 +67,7 @@ import {
   OperationResult,
   TokenToOperation,
 } from "../objects/operations";
-import { coerceToString } from "../objects/protocol";
+import { coerceToString, evaluateTruthy } from "../objects/protocol";
 import { createIterator } from "../objects/protocolIterator";
 import {
   ReflectedSpecialName,
@@ -555,11 +555,12 @@ export class Interpreter extends AstVisitor<SantaiObject> {
   override visitWhileStatement(node: WhileStatement): SantaiObject {
     const conditionExpression: Expression = node.condition;
     assertDefined(conditionExpression);
+    const callsite = this.makeCallSite(conditionExpression);
 
     while (true) {
       const condition: SantaiObject = this.evaluate(conditionExpression);
 
-      if (!condition.isTruthy()) {
+      if (!evaluateTruthy(callsite, condition)) {
         break;
       }
 
@@ -612,7 +613,8 @@ export class Interpreter extends AstVisitor<SantaiObject> {
       return Factory.Kosong;
     }
 
-    if (condition.isTruthy()) {
+    const callsite = this.makeCallSite(node.condition);
+    if (evaluateTruthy(callsite, condition)) {
       return this.evaluate(node.then);
     } else if (node.hasElseStatement()) {
       return this.evaluate(node.orelse);
@@ -777,7 +779,8 @@ export class Interpreter extends AstVisitor<SantaiObject> {
 
     switch (op) {
       case TokenValue.kNot:
-        return Factory.Boolean(!right.isTruthy());
+        const callsite = this.makeCallSite(node);
+        return Factory.Boolean(!evaluateTruthy(callsite, right));
       case TokenValue.kSub: {
         if (!right.isNumber()) {
           this.reportAndThrow(
@@ -808,23 +811,18 @@ export class Interpreter extends AstVisitor<SantaiObject> {
   override visitBinaryOp(node: BinaryOp): SantaiObject {
     const left: SantaiObject = this.evaluate(node.left);
     const op: TokenValue = node.op;
+    const callsite = this.makeCallSite(node);
 
     if (op === TokenValue.kDan) {
-      if (!left.isTruthy()) {
-        return Factory.False;
-      } else {
-        const right: SantaiObject = this.evaluate(node.right);
-        return Factory.Boolean(right.isTruthy());
-      }
+      if (!evaluateTruthy(callsite, left)) return Factory.False;
+      const right: SantaiObject = this.evaluate(node.right);
+      return Factory.Boolean(evaluateTruthy(callsite, right));
     }
 
     if (op === TokenValue.kAtau) {
-      if (left.isTruthy()) {
-        return Factory.True;
-      } else {
-        const right = this.evaluate(node.right);
-        return Factory.Boolean(right.isTruthy());
-      }
+      if (evaluateTruthy(callsite, left)) return Factory.True;
+      const right = this.evaluate(node.right);
+      return Factory.Boolean(evaluateTruthy(callsite, right));
     }
 
     const right = this.evaluate(node.right);
