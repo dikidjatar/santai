@@ -21,15 +21,15 @@ interface KeywordSpec {
 }
 
 const KEYWORD_SPECS: readonly KeywordSpec[] = [
-  { canonical: "ambil", token: TokenValue.kAmbil, aliases: ["bawa"] },
+  { canonical: "ambil", token: TokenValue.kAmbil },
   { canonical: "atau", token: TokenValue.kAtau },
-  { canonical: "aksi", token: TokenValue.kAksi, aliases: ["jurus"] },
+  { canonical: "aksi", token: TokenValue.kAksi },
   { canonical: "balikin", token: TokenValue.kBalikin },
-  { canonical: "benar", token: TokenValue.kBenarLiteral, aliases: ["bener"] },
+  { canonical: "benar", token: TokenValue.kBenarLiteral },
   { canonical: "coba", token: TokenValue.kCoba },
   { canonical: "stop", token: TokenValue.kStop },
   { canonical: "dan", token: TokenValue.kDan },
-  { canonical: "di", token: TokenValue.kDi },
+  { canonical: "di", token: TokenValue.kDi, aliases: ["dalam"] },
   { canonical: "gak", token: TokenValue.kNot },
   { canonical: "gue", token: TokenValue.kGue },
   { canonical: "isi", token: TokenValue.kIsi },
@@ -39,12 +39,15 @@ const KEYWORD_SPECS: readonly KeywordSpec[] = [
   { canonical: "lempar", token: TokenValue.kLempar },
   { canonical: "mumpung", token: TokenValue.kMumpung, aliases: ["selama"] },
   { canonical: "tangkap", token: TokenValue.kTangkap },
-  { canonical: "tiap", token: TokenValue.kTiap },
-  { canonical: "salah", token: TokenValue.kSalahLiteral, aliases: ["hoaks"] },
+  { canonical: "tiap", token: TokenValue.kTiap, aliases: ["setiap"] },
+  { canonical: "salah", token: TokenValue.kSalahLiteral },
   { canonical: "skip", token: TokenValue.kSkip },
-  { canonical: "tapi", token: TokenValue.kTapi },
   { canonical: "titip", token: TokenValue.kTitip },
-  { canonical: "yaudah", token: TokenValue.kYaudah, aliases: ["oke"] },
+  {
+    canonical: "yaudah",
+    token: TokenValue.kYaudah,
+    aliases: ["tapi", "oke", "udahan"],
+  },
 ];
 
 const _ALL_KEYWORD_STRINGS: readonly string[] = KEYWORD_SPECS.flatMap((s) =>

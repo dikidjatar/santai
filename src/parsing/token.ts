@@ -61,7 +61,6 @@ const TOKEN_LIST: TokenDef[] = [
 
   // Keywords
   ["kSkip", "skip", 0, true],
-  ["kTapi", "tapi", 0, true],
   ["kStop", "stop", 0, true],
   ["kYaudah", "yaudah", 0, true],
   ["kTiap", "tiap", 0, true],
@@ -149,7 +148,6 @@ export enum TokenValue {
 
   // Keywords
   kSkip,
-  kTapi,
   kStop,
   kYaudah,
   kTiap,
