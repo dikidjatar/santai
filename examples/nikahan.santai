@@ -1,0 +1,111 @@
+# Contoh Program Nikahan
+# Ditulis menggunakan bahasa pemrograman Santai
+# https://github.com/dikidjatar/santai
+
+# Masalah gagal nikah
+gue GagalNikah {
+  aksi __awal__(gue, pesan) {
+    gue.pesan = pesan
+    gue.nama  = 'GagalNikah'
+  }
+}
+
+# Status nikah
+gue StatusNikah {
+  aksi __awal__(gue, orang) {
+    gue.orang = orang
+  }
+
+  aksi nikah(gue) {
+    isi udah_nikah = gue.orang.pasangan itu gak kosong
+    
+    kalo udah_nikah
+      balikin "{gue.orang.nama} sudah menikah dengan {gue.orang.pasangan.nama}"
+    yaudah
+      balikin "{gue.orang.nama} masih jomblo"
+  }
+}
+
+gue Orang {
+  
+  aksi __awal__(
+    gue,
+    nama,
+    umur,
+    jenis_kelamin,
+    negara,
+    email         = kosong,
+    nomor         = kosong,
+    hobi          = [],
+    pasangan      = kosong
+  ) {
+    gue.nama          = nama
+    gue.umur          = umur
+    gue.jenis_kelamin = jenis_kelamin
+    gue.negara        = negara
+    gue.email         = email
+    gue.nomor         = nomor
+    gue.hobi          = hobi
+    gue.pasangan      = pasangan
+    
+    gue.status = StatusNikah(gue)
+  }
+
+  # parameter pasangan = Orang
+  aksi nikahi(gue, pasangan) {
+    # kalo gue udah nikah
+    kalo gue.pasangan itu gak kosong {
+      lempar GagalNikah(gue.nama + '. Anda sudah memiliki pasangan')
+    }
+
+    # kalo pasangannya udah nikah
+    kalo pasangan.pasangan itu gak kosong {
+      lempar GagalNikah(
+        "{pasangan.nama} itu gak jomblo. Dia udah nikah dengan {pasangan.pasangan.nama}")
+    }
+
+    gue.pasangan = pasangan
+    pasangan.pasangan = gue
+  }
+}
+
+isi Jonson = Orang(
+  nama          = 'Jonson',
+  umur          = 28,
+  negara        = 'Indonesia',
+  jenis_kelamin = 'pria',
+)
+
+isi Amelia = Orang(
+  nama          = 'Amelia',
+  umur          = 26,
+  jenis_kelamin = 'wanita',
+  negara        = 'Indonesia',
+  email         = 'amelia123@gmail.com',
+  hobi          = ['Memasak', 'Membaca']
+)
+
+isi Budi = Orang(
+  nama          = 'Budi',
+  umur          = 32,
+  jenis_kelamin = 'pria',
+  negara        = 'Indonesia',
+  hobi          = ['Basket', 'Olahraga']
+)
+
+spil Jonson.status.nikah()
+spil Amelia.status.nikah()
+
+Jonson nikahi Amelia
+
+spil Jonson.status.nikah()
+spil Amelia.status.nikah()
+
+coba {
+  # Budi mencoba nikahi Amelia yang sudah menikah dengan Jonson
+  Budi nikahi Amelia
+} tangkap gagal {
+  kalo gagal.nama itu 'GagalNikah' {
+     spil "Maaf {Budi.nama}. {gagal.pesan}"
+  }
+} yaudah spil 'OKEEEE'
