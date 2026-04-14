@@ -17,7 +17,8 @@
     "noUncheckedSideEffectImports": true,
     "skipLibCheck": true,
     "esModuleInterop": true,
-    "useUnknownInCatchVariables": false
+    "useUnknownInCatchVariables": false,
+    "types": ["@types/node", "@types/jest"]
   },
   "include": ["src"]
 }
