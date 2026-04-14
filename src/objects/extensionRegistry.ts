@@ -36,3 +36,11 @@ export function lookupExtension(
 ): SantaiFunction | undefined {
   return _registry.get(name)?.get(methodName);
 }
+
+/**
+ * Get All user defined extension function
+ */
+export function getAllExtensions(name: string): ReadonlyArray<SantaiFunction> {
+  const methods = _registry.get(name)?.values();
+  return methods ? Array.from(methods) : [];
+}

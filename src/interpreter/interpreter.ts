@@ -48,10 +48,7 @@ import { MessageTemplate } from "../base/messageTemplate";
 import { isUndefined } from "../base/types";
 import { globalProvideRegistry } from "../builtins/globalProvider";
 import "../builtins/globals";
-import {
-  lookupExtension,
-  registerExtension,
-} from "../objects/extensionRegistry";
+import { registerExtension } from "../objects/extensionRegistry";
 import {
   BuiltinFunction,
   CallSite,
@@ -67,7 +64,11 @@ import {
   OperationResult,
   TokenToOperation,
 } from "../objects/operations";
-import { coerceToString, evaluateTruthy } from "../objects/protocol";
+import {
+  callSpecialMethod,
+  coerceToString,
+  evaluateTruthy,
+} from "../objects/protocol";
 import { createIterator } from "../objects/protocolIterator";
 import {
   ReflectedSpecialName,
@@ -453,28 +454,21 @@ export class Interpreter extends AstVisitor<SantaiObject> {
     if (propertyNode.isLiteral() && propertyNode.isStringLiteral()) {
       const propertyName = propertyNode.asStringLiteral();
 
-      if (obj.isInstance()) {
-        const getAttr = obj.getProperty(SpecialName.__ambilproperti__);
-        if (getAttr) {
-          return this.dispatch(
-            getAttr,
-            [{ evaluatedValue: Factory.NewString(propertyName) }],
-            propertyNode
-          );
-        }
+      const callsite = this.makeCallSite(propertyNode);
+      const getPropertyMethod = obj.getProperty(SpecialName.__ambilproperti__);
+      if (!isUndefined(getPropertyMethod)) {
+        return callSpecialMethod(callsite, getPropertyMethod, undefined);
       }
 
       const property = obj.getProperty(propertyName);
-      if (!isUndefined(property)) {
-        return property;
-      }
+      if (!isUndefined(property)) return property;
 
       if (obj.isBuiltinClass() || obj.isClass()) {
         const method = obj.getMethod(propertyName);
         if (!isUndefined(method)) return method;
       }
 
-      const extensionFn = lookupExtension(obj.typeName, propertyName);
+      const extensionFn = obj.getExtension(obj.typeName, propertyName);
       if (!isUndefined(extensionFn)) {
         return extensionFn.bindAndCopy(obj);
       }

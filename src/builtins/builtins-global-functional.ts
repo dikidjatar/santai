@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: MIT
 
 import { MessageTemplate } from "../base/messageTemplate";
-import { Factory, SantaiObject } from "../objects/object";
+import { getAllExtensions } from "../objects/extensionRegistry";
+import { Factory, SantaiList, SantaiObject } from "../objects/object";
 import { ObjectUtil } from "../objects/object-util";
 import {
   callObjectSpecialMethod,
@@ -87,7 +88,10 @@ defineGlobal("daftar_properti", () => {
   return Factory.NewBuiltinFunction(
     "daftar_properti",
     ObjectUtil.wrapCallable((callsite, object) => {
-      const result = callObjectSpecialMethod(
+      const extensions = getAllExtensions(object.typeName).map((ext) =>
+        Factory.NewString(ext.name)
+      );
+      const result = callObjectSpecialMethod<SantaiList>(
         callsite,
         object,
         SpecialName.__daftarproperti__,
@@ -96,10 +100,13 @@ defineGlobal("daftar_properti", () => {
             ? undefined
             : `bukan-daftar (tipenya ${returnValue.typeName})`
       );
-      if (result) return result;
-      return Factory.NewList(
-        object.dir().map((name) => Factory.NewString(name))
-      );
+      if (result) {
+        return Factory.NewList([...extensions, ...result.elements]);
+      }
+      return Factory.NewList([
+        ...extensions,
+        ...object.dir().map((name) => Factory.NewString(name)),
+      ]);
     }),
     undefined,
     [required("objek")]

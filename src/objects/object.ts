@@ -5,6 +5,7 @@ import { Block, Parameter } from "../ast/ast";
 import { MessageTemplate } from "../base/messageTemplate";
 import { isUndefined } from "../base/types";
 import { Environment } from "../interpreter/environment";
+import { getAllExtensions, lookupExtension } from "./extensionRegistry";
 import { listPropertyNames, lookupProperty } from "./propertyRegistry";
 import { SpecialName } from "./specialNames";
 import { SantaiType } from "./st-type";
@@ -129,6 +130,10 @@ export abstract class SantaiObject {
 
   setSubscript(_obj: SantaiObject, _value: SantaiObject): boolean {
     return false;
+  }
+
+  getExtension(name: string, methodName: string): SantaiFunction | undefined {
+    return lookupExtension(name, methodName);
   }
 
   /**
@@ -722,13 +727,17 @@ export class SantaiInstance extends SantaiObject {
    * Returns `undefined` if not found in both.
    */
   override getProperty(name: string): SantaiObject | undefined {
-    // 1. Check own property first
+    // Extension high priority (can override class method)
+    const extension = this.getExtension(this.clazz.name, name);
+    if (!isUndefined(extension)) return extension.bindAndCopy(this);
+
+    // Check own property first
     const ownProperty = this.getOwnProperty(name);
     if (!isUndefined(ownProperty)) {
       return ownProperty;
     }
 
-    // 2. Look in the class method, bind it to this instance
+    // Look in the class method, bind it to this instance
     const method = this.clazz.getMethod(name);
     if (!isUndefined(method)) {
       return method.bindAndCopy(this);
@@ -761,9 +770,16 @@ export class SantaiInstance extends SantaiObject {
   }
 
   override dir(): readonly string[] {
+    const extensions = getAllExtensions(this.clazz.name);
     const ownProps = [...this._properties.keys()];
     const classMethods = this.clazz.methodNames();
-    return [...new Set([...ownProps, ...classMethods])].sort();
+    return [
+      ...new Set([
+        ...extensions.map((fn) => fn.name),
+        ...ownProps,
+        ...classMethods,
+      ]),
+    ].sort();
   }
 
   override isTruthy(): boolean {
