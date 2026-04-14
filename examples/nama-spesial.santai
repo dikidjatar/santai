@@ -1,0 +1,125 @@
+# Contoh program dengan nama-nama spesial Santai (mirip Python)
+# Ditulis menggunakan bahasa pemrograman Santai
+# https://github.com/dikidjatar/santai
+
+# Daftar nama-nama spesial:
+# __awal__      = Inisialisasi objek awal
+# __teks__      = Merepresentasikan objek ke teks  (harus mengembalikan teks)
+# __angka__     = Merepresentasikan objek ke angka (harus mengembalikan teks)
+# __panjang__   = Panjang suato objek              (harus mengembalikan angka)
+
+# Operasi Aritmatika         # Reflected Aritmatika
+# __tambah__                 # __rtambah__
+# __kurang__                 # __rkurang___
+# __kali__                   # __rkali__
+# __bagi__                   # __rbagi__
+# __modulus__                # __rmodulus__
+# __pangkat__                # __rpangkat__
+
+
+# Perbandingan (Comparison)  # Kontainer / Akses / Iterasi
+# __sama__                   # __ambil__
+# __tidaksama__              # __atur__
+# __kurangdari__             # __berisi__
+# __lebihdari__              # __ambilproperti__
+# __kurangsama__             # __daftarproperti__
+# __lebihsama__              # __iterasi__
+                             # __lanjut__
+
+# Aksi bantuan untuk membuat judul
+aksi judul(judul) {
+  tulis '\n'
+  spil "=".ulangin(10) + " {judul} " +  "=".ulangin(10)
+  tulis '\n'
+}
+
+judul "Operator overloading"
+
+gue Titik {
+  aksi __awal__(gue, a, b) {
+    gue.a = a;
+    gue.b = b
+  }
+
+  aksi __tambah__(gue, tlain) {
+    balikin Titik(gue.a + tlain.a, gue.b + tlain.b)
+  }
+
+  aksi __kali__(gue, n) {
+    balikin Titik(gue.a * n, gue.b * n)
+  }
+
+  aksi __sama__(gue, tlain) {
+    balikin gue.a == tlain.a dan gue.b == tlain.b
+  }
+
+  aksi __teks__(gue) {
+    balikin "Titik(a = {gue.a}, b = {gue.b})"
+  }
+
+  aksi __panjang__(gue) {
+    balikin 2
+  }
+}
+
+isi t1 = Titik(1, 2)
+isi t2 = Titik(3, 4)
+spil(t1 + t2)         # Titik(a = 4, b = 6)
+spil(t1 * 3)          # Titik(a = 3, b = 6)
+spil(t1 == t1)        # benar
+spil(panjang t1)      # 2
+
+judul "Iterable dengan '__iter__' dan '__lanjut__'"
+
+gue Hitungan {
+  aksi __awal__(gue, sampai) {
+    gue.sampai = sampai
+    gue.sekarang = 0
+  }
+
+  # Nama spesial '__iterasi__'
+  aksi __iterasi__(gue) {
+    gue.sekarang = 0
+    balikin gue
+  }
+
+  aksi __lanjut__(gue) {
+    kalo gue.sekarang >= gue.sampai
+      stop # Stop bisa digunakan disini didalam nama spesial '__lanjut__'
+    isi n = gue.sekarang
+    gue.sekarang = gue.sekarang + 1
+    balikin gue.sekarang
+  }
+}
+
+isi h1 = Hitungan 5
+isi h2 = Hitungan 3
+# Menggunakan ; karena akan bentrok dengan infix call
+# tanpa titik koma: spil h1 spil = infix
+spil h1; # Hitungan { sampai: 5, sekarang: 0 }
+spil h2; # Hitungan { sampai: 3, sekarang: 0 }
+
+tiap n di Hitungan 10 {
+  spil n
+}
+
+# Bisa juga menggunakan ekstensi
+# Nama spesial '__tambah__'
+aksi Hitungan.__tambah__(gue, loe) {
+  kalo tipe loe itu angka
+    balikin Hitungan gue.sampai + loe
+  yaudah kalo tipe loe itu Hitungan
+    balikin Hitungan gue.sampai + loe.sampai
+  yaudah lempar Masalah "Tipe loe '{tipe loe}' gak diterima"
+}
+
+# Nama spesial '__teks__' merepresentasikan ke teks
+# ini digunakan oleh aksi bawaan 'spil'
+# dan harus mengembalikan tels
+aksi Hitungan.__teks__(gue) {
+  balikin "Hitungan {gue.sampai}x"
+}
+
+spil h1 + h2 # Hitungan 8x
+spil(Hitungan(10) + 7 + Hitungan(3)) # Hitungan 20x
+# spil(Hitungan(5) + 'abc') # 😤 error: Masalah: Tipe loe '<gue teks>' gak diterima
