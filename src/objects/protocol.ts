@@ -12,6 +12,10 @@ import {
 } from "./object";
 import { SpecialName } from "./specialNames";
 
+export type SpecialMethodCheckReturnValue =
+  | ((value: SantaiObject) => string | undefined)
+  | undefined;
+
 /**
  * Invokes a special method with validation of its return value.
  *
@@ -23,11 +27,11 @@ import { SpecialName } from "./specialNames";
 export function callSpecialMethod<T extends SantaiObject>(
   callsite: CallSite,
   specialMethod: SantaiObject,
-  checkReturnValue: (value: SantaiObject) => string | undefined,
+  checkReturnValue: SpecialMethodCheckReturnValue,
   args: SantaiObject[] = []
 ): T {
   const returnValue = callsite.invoke(specialMethod, args);
-  const checkResult = checkReturnValue(returnValue as T);
+  const checkResult = checkReturnValue?.(returnValue as T);
   if (!isUndefined(checkResult)) {
     return callsite.throw(
       MessageTemplate.kInvalidReturnValue,
@@ -45,7 +49,7 @@ export function callObjectSpecialMethod<T extends SantaiObject>(
   callsite: CallSite,
   object: SantaiObject,
   specialName: SpecialName,
-  checkReturnValue: (value: SantaiObject) => string | undefined,
+  checkReturnValue: SpecialMethodCheckReturnValue,
   args: SantaiObject[] = []
 ): T | undefined {
   const method = object.getProperty(specialName);
@@ -61,7 +65,7 @@ export function callObjectSpecialMethodWithThrow<T extends SantaiObject>(
   callsite: CallSite,
   object: SantaiObject,
   specialName: SpecialName,
-  checkReturnValue: (value: SantaiObject) => string | undefined,
+  checkReturnValue: SpecialMethodCheckReturnValue,
   args: SantaiObject[] = []
 ): T {
   const specialMethod = object.getProperty(specialName);
