@@ -685,40 +685,7 @@ export class Parser {
   }
 
   parseExpressionStatement(): Statement | undefined {
-    const expression = this.parseAssignmentExpression();
-    if (!expression) {
-      return undefined;
-    }
-
-    // ─── No-paren single-argument call: `ident arg` ──────────────────────────
-    // Conditions:
-    //   1. The parsed expression is a plain identifier (VariableExpression)
-    //   2. There is no line terminator between the identifier and the next token
-    //   3. The next token is a clear argument start (not a binary operator)
-    // Valid examples:   spil 'halo'  |  spil hasil  |  salam (x + 1)
-    // Invalid examples: spil 'halo', 'dunia'
-    if (
-      expression.isVariableExpression() &&
-      !this.scanner.hasLineTerminator() &&
-      isNoParenArgStart(this.peek())
-    ) {
-      const argumentPosition = this.peekPosition();
-      const argument = this.parseAssignmentExpression();
-
-      if (!argument) {
-        return undefined;
-      }
-
-      this.expectSemicolon();
-
-      return this.factory.newCall(
-        expression,
-        [this.factory.newCallArgument(argument, undefined, undefined)],
-        argumentPosition
-      ) as unknown as Statement;
-    }
-
-    return expression;
+    return this.parseAssignmentExpression();
   }
 
   parseExpression(): Expression | undefined {
@@ -789,7 +756,7 @@ export class Parser {
 
     let prec1 = Token.precedence(this.peek(), this.accept_IN);
 
-    if (this.checkInfixCall()) {
+    if (this.isNoParenArgStartOrInfixCall(expression)) {
       prec1 = INFIX_CALL_PREC;
     }
 
@@ -1262,13 +1229,34 @@ export class Parser {
 
       // infix function calls at INFIX_CALL_PREC
       if (prec1 === INFIX_CALL_PREC && prec <= INFIX_CALL_PREC) {
-        expression = this.parseInfixCalls(expression);
+        expression = this.parseInfixCallOrNoParenArg(expression);
       }
 
       --prec1;
     } while (prec1 >= prec);
 
     return expression;
+  }
+
+  private parseInfixCallOrNoParenArg(expression: Expression): Expression {
+    if (this.checkInfixCall()) return this.parseInfixCalls(expression);
+
+    // No-paren single-argument call: `ident arg`
+    // Conditions:
+    //   1. The parsed expression is a plain identifier (VariableExpression)
+    //   2. There is no line terminator between the identifier and the next token
+    //   3. The next token is a clear argument start (not a binary operator)
+    // Valid examples:   spil 'halo'  |  spil hasil  |  spil (x + 1)
+    // Invalid examples: spil 'halo', 'dunia'
+    if (!this.checkNoParenArg(expression)) return expression;
+    const argumentPosition = this.peekPosition();
+    const argument = this.parseBinaryExpression(INFIX_CALL_PREC + 1);
+    if (!argument) return expression;
+    return this.factory.newCall(
+      expression,
+      [this.factory.newCallArgument(argument, undefined, undefined)],
+      argumentPosition
+    );
   }
 
   private parseInfixCalls(initial: Expression): Expression {
@@ -1308,6 +1296,21 @@ export class Parser {
         (this.scanner.peekAhead() === TokenValue.kGue &&
           !isUndefined(this.currentClassContext)))
     );
+  }
+
+  /**
+   * Check if the current expression and token is no paren arg call
+   */
+  private checkNoParenArg(expression: Expression): boolean {
+    return (
+      expression.isVariableExpression() &&
+      !this.scanner.hasLineTerminator() &&
+      isNoParenArgStart(this.peek())
+    );
+  }
+
+  private isNoParenArgStartOrInfixCall(expression: Expression): boolean {
+    return this.checkNoParenArg(expression) || this.checkInfixCall();
   }
 
   private buildUnaryExpression(
