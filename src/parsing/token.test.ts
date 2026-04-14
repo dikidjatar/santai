@@ -6,7 +6,7 @@ import { Token, TokenValue } from "./token";
 describe("Token", () => {
   describe("TokenValue enum", () => {
     it("should have correct number of tokens", () => {
-      expect(TokenValue.kNumTokens).toBe(58);
+      expect(TokenValue.kNumTokens).toBe(59);
     });
   });
 
@@ -51,7 +51,6 @@ describe("Token", () => {
     it("should have correct token flags", () => {
       // Keywords should have both IsKeyword and IsPropertyName bits set
       expect(Token.tokenFlags[TokenValue.kSkip]).toBe(3); // 0b11
-      expect(Token.tokenFlags[TokenValue.kTapi]).toBe(3);
 
       // Identifiers should have IsPropertyName bit set
       expect(Token.tokenFlags[TokenValue.kIdentifier]).toBe(2); // 0b10

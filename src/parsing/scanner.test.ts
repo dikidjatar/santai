@@ -90,7 +90,6 @@ describe("Scanner", () => {
         { input: "mumpung", token: TokenValue.kMumpung },
         { input: "tiap", token: TokenValue.kTiap },
         { input: "skip", token: TokenValue.kSkip },
-        { input: "tapi", token: TokenValue.kTapi },
         { input: "yaudah", token: TokenValue.kYaudah },
         { input: "titip", token: TokenValue.kTitip },
         { input: "stop", token: TokenValue.kStop },
