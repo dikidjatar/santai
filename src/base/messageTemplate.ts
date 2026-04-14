@@ -74,7 +74,7 @@ export const MessageTemplateString: Record<MessageTemplate, string> = {
   [MessageTemplate.kTrailingNumericSeparator]:
     "jangan taruh underscore di ujung angka, nanggung banget",
   [MessageTemplate.kInvalidOrUnexpectedToken]:
-    "karakter ini muncul disin? gue gak ngerti sama sekali",
+    "karakter ini muncul disin? gue bingung",
   [MessageTemplate.kZeroDigitNumericSeparator]:
     "underscore gak boleh langsung nempel setelah nol di depan",
 
