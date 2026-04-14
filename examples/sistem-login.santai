@@ -125,10 +125,11 @@ gue Aplikasi {
       }
     }
 
-    kalo harus_masuk gue.masuk(
-      email    = gue.pengguna.email,
-      password = gue.pengguna.password
-    )
+    kalo harus_masuk
+      gue.masuk(
+        email    = gue.pengguna.email,
+        password = gue.pengguna.password
+      )
   }
 
   aksi tampilin_pengguna(gue) {
