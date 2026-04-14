@@ -104,9 +104,7 @@ export class KeywordMap {
       if (spec.aliases) {
         for (const alias of spec.aliases) {
           if (map.has(alias)) {
-            throw new Error(
-              `KeywordMap: alias "${alias}" bentrok dengan entri lain`
-            );
+            throw new Error(`KeywordMap: duplicate alias name: "${alias}"`);
           }
 
           map.set(alias, spec.token);
