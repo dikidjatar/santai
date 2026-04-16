@@ -5,10 +5,7 @@ import { MessageTemplate } from "../base/messageTemplate";
 import { getAllExtensions } from "../objects/extensionRegistry";
 import { Factory, SantaiList, SantaiObject } from "../objects/object";
 import { ObjectUtil } from "../objects/object-util";
-import {
-  callObjectSpecialMethod,
-  callObjectSpecialMethodWithThrow,
-} from "../objects/protocol";
+import { callObjectSpecialMethod } from "../objects/protocol";
 import { createIterator } from "../objects/protocolIterator";
 import { SpecialName } from "../objects/specialNames";
 import { doIterator } from "./builtin-util";
@@ -19,19 +16,17 @@ defineGlobal("panjang", () => {
   return Factory.NewBuiltinFunction(
     "panjang",
     ObjectUtil.wrapCallable((callsite, object) => {
-      if (object.isInstance()) {
-        return callObjectSpecialMethodWithThrow(
-          callsite,
-          object,
-          SpecialName.__panjang__,
-          (returnValue) => {
-            return !returnValue.isNumber()
-              ? `bukan-angka (tipenya ${returnValue.typeName})`
-              : undefined;
-          }
-        );
-      }
-
+      const result = callObjectSpecialMethod(
+        callsite,
+        object,
+        SpecialName.__panjang__,
+        (returnValue) => {
+          return !returnValue.isNumber()
+            ? `bukan-angka (tipenya ${returnValue.typeName})`
+            : undefined;
+        }
+      );
+      if (result) return result;
       if (!object.hasLength()) {
         callsite.throw(
           MessageTemplate.kObjectHasNoMember,
