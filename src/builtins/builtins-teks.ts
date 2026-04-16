@@ -191,6 +191,15 @@ const teks_subteks: MethodArg = [
   undefined,
   [required("gue"), required("mulai"), optional("akhir", Factory.Kosong)],
 ];
+const teks_nya: MethodArg = [
+  "nya",
+  method.string(({ value }, searchString) => {
+    if (!searchString.isString()) return Factory.False;
+    return Factory.Boolean(value === searchString.value);
+  }),
+  undefined,
+  [required("gue"), required("teks")],
+];
 const teks__daftarproperti__: MethodArg = [
   SpecialName.__daftarproperti__,
   ObjectUtil.wrapCallable(() =>
@@ -219,6 +228,7 @@ const textMethods: BuiltinFunction[] = [
   Factory.NewBuiltinFunction(...teks_gabungin),
   Factory.NewBuiltinFunction(...teks_posisi),
   Factory.NewBuiltinFunction(...teks_subteks),
+  Factory.NewBuiltinFunction(...teks_nya),
   Factory.NewBuiltinFunction(...teks__daftarproperti__),
 ];
 
