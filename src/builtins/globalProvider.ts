@@ -1,6 +1,7 @@
 // Copyright (c) [2025-2026] [Diki Djatar]
 // SPDX-License-Identifier: MIT
 
+import { assertDefined } from "../base/asserts";
 import { SantaiObject } from "../objects/object";
 import { ServiceContainer } from "../runtime/serviceContainer";
 
@@ -19,6 +20,7 @@ export type GlobalProvider = SingleGlobalProvider | BatchGlobalProvider;
 
 class GlobalProviderRegistry {
   private readonly _providers: GlobalProvider[] = [];
+  private readonly _resolved: Map<string, SantaiObject> = new Map();
 
   register(provider: GlobalProvider): void {
     if (provider.kind === "single") {
@@ -32,27 +34,31 @@ class GlobalProviderRegistry {
     this._providers.push(provider);
   }
 
+  getResolvedGlobal(name: string): SantaiObject {
+    const globalProvider = this._resolved.get(name);
+    assertDefined(globalProvider);
+    return globalProvider;
+  }
+
   /**
    * Resolve all registered globals using the given container.
    */
   resolveAll(container: ServiceContainer): ReadonlyMap<string, SantaiObject> {
-    const result = new Map<string, SantaiObject>();
-
     for (const provider of this._providers) {
       if (provider.kind === "single") {
-        result.set(provider.name, provider.create(container));
+        this._resolved.set(provider.name, provider.create(container));
       } else {
         for (const [name, value] of provider.resolve(container)) {
-          result.set(name, value);
+          this._resolved.set(name, value);
         }
       }
     }
 
-    return result;
+    return this._resolved;
   }
 }
 
-export const globalProvideRegistry = new GlobalProviderRegistry();
+export const GlobalProvideRegistry = new GlobalProviderRegistry();
 
 /**
  * Register a single named global. The factory receives the ServiceContainer
@@ -74,7 +80,7 @@ export function defineGlobal(
   name: string,
   factory: (container: ServiceContainer) => SantaiObject
 ): void {
-  globalProvideRegistry.register({ kind: "single", name, create: factory });
+  GlobalProvideRegistry.register({ kind: "single", name, create: factory });
 }
 
 /**
@@ -87,5 +93,5 @@ export function defineGlobal(
 export function defineBatchGlobals(
   resolver: (container: ServiceContainer) => ReadonlyMap<string, SantaiObject>
 ): void {
-  globalProvideRegistry.register({ kind: "batch", resolve: resolver });
+  GlobalProvideRegistry.register({ kind: "batch", resolve: resolver });
 }

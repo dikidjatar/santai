@@ -46,7 +46,7 @@ import {
 } from "../base/errorHandler";
 import { MessageTemplate } from "../base/messageTemplate";
 import { isUndefined } from "../base/types";
-import { globalProvideRegistry } from "../builtins/globalProvider";
+import { GlobalProvideRegistry } from "../builtins/globalProvider";
 import "../builtins/globals";
 import { registerExtension } from "../objects/extensionRegistry";
 import {
@@ -187,7 +187,7 @@ export class Interpreter extends AstVisitor<SantaiObject> {
   }
 
   private registerBuiltinsGlobals(): void {
-    const globals = globalProvideRegistry.resolveAll(this.serviceContainer);
+    const globals = GlobalProvideRegistry.resolveAll(this.serviceContainer);
     for (const [name, value] of globals) {
       const variable: Variable = new Variable(name, VariableMode.kConst);
       this.globalEnv.declare(variable, value);
