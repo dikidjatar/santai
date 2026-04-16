@@ -124,12 +124,19 @@ const teks_pisahin: MethodArg = [
     optional("batas", Factory.NewNumber(-1)),
   ],
 ];
+const method_berisi = method.string(({ value }, searchString, _position) => {
+  const position = _position.isNumber() ? _position.value : undefined;
+  return Factory.Boolean(value.includes(searchString.inspect(), position));
+});
 const teks_berisi: MethodArg = [
   "berisi",
-  method.string(({ value }, searchString, _position) => {
-    const position = _position.isNumber() ? _position.value : undefined;
-    return Factory.Boolean(value.includes(searchString.inspect(), position));
-  }),
+  method_berisi,
+  undefined,
+  [required("gue"), required("teks"), optional("posisi", Factory.Kosong)],
+];
+const teks_mengandung: MethodArg = [
+  "mengandung",
+  method_berisi,
   undefined,
   [required("gue"), required("teks"), optional("posisi", Factory.Kosong)],
 ];
@@ -206,6 +213,7 @@ const textMethods: BuiltinFunction[] = [
   Factory.NewBuiltinFunction(...teks_ganti),
   Factory.NewBuiltinFunction(...teks_pisahin),
   Factory.NewBuiltinFunction(...teks_berisi),
+  Factory.NewBuiltinFunction(...teks_mengandung),
   Factory.NewBuiltinFunction(...teks_mirip),
   Factory.NewBuiltinFunction(...teks_ulangin),
   Factory.NewBuiltinFunction(...teks_gabungin),
