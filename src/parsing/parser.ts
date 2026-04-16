@@ -858,7 +858,7 @@ export class Parser {
             break;
           }
 
-          expr = this.factory.newProperty(expr, indexProperty, position);
+          expr = this.factory.newSubscript(expr, indexProperty, position);
           this.expect(TokenValue.kRightBracket);
           break;
         }

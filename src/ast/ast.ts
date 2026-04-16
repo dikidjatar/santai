@@ -362,6 +362,7 @@ export class Property extends Expression {
   constructor(
     readonly object: Expression,
     readonly property: Expression,
+    readonly isComputed: boolean,
     position: number
   ) {
     super(NodeType.kProperty, position);
@@ -642,7 +643,15 @@ export class AstNodeFactory {
     property: Expression,
     position: number
   ): Property {
-    return new Property(object, property, position);
+    return new Property(object, property, false, position);
+  }
+
+  newSubscript(
+    object: Expression,
+    property: Expression,
+    position: number
+  ): Property {
+    return new Property(object, property, true, position);
   }
 
   newFunctionLiteral(

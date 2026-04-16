@@ -448,10 +448,15 @@ export class Interpreter extends AstVisitor<SantaiObject> {
   }
 
   override visitProperty(node: Property): SantaiObject {
+    const isComputed = node.isComputed;
     const obj = this.evaluate(node.object);
     const propertyNode: Expression = node.property;
 
-    if (propertyNode.isLiteral() && propertyNode.isStringLiteral()) {
+    if (
+      !isComputed &&
+      propertyNode.isLiteral() &&
+      propertyNode.isStringLiteral()
+    ) {
       const propertyName = propertyNode.asStringLiteral();
 
       const callsite = this.makeCallSite(propertyNode);
