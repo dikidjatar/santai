@@ -457,7 +457,9 @@ export class Interpreter extends AstVisitor<SantaiObject> {
       const callsite = this.makeCallSite(propertyNode);
       const getPropertyMethod = obj.getProperty(SpecialName.__ambilproperti__);
       if (!isUndefined(getPropertyMethod)) {
-        return callSpecialMethod(callsite, getPropertyMethod, undefined);
+        return callSpecialMethod(callsite, getPropertyMethod, undefined, [
+          Factory.NewString(propertyName),
+        ]);
       }
 
       const property = obj.getProperty(propertyName);
