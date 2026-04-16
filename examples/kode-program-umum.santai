@@ -1,0 +1,53 @@
+# Contoh-contoh Kode Umum
+# Ditulis menggunakan bahasa pemrograman Santai
+# https://github.com/dikidjatar/santai
+
+# Membuat DSL (Domain Spesific Language)
+# Santai mendukung Infix Call (memanggil fungsi tanpa titik
+# atau kurung jika argumennya hanya satu), Anda bisa membuat
+# kode yang terbaca seperti bahasa Manusia
+aksi angka.tambah_dengan(gue, angka_lain) {
+  balikin gue + angka_lain
+}
+aksi angka.dikali(gue, angka_lain) {
+  balikin gue * angka_lain
+}
+
+# Sekarang Anda bisa menulis kode seperti ini:
+isi hasil = 10 tambah_dengan 5 dikali 2
+spil hasil # Hasilnya 30 karena diproses berurutan
+
+
+# Fungsi yang menerima fungsi lain (Higher-Order-Function)
+aksi pantau_eksekusi(nama_aksi, _aksi) {
+  spil "Memulai aksi: {nama_aksi}..."
+  isi hasil = _aksi()
+  spil "Aksi '{nama_aksi}' selesai."
+  balikin hasil
+}
+
+pantau_eksekusi('Aksi 1', () -> {})
+pantau_eksekusi('Aksi 2', () -> {})
+pantau_eksekusi('Aksi 3', () -> {})
+
+# Penanganan Error/Masalah
+# Anda bisa membuat sistem penanganan masalah
+# sehingga program tidak langsung mati saat terjadi masalah
+gue MasalahKoneksi {
+  aksi __awal__(gue, pesan) {
+    gue.nama = 'MasalahKoneksi'
+    gue.pesan = pesan
+  }
+}
+
+aksi ambil_data_web(url) {
+  lempar MasalahKoneksi('Server sibuk banget, santai dulu...')
+}
+
+coba
+  ambil_data_web('https://example.com')
+tangkap gagal
+  kalo gagal.nama itu 'MasalahKoneksi'
+    spil "Waduh: {gagal.pesan}"
+  yaudah
+    spil "Masalah misterius: {gagal}"

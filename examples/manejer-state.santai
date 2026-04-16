@@ -1,0 +1,47 @@
+# Contoh Program Manejer State Sederhana
+# Ditulis menggunakan bahasa pemrograman Santai
+# https://github.com/dikidjatar/santai
+
+# Sistem ini mengelola data dan memicu
+# aksi tertentu saat data berubah
+
+gue Data {
+  aksi __awal__(gue, nama, stok) {
+    gue.nama = nama
+    gue.stok = stok
+  }
+}
+
+gue GudangData {
+  aksi __awal__(gue, awal) {
+    gue.data = awal
+    gue.pendengar = []
+  }
+
+  aksi pantau(gue, aksi_baru) {
+    gue.pendengar tambah aksi_baru
+  }
+
+  aksi perbarui(gue, data_baru) {
+    gue.data = data_baru
+    # Beritahu semua pendegar bahwa data berubah
+    tiap pendengar di gue.pendengar {
+      pendengar(gue.data)
+    }
+  }
+}
+
+isi toko = GudangData(
+  Data(
+    nama = 'Toko Santai',
+    stok = 10
+  )
+)
+
+# Daftarkan aksi otomatis ketika stok berubah
+toko pantau data -> {
+  spil "[NOTIF] Stok sekarang berubah jadi: {data.stok}"
+}
+
+toko perbarui Data('Toko Santai', 5)
+toko perbarui Data('Toko Santai', 0)

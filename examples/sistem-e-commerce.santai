@@ -1,0 +1,148 @@
+# Contoh Program Sistem E-Commerce
+# Ditulis menggunakan bahasa pemrograman Santai
+# https://github.com/dikidjatar/santai
+
+# fungsi ekstensi untuk menampilkan format mata uang
+aksi angka.Rp(gue) {
+  balikin "Rp{gue}.000"
+}
+
+# Mengecek ketersediaan
+aksi angka.lebih_dari(gue, target) {
+  balikin gue > target
+}
+
+# Masalah bisnis
+gue MasalahBisnis {
+  aksi __awal__(gue, pesan) {
+    gue.nama  = 'MasalahBisnis'
+    gue.pesan = pesan
+  }
+}
+
+# Model Data (Entity)
+gue Produk {
+  aksi __awal__(gue, id, nama, harga, stok, kategori) {
+    gue.id        = id
+    gue.nama      = nama
+    gue.harga     = harga
+    gue.stok      = stok
+    gue.kategori  = kategori
+  }
+}
+
+# Database (Repository)
+gue Inventori {
+  aksi __awal__(gue) {
+    gue.koleksi = []
+  }
+
+  aksi tambah(gue, produk) {
+    gue.koleksi tambah produk
+  }
+
+  aksi cari_produk(gue, kriteria) {
+    balikin saring(gue.koleksi, kriteria)
+  }
+}
+
+# Proses (Logic Layer)
+gue Kasir {
+  aksi __awal__(gue, inventori) {
+    gue.db = inventori
+    gue.keranjang = []
+    gue.total_belanja = 0
+  }
+
+  aksi beli(gue, id_produk) {
+    isi item = gue.db.koleksi.cariin(produk -> produk.id == id_produk)
+
+    kalo item itu kosong
+      lempar MasalahBisnis "Produk ID {id_produk} tidak ada!"
+
+    kalo item.stok < 1
+      lempar MasalahBisnis "Stok {item.nama} habis!"
+
+    item.stok = item.stok - 1
+    gue.keranjang tambah item
+    gue.total_belanja = gue.total_belanja + item.harga
+    spil "[🛒] Berhasil menambah {item.nama} ke keranjang."   
+  }
+
+  # Aksi untuk menghitung diskon secara dinamis
+  aksi terapkan_promo(gue, logika_promo) {
+    spil "[🏷️] Mengecek promo..."
+    isi potongan = logika_promo(gue.total_belanja)
+    gue.total_belanja = gue.total_belanja - potongan
+    spil "[✨] Potongan harga: {potongan.Rp()}"
+  }
+
+  aksi cetak_struk(gue) {
+    spil "\n" + ("=" ulangin 30)
+    spil "      TOKO SANTAI JAYA"
+    spil ("-" ulangin 30)
+    tiap item di gue.keranjang {
+      spil "{item.nama} \t| {item.harga.Rp()}"
+    }
+    spil ("-" ulangin 30)
+    spil "TOTAL AKHIR \t| {gue.total_belanja.Rp()}"
+    spil ("=" ulangin 30)
+  }
+}
+
+# Inisialisasi Data
+isi gudang = Inventori()
+gudang tambah Produk(
+  id        = 1,
+  nama      = 'MacBook M3',
+  harga     = 25000,
+  stok      = 5,
+  kategori  = 'Laptop'
+)
+gudang tambah Produk(
+  id        = 2,
+  nama      = 'iPhone 15',
+  harga     = 15000,
+  stok      = 10,
+  kategori  = 'HP'
+)
+gudang tambah Produk(
+  id        = 3,
+  nama      = 'Indomie',
+  harga     = 3,
+  stok      = 100,
+  kategori  = 'Makanan'
+)
+
+# Inisialisasi Kasir
+isi mesin_kasir = Kasir(gudang)
+
+coba {
+  # Proses belanja (pemanggilan dengan infix)
+  mesin_kasir beli 1
+  mesin_kasir beli 2
+  mesin_kasir beli 3
+
+  # Cari barang elektronik yang mahal
+  isi hasil_filter = gudang cari_produk (
+    ambil produk:
+      produk.kategori nya 'Laptop' dan
+      produk.harga lebih_dari 10000
+  )
+  spil "\n[🔍] Hasil Filter: Ada {panjang(hasil_filter)} produk premiun"
+
+  # Promo jika total belanja > 30 ribu, diskon 5 ribu
+  mesin_kasir terapkan_promo total -> {
+    kalo total lebih_dari 30000
+      balikin 5000
+    yaudah balikin 0
+  }
+
+  mesin_kasir.cetak_struk()
+} tangkap gagal {
+  kalo tipe gagal itu MasalahBisnis {
+    spil "[❌] GAGAL: {gagal.pesan}"
+  } yaudah lempar gagal
+} udahan {
+  spil "\n[🏁] Tranksasi Selesai. Terima kasih sudah bersantai!"
+}

@@ -1,0 +1,24 @@
+# Contoh Program Sistem Validasi Keamanan Sederhana
+# Ditulis menggunakan bahasa pemrograman Santai
+# https://github.com/dikidjatar/santai
+
+# Menambahkan validasi pada tipe teks
+aksi teks.minimal(gue, panjang_minimal) {
+  balikin panjang(gue) >= panjang_minimal
+}
+
+aksi validasi_sandi(sandi) {
+  isi kriteria_1 = sandi minimal 8
+  isi kriteria_2 = sandi mengandung '@'
+  isi kriteria_3 = sandi mengandung '123'
+
+  kalo kriteria_1 dan kriteria_2 dan (gak kriteria_3) {
+    balikin benar
+  } yaudah lempar Masalah 'Sandi kurang kuat'
+}
+
+titip baca_sandi = baca(' > Masukan sandi: ').rapiin()
+
+coba    validasi_sandi(baca_sandi)
+tangkap gagal spil "Akses ditolak: {gagal.pesan}"
+yaudah  spil 'Program selesai.'

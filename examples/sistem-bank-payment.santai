@@ -1,0 +1,192 @@
+# Contoh Program Sistem Bank Payment
+# Ditulis menggunakan bahasa pemrograman Santai
+# https://github.com/dikidjatar/santai
+
+# Aksi ekstensi untuk bantuan
+aksi angka.Rp(gue) { balikin "Rp {gue}.000,00" }
+aksi teks.sensor(gue) { balikin gue.subteks(0, 4) + "****" }
+aksi logika.eksekusi_kalo(gue, eksekusi) {
+  kalo gue itu benar { eksekusi() }
+}
+
+# Tier akun
+gue Tier {
+  aksi __awal__(gue, limit, bunga) {
+    gue.limit = limit
+    gue.bunga = bunga
+  }
+}
+
+# Definisi tingkatan akun
+isi TIER_SILVER   = Tier(10000,  0.01)
+isi TIER_GOLD     = Tier(50000,  0.02)
+isi TIER_PLATINUM = Tier(999999, 0.05)
+
+gue Nasabah {
+  aksi __awal__(
+    gue,
+    id,
+    nama,
+    saldo_awal,
+    tier = TIER_SILVER
+  ) {
+    gue.id = id
+    gue.nama = nama
+    gue.saldo = saldo_awal
+    gue.tier = tier
+    gue.riwayat = []
+    gue.aktif = benar
+  }
+
+  aksi catat(gue, pesan) {
+    gue.riwayat tambah "[{sistem.nama}] " + pesan
+  }
+
+  aksi aktifkan(gue) {
+    kalo gue.aktif balikin
+    gue.aktif = benar
+  }
+
+  aksi nonaktifkan(gue) {
+    kalo gue.aktif
+      gue.aktif = salah
+  }
+}
+
+# Security/Keamanan (Middleware)
+gue MasalahSecurity {
+  aksi __awal__(gue, pesan) {
+    gue.nama = 'MasalahSecurity'
+    gue.pesan = pesan
+  }
+}
+
+gue Security {
+  aksi audit(gue, nasabah, nama_aksi, _aksi) {
+    spil "🔐 [AUDIT] Memvalidasi akses untuk: {nasabah.nama}"
+
+    kalo gak nasabah.aktif
+      lempar MasalahSecurity "Akun ditangguhkan!"
+
+    isi hasil = _aksi()
+    nasabah catat "Aksi {nama_aksi} Berhasi"
+    balikin hasil
+  }
+}
+
+# Sistem Bank
+gue BankSantai {
+  aksi __awal__(gue) {
+    gue.data_nasabah = []
+    gue.keamanan = Security()
+    gue.total_kas = 0
+  }
+
+  aksi daftar_nasabah(gue, nasabah) {
+    gue.data_nasabah tambah nasabah
+    gue.total_kas = gue.total_kas + nasabah.saldo
+    spil "✅ Nasabah baru: {nasabah.nama} ({nasabah.tier.limit.Rp()} limit)"
+  }
+
+  aksi kirim(gue, pengirim, jumlah, penerima) {
+    gue.audit(pengirim, "Transfer", () -> {
+      # Validasi saldo & limit
+      kalo jumlah > pengirim.saldo {
+        lempar Masalah("Saldo tidak cukup!", "MasalahFinnance")
+      }
+      
+      kalo jumlah > pengirim.tier.limit {
+        lempar Masalah("Melebihi limit harian {pengirim.tier.limit}", "MasalahLimit")
+      }
+
+      # Proses transfer
+      pengirim.saldo = pengirim.saldo - jumlah
+      penerima.saldo = penerima.saldo + jumlah
+
+      spil "💸 [TRX] {pengirim.nama} -> {penerima.nama} | {jumlah.Rp()}"
+    })
+  }
+
+  aksi cetak_laporan_aset(gue, minimal_aset) {
+    spil "\n🗒️  [LAPORAN ASET] > {minimal_aset.Rp()}"
+    isi saring_nasabah_kaya = nasabah -> nasabah.saldo >= minimal_aset
+    isi nasabah_kaya = saring(gue.data_nasabah, saring_nasabah_kaya)
+    tiap nasabah di nasabah_kaya
+      spil "- {nasabah.nama} | Saldo: {nasabah.saldo.Rp()} | Akun: {nasabah.id.sensor()}"
+  }
+
+  aksi audit(gue, nasabah, nama_aksi, _aksi) {
+    gue.keamanan.audit(nasabah, nama_aksi, _aksi);
+  }
+}
+
+isi bank = BankSantai()
+
+# Inisialisasi pengguna
+isi DikiDjatar = Nasabah(
+  id          = "12345678",
+  nama        = "Diki Djatar",
+  saldo_awal  = 100000,
+  tier        = TIER_PLATINUM
+)
+isi Budi = Nasabah(
+  id          = "25372732",
+  nama        = "Budi",
+  saldo_awal  = 5000
+)
+isi Layla = Nasabah(
+  id          = "92903273",
+  nama        = "Layla",
+  saldo_awal  = 2000,
+  tier = TIER_GOLD
+)
+
+bank daftar_nasabah DikiDjatar
+bank daftar_nasabah Budi
+bank daftar_nasabah Layla
+
+spil '\n' + ('*' ulangin 40)
+spil '    MEMULAI SIMULASI TRANSAKSI'
+spil (('*' ulangin 40) + '\n')
+
+coba {
+  bank.kirim(
+    pengirim = DikiDjatar,
+    jumlah   = 20000,
+    penerima = Budi
+  )
+  bank.kirim(
+    pengirim = Layla,
+    jumlah   = 1500,
+    penerima = DikiDjatar
+  )
+
+  # Nonaktifkan akun Budi
+  Budi.nonaktifkan()
+  bank.kirim(Budi, 100, Layla)
+} tangkap gagal {
+  spil "❌ [SISTEM BLOKIR] Alasan: {gagal.pesan}"
+}
+
+coba {
+  # Transaksi melebihi batas limit harian
+  spil "[!] Budi mencoba transfer melebihi limit..."
+  Budi.aktifkan() # Aktifkan kembali Budi
+  bank.kirim(
+    pengirim = Budi,
+    jumlah   = 15000,
+    penerima = DikiDjatar
+  )
+} tangkap gagal {
+  spil "⚠️  [BATAS LIMIT] Alasan: {gagal.pesan}"
+}
+
+bank cetak_laporan_aset 10000
+
+spil '\n📔 [LOG INTERNAL DikiDjatar]'
+tiap log di DikiDjatar.riwayat
+  spil "> {log}"
+
+spil '\n' + ('=' ulangin 40)
+spil '    SISTEM PERBANKKAN SELESAI'
+spil ('=' ulangin 40)
