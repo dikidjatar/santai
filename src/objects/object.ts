@@ -101,6 +101,12 @@ export abstract class SantaiObject {
   isError(): this is SantaiError {
     return this.type === SantaiType.kError;
   }
+  isPair(): this is SantaiPair {
+    return this.type === SantaiType.kPair;
+  }
+  isMap(): this is SantaiMap {
+    return this.type === SantaiType.kMap;
+  }
 
   /**
    * Returns `true` if the object can be iterated over.
@@ -874,6 +880,103 @@ export class SantaiError extends SantaiObject {
   }
 }
 
+export class SantaiPair extends SantaiObject {
+  override readonly typeName: string = "Pasangan";
+
+  constructor(
+    readonly id: string,
+    readonly value: SantaiObject
+  ) {
+    super(SantaiType.kPair);
+  }
+
+  override isTruthy(): boolean {
+    return true;
+  }
+
+  override inspect(): string {
+    return `Pasangan { id: ${this.id}, value: ${this.value.inspect()} }`;
+  }
+}
+
+export class SantaiMapIterator extends SantaiIterator {
+  private readonly values: MapIterator<SantaiPair>;
+
+  constructor(private readonly map: SantaiMap) {
+    super();
+    this.values = map.getValues();
+  }
+
+  override hasNext(): boolean {
+    return this.map.size > 0;
+  }
+
+  override next(): IteratorResult<any> {
+    return this.values.next();
+  }
+}
+
+export class SantaiMap extends SantaiObject {
+  override readonly typeName: string = "Peta";
+
+  private readonly _data: Map<string, SantaiPair> = new Map();
+
+  get size(): number {
+    return this._data.size;
+  }
+
+  constructor(pairs: SantaiPair[]) {
+    super(SantaiType.kMap);
+    for (const pair of pairs) {
+      this._data.set(pair.id, pair);
+    }
+  }
+
+  getValue(id: string): SantaiPair | undefined {
+    return this._data.get(id);
+  }
+
+  setValue(id: string, value: SantaiPair): void {
+    this._data.set(id, value);
+  }
+
+  delete(id: string): boolean {
+    return this._data.delete(id);
+  }
+
+  clear(): void {
+    this._data.clear();
+  }
+
+  getEntries(): Readonly<MapIterator<[string, SantaiPair]>> {
+    return this._data.entries();
+  }
+
+  getValues(): MapIterator<SantaiPair> {
+    return this._data.values();
+  }
+
+  override isIterable(): boolean {
+    return true;
+  }
+
+  override iterate(): SantaiIterator {
+    return new SantaiMapIterator(this);
+  }
+
+  override hasLength(): boolean {
+    return true;
+  }
+
+  override isTruthy(): boolean {
+    return this._data.size !== 0;
+  }
+
+  override inspect(): string {
+    return "Peta { }";
+  }
+}
+
 export namespace Factory {
   export const Kosong: SantaiKosong = SantaiKosong.instance;
   export const True: SantaiBoolean = SantaiBoolean.TRUE;
@@ -943,6 +1046,14 @@ export namespace Factory {
 
   export function NewError(message: string, name: string): SantaiError {
     return new SantaiError(message, name);
+  }
+
+  export function NewPair(id: string, value: SantaiObject): SantaiPair {
+    return new SantaiPair(id, value);
+  }
+
+  export function NewMap(pairs: SantaiPair[]): SantaiMap {
+    return new SantaiMap(pairs);
   }
 
   export function IsCallable(obj: SantaiObject): boolean {

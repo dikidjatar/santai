@@ -16,4 +16,6 @@ export const enum SantaiType {
   kError,
   kIterator,
   kType,
+  kPair,
+  kMap,
 }

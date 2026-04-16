@@ -116,3 +116,14 @@ export function evaluateTruthy(
   );
   return result ? result.value : object.isTruthy();
 }
+
+/**
+ * Init santai object
+ */
+export function initObject<T extends SantaiObject>(
+  callsite: CallSite,
+  object: T,
+  ...args: SantaiObject[]
+): T {
+  return callsite.invoke(object, args) as T;
+}

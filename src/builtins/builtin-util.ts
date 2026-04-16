@@ -10,6 +10,7 @@ import {
   SantaiBoolean,
   SantaiError,
   SantaiList,
+  SantaiMap,
   SantaiNumber,
   SantaiObject,
   SantaiRange,
@@ -103,6 +104,12 @@ export namespace method {
     fn: (self: BuiltinClass, ...args: SantaiObject[]) => SantaiObject
   ): Callable {
     return wrapMethod(SantaiType.kBuiltinClass, "tipe", fn);
+  }
+
+  export function map(
+    fn: (self: SantaiMap, ...args: SantaiObject[]) => SantaiObject
+  ): Callable {
+    return wrapMethod(SantaiType.kMap, "Peta", fn);
   }
 }
 

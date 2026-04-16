@@ -13,8 +13,12 @@ export * from "./builtins-logika";
 export * from "./builtins-masalah";
 export * from "./builtins-tipe";
 export * from "./builtins-builtin-class";
+export * from "./builtins-pasangan";
+export * from "./builtins-peta";
 
 export * from "./builtins-io";
 export * from "./builtins-global-functional";
 export * from "./builtins-sistem";
 export * from "./builtins-matematika";
+
+export * from "./builtins-global";
