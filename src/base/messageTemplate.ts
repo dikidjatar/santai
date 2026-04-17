@@ -39,7 +39,8 @@ export const enum MessageTemplate {
   kNotIterable,
   kCannotSetProperty,
   kTypeError,
-  KCannotGetSubscript,
+  kCannotSetSubscript,
+  kCannotGetSubscript,
 
   // ReferenceError
   kNotDefined,
@@ -151,7 +152,8 @@ export const MessageTemplateString: Record<MessageTemplate, string> = {
     "'%s' gak ada di %s — salah panggil atau belum lo bikin?",
   [MessageTemplate.kCannotSetProperty]:
     "gak bisa ngubah '%s' di %s — jangan maksa dong",
-  [MessageTemplate.KCannotGetSubscript]: "gak bisa ambil item di %s",
+  [MessageTemplate.kCannotGetSubscript]: "gak bisa ambil item di %s",
+  [MessageTemplate.kCannotSetSubscript]: "gak bisa atur item di %s",
   [MessageTemplate.kTypeError]: "%s",
 };
 
@@ -218,6 +220,7 @@ export const MessageTemplateMood: Record<MessageTemplate, Mood> = {
   [MessageTemplate.kInvaidObjectDescriptor]:       Mood.Marah,
   [MessageTemplate.kInvalidReturnValue]:           Mood.Panik,
   [MessageTemplate.kObjectHasNoMember]:            Mood.Sedih,
-  [MessageTemplate.KCannotGetSubscript]:           Mood.Sedih,
+  [MessageTemplate.kCannotGetSubscript]:           Mood.Sedih,
+  [MessageTemplate.kCannotSetSubscript]:           Mood.Marah,
   [MessageTemplate.kTypeError]:                    Mood.Sedih
 };

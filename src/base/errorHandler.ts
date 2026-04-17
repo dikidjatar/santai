@@ -46,7 +46,7 @@ export function isTypeError(template: MessageTemplate): boolean {
   return isInRange(
     template,
     MessageTemplate.kUnsupportedUnaryOperation,
-    MessageTemplate.KCannotGetSubscript
+    MessageTemplate.kCannotGetSubscript
   );
 }
 
