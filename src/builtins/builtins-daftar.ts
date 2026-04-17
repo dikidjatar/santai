@@ -1,6 +1,7 @@
 // Copyright (c) [2026] [Diki Djatar]
 // SPDX-License-Identifier: MIT
 
+import { assert } from "../base/asserts";
 import {
   BuiltinFunction,
   Factory,
@@ -10,6 +11,7 @@ import {
 } from "../objects/object";
 import { ObjectUtil } from "../objects/object-util";
 import { registerPropertyProvider } from "../objects/propertyRegistry";
+import { coerceToString, evaluateTruthy } from "../objects/protocol";
 import { createIterator } from "../objects/protocolIterator";
 import { SpecialName } from "../objects/specialNames";
 import { SantaiType } from "../objects/st-type";
@@ -35,26 +37,36 @@ const daftar__awal__: MethodArg = [
 ];
 const daftar__teks__: MethodArg = [
   SpecialName.__teks__,
-  method.list((self) => {
-    const elements: readonly SantaiObject[] = self.elements;
-    let str: string = "[";
+  ObjectUtil.wrapMethod({
+    fn: (callsite, self) => {
+      assert(self.isList());
+      const elements: readonly SantaiObject[] = self.elements;
+      let str: string = "[";
 
-    for (let i = 0; i < elements.length; i++) {
-      const element = elements[i] ?? Factory.Kosong;
+      for (let i = 0; i < elements.length; i++) {
+        const element = elements[i] ?? Factory.Kosong;
 
-      if (element.isString()) {
-        str += "'" + element.inspect() + "'";
-      } else {
-        str += element.inspect();
+        if (element.isString()) {
+          str += "'" + coerceToString(callsite, element) + "'";
+        } else {
+          str += coerceToString(callsite, element);
+        }
+
+        if (i < elements.length - 1) {
+          str += ", ";
+        }
       }
 
-      if (i < elements.length - 1) {
-        str += ", ";
-      }
-    }
-
-    str += "]";
-    return Factory.NewString(str);
+      str += "]";
+      return Factory.NewString(str);
+    },
+    assertDescriptor: (callsite, self) =>
+      ObjectUtil.checkObjectDescriptor(
+        callsite,
+        self,
+        SantaiType.kList,
+        "daftar"
+      ),
   }),
   undefined,
   [required("gue")],
@@ -139,17 +151,27 @@ const daftar_balik: MethodArg = [
 ];
 const daftar_unik: MethodArg = [
   "unik",
-  method.list((self) => {
-    const seen = new Set<string>();
-    const result: SantaiObject[] = [];
-    for (const el of self.elements) {
-      const key = el.inspect();
-      if (!seen.has(key)) {
-        seen.add(key);
-        result.push(el);
+  ObjectUtil.wrapMethod({
+    fn: (callsite, self) => {
+      assert(self.isList());
+      const seen = new Set<string>();
+      const result: SantaiObject[] = [];
+      for (const el of self.elements) {
+        const key = coerceToString(callsite, el);
+        if (!seen.has(key)) {
+          seen.add(key);
+          result.push(el);
+        }
       }
-    }
-    return Factory.NewList(result);
+      return Factory.NewList(result);
+    },
+    assertDescriptor: (callsite, self) =>
+      ObjectUtil.checkObjectDescriptor(
+        callsite,
+        self,
+        SantaiType.kList,
+        "daftar"
+      ),
   }),
   undefined,
   [required("gue")],
@@ -161,7 +183,7 @@ const daftar_cariin: MethodArg = [
       if (!Factory.IsCallable(fn)) return Factory.Kosong;
       const elememts: readonly SantaiObject[] = self.elements;
       const result = elememts.find((element) => {
-        return callsite.invoke(fn, [element]).isTruthy();
+        return evaluateTruthy(callsite, callsite.invoke(fn, [element]));
       });
       return result ? result : Factory.Kosong;
     },

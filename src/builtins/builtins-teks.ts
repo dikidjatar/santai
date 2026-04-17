@@ -1,15 +1,17 @@
 // Copyright (c) [2026] [Diki Djatar]
 // SPDX-License-Identifier: MIT
 
+import { assert } from "../base/asserts";
 import { BuiltinFunction, Factory, MethodArg } from "../objects/object";
 import { ObjectUtil } from "../objects/object-util";
 import { registerPropertyProvider } from "../objects/propertyRegistry";
 import { coerceToString, initObject } from "../objects/protocol";
+import { createIterator } from "../objects/protocolIterator";
 import { SpecialName } from "../objects/specialNames";
 import { SantaiType } from "../objects/st-type";
 import { TypeRegistry } from "../objects/typeRegistry";
 import { TokenValue } from "../parsing/token";
-import { asGetter, mapParams, method } from "./builtin-util";
+import { asGetter, getString, mapParams, method } from "./builtin-util";
 import { defineGlobal, GlobalProvideRegistry } from "./globalProvider";
 import { optional, required } from "./paramSpec";
 
@@ -46,7 +48,7 @@ const teks__ambil__: MethodArg = [
 const teks_kapital: MethodArg = [
   "kapital",
   method.string(({ value }, all) => {
-    const allWord = all.isBoolean() && all.isTruthy();
+    const allWord = all.isBoolean() && all.value === true;
 
     const result = allWord
       ? value.replace(/\S+/g, (w) => w[0]!.toUpperCase() + w.slice(1))
@@ -112,8 +114,8 @@ const teks_ganti: MethodArg = [
   "karakter_ke",
   method.string(({ value }, searchValue, replaceValue) => {
     const newValue = value.replace(
-      searchValue.inspect(),
-      replaceValue.inspect()
+      getString(searchValue),
+      getString(replaceValue)
     );
     return Factory.NewString(newValue);
   }),
@@ -124,7 +126,7 @@ const teks_pisahin: MethodArg = [
   "pisahin",
   method.string(({ value }, pemisah, _limit) => {
     const limit = _limit.isNumber() ? _limit.value : undefined;
-    const elements = value.split(pemisah.inspect(), limit);
+    const elements = value.split(getString(pemisah), limit);
     return Factory.NewList(elements.map((e) => Factory.NewString(e)));
   }),
   undefined,
@@ -136,7 +138,7 @@ const teks_pisahin: MethodArg = [
 ];
 const method_berisi = method.string(({ value }, searchString, _position) => {
   const position = _position.isNumber() ? _position.value : undefined;
-  return Factory.Boolean(value.includes(searchString.inspect(), position));
+  return Factory.Boolean(value.includes(getString(searchString), position));
 });
 const teks_berisi: MethodArg = [
   "berisi",
@@ -171,12 +173,22 @@ const teks_ulangin: MethodArg = [
 ];
 const teks_gabungin: MethodArg = [
   "gabungin",
-  method.string(({ value: separator }, iter) => {
-    if (!iter.isIterable()) return Factory.NewString("");
-    const iterator = iter.iterate();
-    return Factory.NewString(
-      [...iterator].map((v) => v.inspect()).join(separator)
-    );
+  ObjectUtil.wrapMethod({
+    fn: (callsite, self, iterable) => {
+      assert(self.isString());
+      if (!iterable.isIterable()) return Factory.NewString("");
+      const iterator = createIterator(callsite, iterable);
+      return Factory.NewString(
+        [...iterator].map((v) => coerceToString(callsite, v)).join(self.value)
+      );
+    },
+    assertDescriptor: (callsite, self) =>
+      ObjectUtil.checkObjectDescriptor(
+        callsite,
+        self,
+        SantaiType.kString,
+        "teks"
+      ),
   }),
   undefined,
   [required("gue"), required("iter")],
@@ -184,7 +196,7 @@ const teks_gabungin: MethodArg = [
 const teks_posisi: MethodArg = [
   "posisi",
   method.string(({ value }, _searchString, _position) => {
-    const searchString = _searchString.inspect();
+    const searchString = getString(_searchString);
     const position = _position.isNumber() ? _position.value : undefined;
     return Factory.NewNumber(value.indexOf(searchString, position));
   }),

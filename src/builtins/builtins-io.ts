@@ -30,7 +30,7 @@ defineGlobal("spil", () => {
 // Simple implementation for input
 defineGlobal("baca", () => {
   return Factory.NewBuiltinFunction("baca", (_, args) => {
-    const prompt = args[0].inspect();
+    const prompt = args[0].isString() ? args[0].value : "";
     if (prompt) writeToStdout(prompt);
     const buf = Buffer.alloc(1024);
     const n = fs.readSync(0, buf, 0, buf.length, null);

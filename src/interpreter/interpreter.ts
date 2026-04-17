@@ -214,7 +214,10 @@ export class Interpreter extends AstVisitor<SantaiObject> {
           MessageTemplate.kIllegalContinueStatement
         );
       } else if (isThrowSignal(error)) {
-        const message = error.value.inspect();
+        const message = coerceToString(
+          this.makeCallSite(error.node),
+          error.value
+        );
         const location = makeLocation(error.node.position, error.node.position);
         this.errorHandler.reportError(location, message, "dilempar disini");
       } else if (isRuntimeErrorSignal(error)) {

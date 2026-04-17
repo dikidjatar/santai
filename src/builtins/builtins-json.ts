@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: MIT
 
 import { assertNever, unreachable } from "../base/asserts";
-import { BugIndicatingError } from "../base/errors";
 import { MessageTemplate } from "../base/messageTemplate";
 import {
   isBoolean,
@@ -180,18 +179,6 @@ class STJson extends SantaiObject {
       return results;
     }
     return {};
-  }
-
-  override isTruthy(): never {
-    throw new BugIndicatingError(
-      "STJson.isTruthy is not supported, use __logika__ instead"
-    );
-  }
-
-  override inspect(): never {
-    throw new BugIndicatingError(
-      "STJson.inspect is not supported, use __teks__ instead"
-    );
   }
 }
 

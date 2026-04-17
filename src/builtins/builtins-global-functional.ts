@@ -5,7 +5,7 @@ import { MessageTemplate } from "../base/messageTemplate";
 import { getAllExtensions } from "../objects/extensionRegistry";
 import { Factory, SantaiList, SantaiObject } from "../objects/object";
 import { ObjectUtil } from "../objects/object-util";
-import { callObjectSpecialMethod } from "../objects/protocol";
+import { callObjectSpecialMethod, evaluateTruthy } from "../objects/protocol";
 import { createIterator } from "../objects/protocolIterator";
 import { SpecialName } from "../objects/specialNames";
 import { doIterator } from "./builtin-util";
@@ -52,7 +52,7 @@ defineGlobal("saring", () => {
       const iterator = createIterator(callsite, iterable);
       doIterator(iterator, (item) => {
         const keep = callsite.invoke(fn, [item]);
-        if (keep.isTruthy()) result.push(item);
+        if (evaluateTruthy(callsite, keep)) result.push(item);
       });
       return Factory.NewList(result);
     }),

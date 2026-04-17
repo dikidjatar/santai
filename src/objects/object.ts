@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: MIT
 
 import { Block, Parameter } from "../ast/ast";
+import { BugIndicatingError } from "../base/errors";
 import { MessageTemplate } from "../base/messageTemplate";
 import { isUndefined } from "../base/types";
 import { Environment } from "../interpreter/environment";
@@ -62,8 +63,16 @@ export abstract class SantaiObject {
 
   constructor(readonly type: SantaiType) {}
 
-  abstract inspect(): string;
-  abstract isTruthy(): boolean;
+  inspect(): string {
+    throw new BugIndicatingError(
+      "Object.inspect is not supported, use __teks__ instead"
+    );
+  }
+  isTruthy(): boolean {
+    throw new BugIndicatingError(
+      "STJson.isTruthy is not supported, use __logika__ instead"
+    );
+  }
 
   isKosong(): this is SantaiKosong {
     return this.type === SantaiType.kKosong;

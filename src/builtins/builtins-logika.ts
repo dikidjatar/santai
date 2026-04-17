@@ -26,6 +26,12 @@ const logika__teks__: MethodArg = [
   undefined,
   [required("gue")],
 ];
+const logika__logika__: MethodArg = [
+  SpecialName.__logika__,
+  method.boolean(({ value }) => Factory.Boolean(value)),
+  undefined,
+  [required("gue")],
+];
 const logika__daftarproperti__: MethodArg = [
   SpecialName.__daftarproperti__,
   ObjectUtil.wrapCallable(() =>
@@ -39,6 +45,7 @@ const logika__daftarproperti__: MethodArg = [
 const boolenMethods: BuiltinFunction[] = [
   Factory.NewBuiltinFunction(...logika__awal__),
   Factory.NewBuiltinFunction(...logika__teks__),
+  Factory.NewBuiltinFunction(...logika__logika__),
   Factory.NewBuiltinFunction(...logika__daftarproperti__),
 ];
 

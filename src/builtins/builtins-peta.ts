@@ -7,6 +7,7 @@ import {
   BuiltinFunction,
   Factory,
   MethodArg,
+  SantaiObject,
   SantaiPair,
 } from "../objects/object";
 import { ObjectUtil } from "../objects/object-util";
@@ -19,6 +20,12 @@ import { TypeRegistry } from "../objects/typeRegistry";
 import { asGetter, doIterator, mapParams, method } from "./builtin-util";
 import { defineGlobal } from "./globalProvider";
 import { optional, required } from "./paramSpec";
+
+function getId(value: SantaiObject): string {
+  if (value.isString()) return value.value;
+  if (value.isNumber()) return value.value.toString();
+  return "";
+}
 
 const Peta__awal__: MethodArg = [
   SpecialName.__awal__,
@@ -62,7 +69,7 @@ const Peta__panjang__: MethodArg = [
 const Peta__ambil__: MethodArg = [
   SpecialName.__ambil__,
   method.map((self, id) => {
-    const pair = self.getValue(id.inspect());
+    const pair = self.getValue(getId(id));
     return pair ? pair.value : Factory.Kosong;
   }),
   undefined,
@@ -71,7 +78,7 @@ const Peta__ambil__: MethodArg = [
 const Peta__atur__: MethodArg = [
   SpecialName.__atur__,
   method.map((self, id, value) => {
-    const pair = Factory.NewPair(id.inspect(), value);
+    const pair = Factory.NewPair(getId(id), value);
     self.setValue(pair.id, pair);
     return pair;
   }),
@@ -81,7 +88,7 @@ const Peta__atur__: MethodArg = [
 const Peta_ambilin: MethodArg = [
   "ambilin",
   method.map((self, id) => {
-    const pair = self.getValue(id.inspect());
+    const pair = self.getValue(getId(id));
     return pair ? pair.value : Factory.Kosong;
   }),
   undefined,
@@ -90,7 +97,7 @@ const Peta_ambilin: MethodArg = [
 const Peta_isiin: MethodArg = [
   "isiin",
   method.map((self, id, value) => {
-    const pair = Factory.NewPair(id.inspect(), value);
+    const pair = Factory.NewPair(getId(id), value);
     self.setValue(pair.id, pair);
     return Factory.Kosong;
   }),
@@ -100,7 +107,7 @@ const Peta_isiin: MethodArg = [
 const Peta_hapusin: MethodArg = [
   "hapusin",
   method.map((self, id) => {
-    return Factory.Boolean(self.delete(id.inspect()));
+    return Factory.Boolean(self.delete(getId(id)));
   }),
   undefined,
   [required("gue"), required("id")],

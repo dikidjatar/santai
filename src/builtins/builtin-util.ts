@@ -121,3 +121,10 @@ export function doIterator<T>(
     fn(value);
   }
 }
+
+export function getString(value: SantaiObject): string {
+  if (value.isString() || value.isNumber()) {
+    return value.value.toString();
+  }
+  return "";
+}
