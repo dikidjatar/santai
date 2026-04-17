@@ -59,6 +59,24 @@ const daftar__teks__: MethodArg = [
   undefined,
   [required("gue")],
 ];
+const daftar__ambil__: MethodArg = [
+  SpecialName.__ambil__,
+  method.list((self, index) => {
+    if (!index.isNumber()) return Factory.Kosong;
+    return self.get(index.value) ?? Factory.Kosong;
+  }),
+  undefined,
+  [required("gue"), required("indeks")],
+];
+const daftar__atur__: MethodArg = [
+  SpecialName.__atur__,
+  method.list((self, index, value) => {
+    if (index.isNumber()) self.set(index.value, value);
+    return Factory.Kosong;
+  }),
+  undefined,
+  [required("gue"), required("indeks"), required("value")],
+];
 const daftar_tambah: MethodArg = [
   "tambah",
   method.list((self, ...args) => Factory.NewNumber(self.push(...args))),
@@ -170,6 +188,8 @@ const list__daftarproperti__: MethodArg = [
 const listMethods: BuiltinFunction[] = [
   Factory.NewBuiltinFunction(...daftar__awal__),
   Factory.NewBuiltinFunction(...daftar__teks__),
+  Factory.NewBuiltinFunction(...daftar__ambil__),
+  Factory.NewBuiltinFunction(...daftar__atur__),
   Factory.NewBuiltinFunction(...daftar_tambah),
   Factory.NewBuiltinFunction(...daftar_hapus),
   Factory.NewBuiltinFunction(...daftar_hapus_ke),

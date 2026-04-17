@@ -33,6 +33,16 @@ const teks__tambah__ = method.op(
   SpecialName.__tambah__,
   TokenValue.kAdd
 );
+const teks__ambil__: MethodArg = [
+  SpecialName.__ambil__,
+  method.string((self, index) => {
+    if (!index.isNumber()) return Factory.Kosong;
+    const value = self.value[index.value];
+    return value ? Factory.NewString(value) : Factory.Kosong;
+  }),
+  undefined,
+  [required("gue"), required("indeks")],
+];
 const teks_kapital: MethodArg = [
   "kapital",
   method.string(({ value }, all) => {
@@ -212,6 +222,7 @@ const textMethods: BuiltinFunction[] = [
   Factory.NewBuiltinFunction(...teks__awal__),
   Factory.NewBuiltinFunction(...teks__teks__),
   Factory.NewBuiltinFunction(...teks__tambah__),
+  Factory.NewBuiltinFunction(...teks__ambil__),
   Factory.NewBuiltinFunction(...teks_kapital),
   Factory.NewBuiltinFunction(...teks_gedein),
   Factory.NewBuiltinFunction(...teks_kecilin),

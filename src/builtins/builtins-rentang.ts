@@ -89,6 +89,25 @@ const rentang__teks__: MethodArg = [
   undefined,
   [required("gue")],
 ];
+const rentang__ambil__: MethodArg = [
+  SpecialName.__ambil__,
+  method.range((self, index) => {
+    if (!index.isNumber()) return Factory.Kosong;
+    const potentialValue: number = self.start + index.value * self.step;
+    if (self.step > 0) {
+      if (potentialValue < self.start || potentialValue >= self.stop) {
+        return Factory.Kosong;
+      }
+    } else {
+      if (potentialValue > self.start || potentialValue <= self.stop) {
+        return Factory.Kosong;
+      }
+    }
+    return Factory.NewNumber(potentialValue);
+  }),
+  undefined,
+  [required("gue"), required("indeks")],
+];
 const rentang_loncat: MethodArg = [
   "loncat",
   method.range((self, number) => {
@@ -111,6 +130,7 @@ const rentang__daftarproperti__: MethodArg = [
 const rangeMethods: BuiltinFunction[] = [
   Factory.NewBuiltinFunction(...rentang__awal__),
   Factory.NewBuiltinFunction(...rentang__teks__),
+  Factory.NewBuiltinFunction(...rentang__ambil__),
   Factory.NewBuiltinFunction(...rentang_loncat),
   Factory.NewBuiltinFunction(...rentang__daftarproperti__),
 ];

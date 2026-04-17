@@ -498,15 +498,9 @@ export class Interpreter extends AstVisitor<SantaiObject> {
         );
       }
 
-      const result = obj.getSubscript(keyObj);
-
-      if (!isUndefined(result)) {
-        return result;
-      }
-
       this.reportAndThrow(
         node,
-        MessageTemplate.KCannotGetSubscript,
+        MessageTemplate.kCannotGetSubscript,
         obj.typeName
       );
     }
@@ -751,7 +745,11 @@ export class Interpreter extends AstVisitor<SantaiObject> {
           );
           return true;
         }
-        return obj.setSubscript(keyObj, value);
+        this.reportAndThrow(
+          target,
+          MessageTemplate.kCannotSetSubscript,
+          obj.typeName
+        );
       }
     } else {
       this.reportAndThrow(target, MessageTemplate.kInvalidAssignmentTarget);
