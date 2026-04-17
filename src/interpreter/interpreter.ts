@@ -489,15 +489,13 @@ export class Interpreter extends AstVisitor<SantaiObject> {
     } else {
       const keyObj: SantaiObject = this.evaluate(propertyNode);
 
-      if (obj.isInstance()) {
-        const getItem = obj.getProperty(SpecialName.__ambil__);
-        if (getItem) {
-          return this.dispatch(
-            getItem,
-            [{ evaluatedValue: keyObj }],
-            propertyNode
-          );
-        }
+      const getItem = obj.getProperty(SpecialName.__ambil__);
+      if (getItem) {
+        return this.dispatch(
+          getItem,
+          [{ evaluatedValue: keyObj }],
+          propertyNode
+        );
       }
 
       const result = obj.getSubscript(keyObj);
@@ -725,7 +723,11 @@ export class Interpreter extends AstVisitor<SantaiObject> {
       const obj = this.evaluate(target.object);
       const propertyKey: Expression = target.property;
 
-      if (propertyKey.isLiteral() && propertyKey.isStringLiteral()) {
+      if (
+        !target.isComputed &&
+        propertyKey.isLiteral() &&
+        propertyKey.isStringLiteral()
+      ) {
         const propertyName = propertyKey.asStringLiteral();
 
         if (!obj.setProperty(propertyName, value)) {
@@ -740,16 +742,14 @@ export class Interpreter extends AstVisitor<SantaiObject> {
         return true;
       } else {
         const keyObj = this.evaluate(propertyKey);
-        if (obj.isInstance()) {
-          const setItem = obj.getProperty(SpecialName.__atur__);
-          if (setItem) {
-            this.dispatch(
-              setItem,
-              [{ evaluatedValue: keyObj }, { evaluatedValue: value }],
-              target
-            );
-            return true;
-          }
+        const setItem = obj.getProperty(SpecialName.__atur__);
+        if (!isUndefined(setItem)) {
+          this.dispatch(
+            setItem,
+            [{ evaluatedValue: keyObj }, { evaluatedValue: value }],
+            target
+          );
+          return true;
         }
         return obj.setSubscript(keyObj, value);
       }
