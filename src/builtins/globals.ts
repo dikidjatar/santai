@@ -15,6 +15,7 @@ export * from "./builtins-tipe";
 export * from "./builtins-builtin-class";
 export * from "./builtins-pasangan";
 export * from "./builtins-peta";
+export * from "./builtins-json";
 
 export * from "./builtins-io";
 export * from "./builtins-global-functional";

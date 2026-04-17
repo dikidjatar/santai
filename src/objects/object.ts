@@ -642,6 +642,10 @@ export class SantaiInstance extends SantaiObject {
     return true;
   }
 
+  getOwnProperties(): MapIterator<[string, SantaiObject]> {
+    return this._properties.entries();
+  }
+
   /**
    * Reads properties belonging to this instance (excluding class methods)
    */

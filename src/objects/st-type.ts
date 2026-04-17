@@ -18,4 +18,5 @@ export const enum SantaiType {
   kType,
   kPair,
   kMap,
+  kJson,
 }

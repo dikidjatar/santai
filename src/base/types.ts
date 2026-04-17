@@ -9,6 +9,10 @@ export function isString(value: unknown): value is string {
   return typeof value === "string";
 }
 
+export function isBoolean(value: unknown): value is boolean {
+  return typeof value === "boolean";
+}
+
 /**
  * @returns whether the provided parameter is of type `object` but **not**
  *	`null`, an `array`, a `regexp`, nor a `date`.
