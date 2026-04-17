@@ -36,7 +36,7 @@ class GlobalProviderRegistry {
 
   getResolvedGlobal(name: string): SantaiObject {
     const globalProvider = this._resolved.get(name);
-    assertDefined(globalProvider);
+    assertDefined(globalProvider, `global ${name} is not defined`);
     return globalProvider;
   }
 
