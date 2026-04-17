@@ -268,8 +268,7 @@ tiap baris di teks_matrix {
   y = y + 1
 }
 
-gue peta {}
-isi peta_kolom_indeks_huruf = peta()
+isi peta_kolom_indeks_huruf = Peta()
 titip indeks_huruf_sekarang = -1
 titip dalam_huruf           = salah
 
