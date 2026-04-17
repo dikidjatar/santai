@@ -535,14 +535,6 @@ export class SantaiRange extends SantaiObject {
     return this.size > 0;
   }
 
-  override hasLength(): boolean {
-    return true;
-  }
-
-  override getLength(): number {
-    return this.size;
-  }
-
   override inspect(): string {
     if (this.step === 1) {
       return this.start === 0

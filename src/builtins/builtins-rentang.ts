@@ -108,6 +108,12 @@ const rentang__ambil__: MethodArg = [
   undefined,
   [required("gue"), required("indeks")],
 ];
+const rentang__panjang__: MethodArg = [
+  SpecialName.__panjang__,
+  method.range((self) => Factory.NewNumber(self.size)),
+  undefined,
+  [required("gue")],
+];
 const rentang_loncat: MethodArg = [
   "loncat",
   method.range((self, number) => {
@@ -131,6 +137,7 @@ const rangeMethods: BuiltinFunction[] = [
   Factory.NewBuiltinFunction(...rentang__awal__),
   Factory.NewBuiltinFunction(...rentang__teks__),
   Factory.NewBuiltinFunction(...rentang__ambil__),
+  Factory.NewBuiltinFunction(...rentang__panjang__),
   Factory.NewBuiltinFunction(...rentang_loncat),
   Factory.NewBuiltinFunction(...rentang__daftarproperti__),
 ];
