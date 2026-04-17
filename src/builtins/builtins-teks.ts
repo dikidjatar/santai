@@ -4,13 +4,13 @@
 import { BuiltinFunction, Factory, MethodArg } from "../objects/object";
 import { ObjectUtil } from "../objects/object-util";
 import { registerPropertyProvider } from "../objects/propertyRegistry";
-import { coerceToString } from "../objects/protocol";
+import { coerceToString, initObject } from "../objects/protocol";
 import { SpecialName } from "../objects/specialNames";
 import { SantaiType } from "../objects/st-type";
 import { TypeRegistry } from "../objects/typeRegistry";
 import { TokenValue } from "../parsing/token";
 import { asGetter, mapParams, method } from "./builtin-util";
-import { defineGlobal } from "./globalProvider";
+import { defineGlobal, GlobalProvideRegistry } from "./globalProvider";
 import { optional, required } from "./paramSpec";
 
 const teks__awal__: MethodArg = [
@@ -210,6 +210,24 @@ const teks_nya: MethodArg = [
   undefined,
   [required("gue"), required("teks")],
 ];
+const teks_ke: MethodArg = [
+  "ke",
+  ObjectUtil.wrapMethod({
+    fn: (callsite, self, value) => {
+      const Pasang = GlobalProvideRegistry.getResolvedGlobal("Pasang");
+      return initObject(callsite, Pasang, self, value);
+    },
+    assertDescriptor: (callsite, self) =>
+      ObjectUtil.checkObjectDescriptor(
+        callsite,
+        self,
+        SantaiType.kString,
+        "teks"
+      ),
+  }),
+  undefined,
+  [required("gue"), required("nilai")],
+];
 const teks__daftarproperti__: MethodArg = [
   SpecialName.__daftarproperti__,
   ObjectUtil.wrapCallable(() =>
@@ -240,6 +258,7 @@ const textMethods: BuiltinFunction[] = [
   Factory.NewBuiltinFunction(...teks_posisi),
   Factory.NewBuiltinFunction(...teks_subteks),
   Factory.NewBuiltinFunction(...teks_nya),
+  Factory.NewBuiltinFunction(...teks_ke),
   Factory.NewBuiltinFunction(...teks__daftarproperti__),
 ];
 

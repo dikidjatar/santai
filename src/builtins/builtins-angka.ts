@@ -4,13 +4,16 @@
 import { BuiltinFunction, Factory, MethodArg } from "../objects/object";
 import { ObjectUtil } from "../objects/object-util";
 import { registerPropertyProvider } from "../objects/propertyRegistry";
-import { callObjectSpecialMethodWithThrow } from "../objects/protocol";
+import {
+  callObjectSpecialMethodWithThrow,
+  initObject,
+} from "../objects/protocol";
 import { SpecialName } from "../objects/specialNames";
 import { SantaiType } from "../objects/st-type";
 import { TypeRegistry } from "../objects/typeRegistry";
 import { TokenValue } from "../parsing/token";
 import { asGetter, mapParams, method } from "./builtin-util";
-import { defineGlobal } from "./globalProvider";
+import { defineGlobal, GlobalProvideRegistry } from "./globalProvider";
 import { optional, required } from "./paramSpec";
 
 const angka__awal__: MethodArg = [
@@ -122,6 +125,25 @@ const angka_sampai: MethodArg = [
   undefined,
   [required("gue"), required("angka")],
 ];
+const angka_ke: MethodArg = [
+  "ke",
+  ObjectUtil.wrapMethod({
+    fn: (callsite, self, value) => {
+      const Pasang = GlobalProvideRegistry.getResolvedGlobal("Pasang");
+      return initObject(callsite, Pasang, self, value);
+    },
+    assertDescriptor: (callsite, self) => {
+      return ObjectUtil.checkObjectDescriptor(
+        callsite,
+        self,
+        SantaiType.kNumber,
+        "angka"
+      );
+    },
+  }),
+  undefined,
+  [required("gue"), required("nilai")],
+];
 
 function defShiftOp(
   name: string,
@@ -163,6 +185,7 @@ const numberMethods: BuiltinFunction[] = [
   Factory.NewBuiltinFunction(...angka__kurangsama__),
   Factory.NewBuiltinFunction(...angka__lebihsama__),
   Factory.NewBuiltinFunction(...angka_sampai),
+  Factory.NewBuiltinFunction(...angka_ke),
   Factory.NewBuiltinFunction(...defShiftOp("SHL", (a, b) => a << b)),
   Factory.NewBuiltinFunction(...defShiftOp("SHR", (a, b) => a >> b)),
   Factory.NewBuiltinFunction(...defShiftOp("LSHR", (a, b) => a >>> b)),
