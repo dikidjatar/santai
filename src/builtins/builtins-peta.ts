@@ -59,6 +59,25 @@ const Peta__panjang__: MethodArg = [
   undefined,
   [required("gue")],
 ];
+const Peta__ambil__: MethodArg = [
+  SpecialName.__ambil__,
+  method.map((self, id) => {
+    const pair = self.getValue(id.inspect());
+    return pair ? pair.value : Factory.Kosong;
+  }),
+  undefined,
+  [required("gue"), required("id")],
+];
+const Peta__atur__: MethodArg = [
+  SpecialName.__atur__,
+  method.map((self, id, value) => {
+    const pair = Factory.NewPair(id.inspect(), value);
+    self.setValue(pair.id, pair);
+    return pair;
+  }),
+  undefined,
+  [required("gue"), required("id"), required("nilai")],
+];
 const Peta_ambilin: MethodArg = [
   "ambilin",
   method.map((self, id) => {
@@ -100,6 +119,8 @@ const PetaMethods: BuiltinFunction[] = [
   Factory.NewBuiltinFunction(...Peta__awal__),
   Factory.NewBuiltinFunction(...Peta__teks__),
   Factory.NewBuiltinFunction(...Peta__panjang__),
+  Factory.NewBuiltinFunction(...Peta__ambil__),
+  Factory.NewBuiltinFunction(...Peta__atur__),
   Factory.NewBuiltinFunction(...Peta_ambilin),
   Factory.NewBuiltinFunction(...Peta_isiin),
   Factory.NewBuiltinFunction(...Peta_hapusin),
