@@ -1,0 +1,63 @@
+# Contoh Program Data Palsu
+# Ditulis menggunakan bahasa pemrograman Santai
+# https://github.com/dikidjatar/santai
+
+aksi buat_data_palsu(jumlah = 5) {
+  isi data_palsu = []
+  tiap _ di rentang jumlah {
+    isi nama = buat_nama_palsu()
+    isi data = petain([
+      'nama'   ke nama,
+      'email'  ke buat_email_palsu(nama),
+      'nomor'  ke buat_nomor_palsu(),
+      'alamat' ke buat_alamat_palsu()
+    ])
+    data_palsu tambah data
+  }
+  balikin data_palsu
+}
+
+aksi buat_nama_palsu {
+  isi nama_depan = [
+    "John", "Jane", "Alice", "Bob", "Charlie",
+    "David", "Eva", "Frank", "Grace", "Helen"
+  ]
+  isi nama_belakang = [
+    "Smith", "Johnson", "Brown", "Wilson", "Lee",
+    "Davis", "Walker", "Young", "Hall", "Moore"
+  ]
+  balikin "{acak(nama_depan)} {acak(nama_belakang)}"
+}
+
+aksi buat_email_palsu(nama) {
+  isi domain = [
+    "gmail.com", "yahoo.com", "hotmail.com",
+    "example.com", "testmail.com"
+  ]
+  balikin "{nama.ganti(' ', '.').kecilin()}@{acak(domain)}"
+}
+
+aksi buat_nomor_palsu {
+  isi acak_angka = (mulai, selesai) -> (mulai sampai selesai).acak()
+  balikin "+62-{acak_angka(100, 999)}-{acak_angka(1000, 9999)}-{acak_angka(1000, 9999)}"
+}
+
+aksi buat_alamat_palsu {
+  isi alamat = ["123 Main St", "456 Elm St", "789 Oak St", "101 Pine Ave", "202 Cedar Rd"]
+  isi kota = ["Jakarta", "Surabaya", "Bandung", "Semarang", "Medan"]
+  balikin "{acak(alamat)}, {acak(kota)}"
+}
+
+aksi spil_data_palsu(data_palsu) {
+  tiap data di data_palsu {
+    spil "=".ulangin(10) + " {data['nama']} " + "=".ulangin(10)
+    spil "Nama: {data['nama']}"
+    spil "Email: {data['email']}"
+    spil "Nomor: {data['nomor']}"
+    spil "Alamat: {data['alamat']}"
+    tulis '\n'
+  }
+}
+
+isi data_palsu = buat_data_palsu(jumlah = 3);
+spil_data_palsu(data_palsu)
