@@ -128,3 +128,13 @@ export function getString(value: SantaiObject): string {
   }
   return "";
 }
+
+export function getNumber(value: SantaiObject, or?: number): number {
+  if (value.isNumber()) return value.value;
+  if (!isUndefined(or)) return or;
+  if (value.isString()) {
+    const number = Number(value.value);
+    return isNaN(number) ? 0 : number;
+  }
+  return 0;
+}

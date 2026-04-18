@@ -1,90 +1,187 @@
 // Copyright (c) [2026] [Diki Djatar]
 // SPDX-License-Identifier: MIT
 
-import { isString } from "../base/types";
 import {
   BuiltinFunction,
-  Callable,
   Factory,
+  GlobalMethodParam,
   SantaiObject,
 } from "../objects/object";
+import { ObjectUtil } from "../objects/object-util";
+import { registerPropertyProvider } from "../objects/propertyRegistry";
+import { createIterator } from "../objects/protocolIterator";
+import { SpecialName } from "../objects/specialNames";
 import { SantaiType } from "../objects/st-type";
+import { asGetter, getNumber, mapParams, wrapMethod } from "./builtin-util";
 import { defineGlobal } from "./globalProvider";
-import { optional, required } from "./paramSpec";
+import { required } from "./paramSpec";
 
-defineGlobal("matematika", () => {
-  return new (class extends SantaiObject {
-    override readonly typeName: string = "matematika";
-    private readonly _properties: Map<string, SantaiObject> = new Map();
+class Matematika extends SantaiObject {
+  override readonly typeName: string = "matematika";
+  private readonly _properties: Map<string, SantaiObject> = new Map();
 
-    constructor() {
-      super(SantaiType.kBuiltinClass);
-      this.set(
-        Factory.NewBuiltinFunction(
-          "bulatin",
-          this.wrap(this._bulatin),
-          undefined,
-          [required("angka"), optional("desimal", Factory.NewNumber(0))]
-        )
-      );
-      this.set(
-        Factory.NewBuiltinFunction(
-          "bulatin_kebawah",
-          this.wrap(this._bulatin_kebawah),
-          undefined,
-          [required("angka")]
-        )
-      );
-    }
+  get propertiNames(): string[] {
+    return [...this._properties.keys()];
+  }
 
-    private _bulatin(arg1: SantaiObject, arg2: SantaiObject): SantaiObject {
-      const value = arg1.isNumber() ? arg1.value : 0;
-      const desimal = arg2.isNumber() ? arg2.value : 0;
-      const factor = 10 ** desimal;
-      return Factory.NewNumber(Math.round(value * factor) / factor);
-    }
+  constructor() {
+    super(SantaiType.kMath);
+    this._properties.set("PI", Factory.NewNumber(Math.PI));
+    this._properties.set("E", Factory.NewNumber(Math.E));
+    this._properties.set("LN2", Factory.NewNumber(Math.LN2));
+    this._properties.set("LN10", Factory.NewNumber(Math.LN10));
+    this._properties.set("LOG10E", Factory.NewNumber(Math.LOG10E));
+    this._properties.set("LOG2E", Factory.NewNumber(Math.LOG2E));
+    this._properties.set("SQRT1_2", Factory.NewNumber(Math.SQRT1_2));
+    this._properties.set("SQRT2", Factory.NewNumber(Math.SQRT2));
+  }
 
-    private _bulatin_kebawah(arg: SantaiObject): SantaiObject {
-      const value = arg.isNumber() ? arg.value : 0;
-      return Factory.NewNumber(Math.floor(value));
-    }
+  override getProperty(name: string): SantaiObject | undefined {
+    const property = this._properties.get(name);
+    if (property) return property;
+    return super.getProperty(name);
+  }
+}
 
-    private wrap(fn: (...args: SantaiObject[]) => SantaiObject): Callable {
-      return (_self: SantaiObject | undefined, args: SantaiObject[]) => {
-        return fn.bind(this)(...args);
-      };
-    }
+function method(
+  name: string,
+  fn: (self: Matematika, ...args: SantaiObject[]) => SantaiObject,
+  params?: GlobalMethodParam[]
+): BuiltinFunction {
+  return Factory.NewBuiltinFunction(
+    name,
+    wrapMethod(SantaiType.kMath, "matematika", fn),
+    undefined,
+    [required("gue"), ...(params ? params : [])]
+  );
+}
 
-    private set(value: BuiltinFunction): void;
-    private set(name: string, value: SantaiObject): void;
-    private set(
-      valueOrName: BuiltinFunction | string,
-      value?: SantaiObject
-    ): void {
-      let name: string;
-      if (isString(valueOrName)) {
-        name = valueOrName;
-      } else {
-        name = valueOrName.name;
-        value = valueOrName;
-      }
-      this._properties.set(name, value!);
-    }
+type MathKey =
+  | "round"
+  | "floor"
+  | "ceil"
+  | "cos"
+  | "cosh"
+  | "sin"
+  | "sinh"
+  | "tan"
+  | "exp"
+  | "expm1"
+  | "sqrt"
+  | "abs"
+  | "acos"
+  | "acosh"
+  | "asin"
+  | "asinh"
+  | "atan"
+  | "atanh"
+  | "cbrt"
+  | "clz32"
+  | "f16round"
+  | "fround"
+  | "log"
+  | "log10"
+  | "log1p"
+  | "log2"
+  | "sign"
+  | "trunc";
 
-    override getProperty(name: string): SantaiObject | undefined {
-      return this._properties.get(name);
-    }
+function math(name: MathKey) {
+  return method(
+    name as string,
+    (_, value) => Factory.NewNumber(Math[name](getNumber(value))),
+    [required("nilai")]
+  );
+}
 
-    override dir(): readonly string[] {
-      return [...this._properties.keys()];
-    }
+function mathMinOrMax(name: "min" | "max"): BuiltinFunction {
+  return Factory.NewBuiltinFunction(
+    name,
+    ObjectUtil.wrapMethod({
+      fn: (callsite, _, values) => {
+        if (!values.isIterable()) {
+          return Factory.NewNumber(0);
+        }
+        const iterator = createIterator(callsite, values);
+        const result = Math[name](
+          ...[...iterator].map((value) => {
+            if (!value.isNumber()) return NaN;
+            return value.value;
+          })
+        );
+        return Factory.NewNumber(isNaN(result) ? 0 : result);
+      },
+      assertDescriptor: (callsite, self) =>
+        ObjectUtil.checkObjectDescriptor(
+          callsite,
+          self,
+          SantaiType.kMath,
+          "matematika"
+        ),
+    }),
+    undefined,
+    [required("gue"), required("nilai")]
+  );
+}
 
-    override isTruthy(): boolean {
-      return true;
-    }
+const mathMethods: BuiltinFunction[] = [
+  Factory.NewBuiltinFunction(
+    SpecialName.__awal__,
+    ObjectUtil.wrapCallable(() => new Matematika()),
+    undefined,
+    [required("gue")]
+  ),
+  method(SpecialName.__teks__, () => Factory.NewString("matematika {}")),
+  method(SpecialName.__logika__, () => Factory.True),
+  method(SpecialName.__daftarproperti__, (self) => {
+    const methodNames = mapParams(mathMethods);
+    const propertyNames = self.propertiNames;
+    return Factory.NewList(
+      [...propertyNames, ...methodNames].map((name) => Factory.NewString(name))
+    );
+  }),
+  method(
+    "pow",
+    (_, x, y) => Factory.NewNumber(Math.pow(getNumber(x), getNumber(y))),
+    [required("x"), required("y")]
+  ),
+  method("random", () => Factory.NewNumber(Math.random())),
+  math("round"),
+  math("floor"),
+  math("ceil"),
+  math("cos"),
+  math("cosh"),
+  math("sin"),
+  math("sinh"),
+  math("tan"),
+  math("exp"),
+  math("expm1"),
+  math("sqrt"),
+  math("abs"),
+  math("acos"),
+  math("acosh"),
+  math("asin"),
+  math("asinh"),
+  math("atan"),
+  math("atanh"),
+  math("cbrt"),
+  math("clz32"),
+  math("f16round"),
+  math("fround"),
+  math("log"),
+  math("log10"),
+  math("log1p"),
+  math("log2"),
+  math("sign"),
+  math("trunc"),
+  mathMinOrMax("min"),
+  mathMinOrMax("max"),
+];
 
-    override inspect(): string {
-      return "matematika { }";
-    }
-  })();
-});
+registerPropertyProvider(
+  SantaiType.kMath,
+  asGetter(mathMethods),
+  mapParams(mathMethods)
+);
+
+defineGlobal("matematika", () => new Matematika());
