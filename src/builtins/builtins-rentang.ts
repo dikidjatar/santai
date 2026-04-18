@@ -140,6 +140,18 @@ const rangeMethods: BuiltinFunction[] = [
   Factory.NewBuiltinFunction(...rentang__panjang__),
   Factory.NewBuiltinFunction(...rentang_loncat),
   Factory.NewBuiltinFunction(...rentang__daftarproperti__),
+  Factory.NewBuiltinFunction(
+    "random",
+    method.range((self) => Factory.NewNumber(self.random())),
+    undefined,
+    [required("gue")]
+  ),
+  Factory.NewBuiltinFunction(
+    "acak",
+    method.range((self) => Factory.NewNumber(self.random())),
+    undefined,
+    [required("gue")]
+  ),
 ];
 
 registerPropertyProvider(

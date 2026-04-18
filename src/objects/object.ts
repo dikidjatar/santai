@@ -540,6 +540,11 @@ export class SantaiRange extends SantaiObject {
     return Math.max(0, Math.ceil((this.start - this.stop) / -this.step));
   }
 
+  random(): number {
+    const randomIndex = Math.floor(Math.random() * this.size);
+    return this.start + randomIndex * this.step;
+  }
+
   override isTruthy(): boolean {
     return this.size > 0;
   }

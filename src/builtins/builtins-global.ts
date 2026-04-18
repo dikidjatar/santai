@@ -8,6 +8,8 @@ import {
   SantaiObject,
 } from "../objects/object";
 import { initObject } from "../objects/protocol";
+import { createIterator } from "../objects/protocolIterator";
+import { doIterator } from "./builtin-util";
 import { defineGlobal, GlobalProvideRegistry } from "./globalProvider";
 import { optional, required } from "./paramSpec";
 
@@ -49,5 +51,20 @@ function defineGlobalFunction(
         ...args
       ),
     [optional("pasangan", Factory.NewList([]))]
+  )
+);
+
+["random", "acak"].forEach((name) =>
+  defineGlobalFunction(
+    name,
+    (callsite, iterable) => {
+      //TODO: __panjang__ and __ambil__
+      const iterator = createIterator(callsite, iterable);
+      const items: SantaiObject[] = [];
+      doIterator(iterator, (item) => items.push(item));
+      const randomIndex = Math.floor(Math.random() * items.length);
+      return items[randomIndex];
+    },
+    [required("nilai")]
   )
 );
