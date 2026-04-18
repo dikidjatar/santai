@@ -99,9 +99,6 @@ function mathMinOrMax(name: "min" | "max"): BuiltinFunction {
     name,
     ObjectUtil.wrapMethod({
       fn: (callsite, _, values) => {
-        if (!values.isIterable()) {
-          return Factory.NewNumber(0);
-        }
         const iterator = createIterator(callsite, values);
         const result = Math[name](
           ...[...iterator].map((value) => {
