@@ -111,7 +111,7 @@ const teks_karakter_ke: MethodArg = [
   [required("gue"), required("indeks")],
 ];
 const teks_ganti: MethodArg = [
-  "karakter_ke",
+  "ganti",
   method.string(({ value }, searchValue, replaceValue) => {
     const newValue = value.replace(
       getString(searchValue),
