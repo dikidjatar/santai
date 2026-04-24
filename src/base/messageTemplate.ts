@@ -24,6 +24,7 @@ export const enum MessageTemplate {
   kIllegalContinueStatement,
   kGueOutsideClass,
   kSyntaxError,
+  kTernaryMissingAlternative,
   kUnexpectedEOS,
 
   // TypeError
@@ -93,6 +94,8 @@ export const MessageTemplateString: Record<MessageTemplate, string> = {
   [MessageTemplate.kUnexpectedKeywordArgument]:
     "'%s' bukan nama parameter yang valid di aksi '%s' — lo yakin beneran ada?",
   [MessageTemplate.kUnterminatedTemplate]: "Kehilangan } di templat expression",
+  [MessageTemplate.kTernaryMissingAlternative]:
+    "ekspresi 'kalo' butuh 'yaudah' setelah kondisinya — format: nilai kalo kondisi yaudah nilai_lain",
   [MessageTemplate.kSyntaxError]: "%s",
 
   // Declaration
@@ -225,5 +228,6 @@ export const MessageTemplateMood: Record<MessageTemplate, Mood> = {
   [MessageTemplate.kCannotGetSubscript]:           Mood.Sedih,
   [MessageTemplate.kCannotSetSubscript]:           Mood.Marah,
   [MessageTemplate.kTypeError]:                    Mood.Sedih,
-  [MessageTemplate.kSyntaxError]:                  Mood.Bingung
+  [MessageTemplate.kSyntaxError]:                  Mood.Bingung,
+  [MessageTemplate.kTernaryMissingAlternative]:    Mood.Bingung
 };

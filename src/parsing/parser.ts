@@ -696,7 +696,7 @@ export class Parser {
     // lowest precedence after the comma (if the comma is considered an operator).
     // a = b = 5 is evaluated as a = (b = 5)
     const position = this.peekPosition();
-    const leftExpression = this.parseLogicalExpression();
+    const leftExpression = this.parseTernaryExpression();
 
     if (!leftExpression) {
       return undefined;
@@ -729,6 +729,45 @@ export class Parser {
     }
 
     return leftExpression;
+  }
+
+  parseTernaryExpression(): Expression | undefined {
+    const position = this.peekPosition();
+
+    // Parse the consequent (the value returned when condition is true).
+    // This also serves as the entire expression when no `kalo` follows.
+    const consequent = this.parseLogicalExpression();
+    if (!consequent) return undefined;
+
+    // Only treat `kalo` as ternary when:
+    //   1. No newline between consequent and `kalo`   (multi-line safety)
+    //   2. The next token is actually `kKalo`
+    if (this.scanner.hasLineTerminator() || this.peek() !== TokenValue.kKalo) {
+      return consequent;
+    }
+
+    this.next();
+
+    const condition = this.parseLogicalExpression();
+    if (!condition) return undefined;
+
+    // `yaudah` is mandatory. A ternary without an alternative is a syntax error.
+    if (!this.check(TokenValue.kYaudah)) {
+      this.reportError(MessageTemplate.kTernaryMissingAlternative);
+      return undefined;
+    }
+
+    // Alternative: parsed recursively to allow right-associative chaining:
+    //   `a kalo c1 yaudah b kalo c2 yaudah d`
+    const alternative = this.parseTernaryExpression();
+    if (!alternative) return undefined;
+
+    return this.factory.newConditionalExpression(
+      consequent,
+      condition,
+      alternative,
+      position
+    );
   }
 
   parseLogicalExpression(): Expression | undefined {

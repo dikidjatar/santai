@@ -48,6 +48,7 @@ export const enum NodeType {
   kFunctionLiteral,
   kEmptyParentheses,
   kTemplateLiteral,
+  kConditionalExpression,
 }
 
 export abstract class AstNode {
@@ -137,6 +138,9 @@ export abstract class AstNode {
   }
   isTemplateLiteral(): this is TemplateLiteral {
     return this.nodeType === NodeType.kTemplateLiteral;
+  }
+  isConditionalExpression(): this is ConditionalExpression {
+    return this.nodeType === NodeType.kConditionalExpression;
   }
 }
 
@@ -563,6 +567,17 @@ export class Call extends Expression {
   }
 }
 
+export class ConditionalExpression extends Expression {
+  constructor(
+    readonly consequent: Expression,
+    readonly condition: Expression,
+    readonly alternative: Expression,
+    position: number
+  ) {
+    super(NodeType.kConditionalExpression, position);
+  }
+}
+
 /**
  * Factory class for creating AST nodes.
  */
@@ -780,6 +795,20 @@ export class AstNodeFactory {
     return new Call(expression, arguments_, position);
   }
 
+  newConditionalExpression(
+    consequent: Expression,
+    condition: Expression,
+    alternative: Expression,
+    position: number
+  ): ConditionalExpression {
+    return new ConditionalExpression(
+      consequent,
+      condition,
+      alternative,
+      position
+    );
+  }
+
   newVariable(name: string, mode: VariableMode): Variable {
     return new Variable(name, mode);
   }
@@ -832,6 +861,7 @@ export abstract class AstVisitor<R = void> {
   abstract visitListLiteral(node: ListLiteral): R;
   abstract visitBinaryOp(node: BinaryOp): R;
   abstract visitCall(node: Call): R;
+  abstract visitConditionalExpression(node: ConditionalExpression): R;
   abstract visitLiteral(node: Literal): R;
   abstract visitUnaryOp(node: UnaryOp): R;
   abstract visitVariableExpression(node: VariableExpression): R;

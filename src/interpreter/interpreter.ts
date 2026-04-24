@@ -11,6 +11,7 @@ import {
   Call,
   CallArgument,
   ClassDeclaration,
+  ConditionalExpression,
   ContinueStatement,
   DeclarationList,
   EmptyParentheses,
@@ -307,6 +308,8 @@ export class Interpreter extends AstVisitor<SantaiObject> {
         return this.visitBinaryOp(node);
       case node.isCall():
         return this.visitCall(node);
+      case node.isConditionalExpression():
+        return this.visitConditionalExpression(node);
       case node.isLiteral():
         return this.visitLiteral(node);
       case node.isUnaryOp():
@@ -1137,6 +1140,16 @@ export class Interpreter extends AstVisitor<SantaiObject> {
 
     // Return as a positional array of parameter sequences
     return params.map((param) => slots.get(param.name)!);
+  }
+
+  override visitConditionalExpression(
+    node: ConditionalExpression
+  ): SantaiObject {
+    const condition = this.evaluate(node.condition);
+    const callsite = this.makeCallSite(node.condition);
+    return evaluateTruthy(callsite, condition)
+      ? this.evaluate(node.consequent)
+      : this.evaluate(node.alternative);
   }
 
   override visitLiteral(node: Literal): SantaiObject {
