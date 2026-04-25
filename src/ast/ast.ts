@@ -36,6 +36,7 @@ export const enum NodeType {
   kDeclarationList,
   kTryStatement,
   kThrowStatement,
+  kImpoortStatement,
   // Expressions
   kAssignment,
   kListLiteral,
@@ -102,6 +103,9 @@ export abstract class AstNode {
   }
   isThrowStatement(): this is ThrowStatement {
     return this.nodeType === NodeType.kThrowStatement;
+  }
+  isImportStatement(): this is ImportStatement {
+    return this.nodeType === NodeType.kImpoortStatement;
   }
   isDeclarationList(): this is DeclarationList {
     return this.nodeType === NodeType.kDeclarationList;
@@ -520,6 +524,20 @@ export class ThrowStatement extends Statement {
   }
 }
 
+export interface ModulePath {
+  readonly level: number;
+  readonly parts: readonly string[];
+}
+
+export class ImportStatement extends Statement {
+  constructor(
+    readonly modulePath: ModulePath,
+    position: number
+  ) {
+    super(NodeType.kImpoortStatement, position);
+  }
+}
+
 export class BinaryOp extends Expression {
   constructor(
     readonly op: TokenValue,
@@ -754,6 +772,13 @@ export class AstNodeFactory {
     return new ThrowStatement(expression, position);
   }
 
+  newImportStatement(
+    modulePath: ModulePath,
+    position: number
+  ): ImportStatement {
+    return new ImportStatement(modulePath, position);
+  }
+
   newAssignment(
     target: Expression,
     value: Expression,
@@ -856,6 +881,7 @@ export abstract class AstVisitor<R = void> {
   abstract visitIfStatement(node: IfStatement): R;
   abstract visitTryStatement(node: TryStatement): R;
   abstract visitThrowStatement(node: ThrowStatement): R;
+  abstract visitImportStatement(node: ImportStatement): R;
   abstract visitDeclarationList(node: DeclarationList): R;
   abstract visitAssignment(node: Assignment): R;
   abstract visitListLiteral(node: ListLiteral): R;

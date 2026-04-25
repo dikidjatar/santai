@@ -8,6 +8,7 @@ import {
   ClassMethod,
   Declaration,
   Expression,
+  ModulePath,
   Parameter,
   Statement,
 } from "../ast/ast";
@@ -264,6 +265,8 @@ export class Parser {
       case TokenValue.kSemicolon:
         this.next();
         return this.factory.emptyStatement();
+      case TokenValue.kImpor:
+        return this.parseImportStatement();
       default:
         return this.parseExpressionStatement();
     }
@@ -682,6 +685,53 @@ export class Parser {
     this.next();
     this.expectSemicolon();
     return this.factory.newContinueStatement();
+  }
+
+  parseImportStatement(): Statement | undefined {
+    this.next();
+    const position = this.position();
+
+    const modulePath = this.parseModulePath();
+    if (this.errorHandler.hasErrors()) {
+      return undefined;
+    }
+
+    this.expectSemicolon();
+    return this.factory.newImportStatement(modulePath, position);
+  }
+
+  private parseModulePath(): ModulePath {
+    // Count leading dots (relative level).
+    let level: number = 0;
+    while (this.peek() === TokenValue.kPeriod) {
+      level++;
+      this.next(); // consume '.'
+    }
+
+    const parts: string[] = [];
+
+    // Parse identifier segments.
+    if (this.peek() === TokenValue.kIdentifier) {
+      this.next();
+      parts.push(this.currentLiteral());
+
+      while (this.peek() === TokenValue.kPeriod) {
+        // Look ahead: is the token after '.' an identifier?
+        // If not, this '.' belongs to a property access in a later expression —
+        // stop here and let the expression parser handle it.
+        if (this.scanner.peekAhead() !== TokenValue.kIdentifier) {
+          break;
+        }
+
+        this.next(); // consume '.'
+        this.next(); // consume identifier
+        parts.push(this.currentLiteral());
+      }
+    } else if (level === 0) {
+      this.reportUnexpectedToken(this.peek());
+    }
+
+    return { level, parts };
   }
 
   parseExpressionStatement(): Statement | undefined {
