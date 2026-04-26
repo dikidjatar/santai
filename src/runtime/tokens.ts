@@ -2,10 +2,12 @@
 // SPDX-License-Identifier: MIT
 
 import { createToken } from "../base/serviceToken";
+import { ModuleSystem } from "../modules/moduleSystem";
 import { RuntimeContext } from "./runtimeContext";
 
 export const Tokens = {
   RuntimeContext: createToken<RuntimeContext>("RuntimeContext"),
+  ModuleSystem: createToken<ModuleSystem>("ModuleSystem"),
 } as const;
 
 // Re-export so callers can `import { Tokens } from "../runtime/tokens"` without

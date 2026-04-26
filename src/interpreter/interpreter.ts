@@ -22,6 +22,7 @@ import {
   FunctionDeclaration,
   FunctionLiteral,
   IfStatement,
+  ImportStatement,
   ListLiteral,
   Literal,
   LiteralType,
@@ -49,6 +50,11 @@ import { MessageTemplate } from "../base/messageTemplate";
 import { isUndefined } from "../base/types";
 import { GlobalProvideRegistry } from "../builtins/globalProvider";
 import "../builtins/globals";
+import {
+  isCircularImportError,
+  isModuleLoadError,
+  isModuleNotFoundError,
+} from "../modules/module";
 import { registerExtension } from "../objects/extensionRegistry";
 import {
   BuiltinFunction,
@@ -58,6 +64,7 @@ import {
   SantaiClass,
   SantaiFunction,
   SantaiIterator,
+  SantaiModule,
   SantaiObject,
 } from "../objects/object";
 import {
@@ -79,6 +86,7 @@ import {
 import { makeLocation, ScannerLocation } from "../parsing/scanner";
 import { Token, TokenValue } from "../parsing/token";
 import { ServiceContainer } from "../runtime/serviceContainer";
+import { Tokens } from "../runtime/tokens";
 import { Environment, VariableSlot } from "./environment";
 import {
   BreakSignal,
@@ -167,7 +175,8 @@ interface ResolvedParam {
 }
 
 export class Interpreter extends AstVisitor<SantaiObject> {
-  private readonly globalEnv: Environment;
+  private readonly builtinEnv: Environment;
+  private readonly moduleEnv: Environment;
   private env: Environment;
 
   /**
@@ -182,8 +191,9 @@ export class Interpreter extends AstVisitor<SantaiObject> {
     private readonly serviceContainer: ServiceContainer
   ) {
     super();
-    this.globalEnv = new Environment();
-    this.env = this.globalEnv;
+    this.builtinEnv = new Environment();
+    this.moduleEnv = new Environment(this.builtinEnv);
+    this.env = this.moduleEnv;
     this.registerBuiltinsGlobals();
   }
 
@@ -191,13 +201,13 @@ export class Interpreter extends AstVisitor<SantaiObject> {
     const globals = GlobalProvideRegistry.resolveAll(this.serviceContainer);
     for (const [name, value] of globals) {
       const variable: Variable = new Variable(name, VariableMode.kConst);
-      this.globalEnv.declare(variable, value);
+      this.builtinEnv.declare(variable, value);
     }
   }
 
-  execute(program: AstNode): void {
+  execute(program: Block): void {
     try {
-      this.visit(program);
+      this.evaluateStatements(program.statements(), this.env);
     } catch (error) {
       if (isReturnSignal(error)) {
         this.errorHandler.reportErrorAt(
@@ -298,6 +308,8 @@ export class Interpreter extends AstVisitor<SantaiObject> {
         return this.visitTryStatement(node);
       case node.isThrowStatement():
         return this.visitThrowStatement(node);
+      case node.isImportStatement():
+        return this.visitImportStatement(node);
       case node.isDeclarationList():
         return this.visitDeclarationList(node);
       case node.isAssignment():
@@ -679,6 +691,53 @@ export class Interpreter extends AstVisitor<SantaiObject> {
   override visitThrowStatement(node: ThrowStatement): SantaiObject {
     const value = this.evaluate(node.expression);
     throw new ThrowSignal(node, value);
+  }
+
+  override visitImportStatement(node: ImportStatement): SantaiObject {
+    const moduleSystem = this.serviceContainer.get(Tokens.ModuleSystem);
+
+    const runtimeCtx = this.serviceContainer.get(Tokens.RuntimeContext);
+    const fromFile = runtimeCtx.scriptPath;
+
+    let module: SantaiModule;
+    try {
+      module = moduleSystem.import(
+        node.modulePath,
+        fromFile,
+        runtimeCtx.moduleSearchPaths
+      );
+    } catch (error) {
+      if (isModuleNotFoundError(error)) {
+        this.reportAndThrow(node, MessageTemplate.kModuleNotFound, error.path);
+      }
+
+      if (isCircularImportError(error)) {
+        this.reportAndThrow(
+          node,
+          MessageTemplate.kCircularImport,
+          [...error.importChain, error.resolvedPath].join(" -> ")
+        );
+      }
+
+      if (isModuleLoadError(error)) {
+        this.reportAndThrow(
+          node,
+          MessageTemplate.kModuleLoadFailed,
+          error.message
+        );
+      }
+
+      throw error;
+    }
+
+    const localName: string = node.getLocalName();
+    const variable = new Variable(localName, VariableMode.kConst);
+
+    if (!this.env.declare(variable, module)) {
+      this.reportAndThrow(node, MessageTemplate.kVarRedeclaration, localName);
+    }
+
+    return Factory.Kosong;
   }
 
   override visitDeclarationList(node: DeclarationList): SantaiObject {
@@ -1189,6 +1248,13 @@ export class Interpreter extends AstVisitor<SantaiObject> {
     } finally {
       this.env = previousEnv;
     }
+  }
+
+  /**
+   * Returns the global environment
+   */
+  public getModuleEnv(): Environment {
+    return this.moduleEnv;
   }
 
   reportAndThrow(

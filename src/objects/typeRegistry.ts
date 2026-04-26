@@ -15,7 +15,8 @@ class TypeRegistryImpl implements ITypeRegistry {
   registerType<T extends SantaiObject>(obj: T, type: SantaiType): T {
     const id = this.id(obj, type);
     if (this._types.has(id)) {
-      throw new TypeError(`type ${id} already exsists`);
+      // throw new TypeError(`type ${id} already exsists`);
+      return this._types.get(id) as T;
     }
     this._types.set(id, obj);
     return obj;

@@ -14,7 +14,7 @@
  */
 
 import { TokenValue } from "../parsing/token";
-import { assert } from "../base/asserts";
+import { assert, assertDefined } from "../base/asserts";
 import { isUndefined } from "../base/types";
 import { Variable, VariableMode } from "./variable";
 
@@ -535,6 +535,13 @@ export class ImportStatement extends Statement {
     position: number
   ) {
     super(NodeType.kImpoortStatement, position);
+  }
+
+  getLocalName(): string {
+    const { parts } = this.modulePath;
+    const name: string = parts[parts.length - 1];
+    assertDefined(name);
+    return name;
   }
 }
 

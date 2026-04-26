@@ -21,4 +21,5 @@ export const enum SantaiType {
   kJson,
   kMath,
   kSystem,
+  kModule,
 }

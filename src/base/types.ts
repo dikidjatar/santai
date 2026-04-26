@@ -56,3 +56,9 @@ export function isUndefinedOrNull(obj: unknown): obj is undefined | null {
 export abstract class Signal<T> {
   constructor(readonly node: T) {}
 }
+
+export function isEmpty(value: string | unknown[]): boolean {
+  if (isString(value)) return value !== "";
+  if (Array.isArray(value)) return value.length === 0;
+  return false;
+}

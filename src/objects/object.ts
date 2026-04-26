@@ -922,6 +922,34 @@ export class SantaiMap extends SantaiObject {
   }
 }
 
+export class SantaiModule extends SantaiObject {
+  override readonly typeName = "modul";
+
+  constructor(
+    private readonly moduleName: string,
+    private readonly modulePath: string,
+    private readonly exports: ReadonlyMap<string, SantaiObject>
+  ) {
+    super(SantaiType.kModule);
+  }
+
+  override getProperty(name: string): SantaiObject | undefined {
+    return this.exports.get(name);
+  }
+
+  override dir(): readonly string[] {
+    return Array.from(this.exports.keys());
+  }
+
+  override isTruthy(): boolean {
+    return true;
+  }
+
+  override inspect(): string {
+    return `<modul '${this.moduleName}' dari '${this.modulePath}'>`;
+  }
+}
+
 export namespace Factory {
   export const Kosong: SantaiKosong = SantaiKosong.instance;
   export const True: SantaiBoolean = SantaiBoolean.TRUE;
@@ -999,6 +1027,14 @@ export namespace Factory {
 
   export function NewMap(pairs: SantaiPair[]): SantaiMap {
     return new SantaiMap(pairs);
+  }
+
+  export function NewModule(
+    moduleName: string,
+    modulePath: string,
+    exports: ReadonlyMap<string, SantaiObject>
+  ): SantaiModule {
+    return new SantaiModule(moduleName, modulePath, exports);
   }
 
   export function IsCallable(obj: SantaiObject): boolean {

@@ -90,6 +90,10 @@ export class Environment {
     return undefined;
   }
 
+  getAllSlots(): ReadonlyMap<string, VariableSlot> {
+    return this._store;
+  }
+
   private findOwnerEnvironment(name: string): Environment | undefined {
     let current: Environment | undefined = this;
 

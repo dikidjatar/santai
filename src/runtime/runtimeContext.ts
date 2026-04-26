@@ -1,6 +1,19 @@
 // Copyright (c) [2025-2026] [Diki Djatar]
 // SPDX-License-Identifier: MIT
 
+function resolveSantaiPath(): readonly string[] {
+  const raw = process.env["SANTAI_PATH"];
+  if (!raw) {
+    return [];
+  }
+
+  const separator = process.platform === "win32" ? ";" : ":";
+  return raw
+    .split(separator)
+    .map((p) => p.trim())
+    .filter((p) => p.length > 0);
+}
+
 export interface RuntimeContext {
   /**
    * Node executable path
@@ -23,6 +36,12 @@ export interface RuntimeContext {
    * Empty when running `--eval` or when the user supplies no extra args.
    */
   readonly args: readonly string[];
+
+  /**
+   * Additional directories searched for module resolution.
+   * Populated from the `SANTAI_PATH` environment variable
+   */
+  readonly moduleSearchPaths: readonly string[];
 }
 
 /**
@@ -37,6 +56,7 @@ export function makeScriptContext(
     execPath: process.argv[1],
     scriptPath,
     args,
+    moduleSearchPaths: resolveSantaiPath(),
   };
 }
 
@@ -49,5 +69,6 @@ export function makeEvalContext(args: readonly string[] = []): RuntimeContext {
     execPath: process.argv[1],
     scriptPath: "<eval>",
     args,
+    moduleSearchPaths: resolveSantaiPath(),
   };
 }

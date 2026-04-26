@@ -6,6 +6,7 @@ import { MAX_ERRORS } from "../base/config";
 import { ErrorHandler } from "../base/errorHandler";
 import { ExitCode } from "../base/exitCode";
 import { Interpreter } from "../interpreter/interpreter";
+import { ModuleSystem } from "../modules/moduleSystem";
 import { Parser } from "../parsing/parser";
 import { CharacterStream, Scanner } from "../parsing/scanner";
 import { TokenValue } from "../parsing/token";
@@ -33,6 +34,7 @@ export class Pipeline {
   private readonly factory: AstNodeFactory;
   private readonly errorHandler: ErrorHandler;
   private readonly parser: Parser;
+  private readonly interpreter: Interpreter;
 
   private constructor(
     source: SourceFile,
@@ -46,6 +48,22 @@ export class Pipeline {
       maxErrors: MAX_ERRORS,
     });
     this.parser = new Parser(this.scanner, this.factory, this.errorHandler);
+    const moduleSystem = ModuleSystem.create();
+
+    const container = ServiceContainer.builder()
+      .provide(Tokens.RuntimeContext, this.runtimeCtx)
+      .provide(Tokens.ModuleSystem, moduleSystem)
+      .build();
+
+    this.interpreter = new Interpreter(this.errorHandler, container);
+  }
+
+  public getInterpreter(): Interpreter {
+    return this.interpreter;
+  }
+
+  public getErrorHandler(): ErrorHandler {
+    return this.errorHandler;
   }
 
   /**
@@ -98,12 +116,6 @@ export class Pipeline {
   private interpret(statements: Statement[]): void {
     const program = this.factory.newBlock();
     program.initializeStatements(statements);
-
-    const container = ServiceContainer.builder()
-      .provide(Tokens.RuntimeContext, this.runtimeCtx)
-      .build();
-
-    const interpreter = new Interpreter(this.errorHandler, container);
-    interpreter.execute(program);
+    this.interpreter.execute(program);
   }
 }
