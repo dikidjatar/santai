@@ -38,6 +38,7 @@ import {
   VariableExpression,
   WhileStatement,
 } from "../ast/ast";
+import { SourceContext } from "../ast/sourceContext";
 import { Variable, VariableMode } from "../ast/variable";
 import { assert, assertDefined, unreachable } from "../base/asserts";
 import {
@@ -188,7 +189,8 @@ export class Interpreter extends AstVisitor<SantaiObject> {
 
   constructor(
     private readonly errorHandler: ErrorHandler,
-    private readonly serviceContainer: ServiceContainer
+    private readonly serviceContainer: ServiceContainer,
+    private readonly sourceContext: SourceContext
   ) {
     super();
     this.builtinEnv = new Environment();
@@ -365,7 +367,9 @@ export class Interpreter extends AstVisitor<SantaiObject> {
       variable.name,
       node.params,
       node.body,
-      this.env
+      this.env,
+      undefined,
+      this.sourceContext
     );
     if (!this.env.declare(variable, functionObj)) {
       this.reportAndThrow(
@@ -385,8 +389,10 @@ export class Interpreter extends AstVisitor<SantaiObject> {
       node.methodName,
       node.params,
       node.body,
-      this.env
-      // Stored unbound, bound lazily in visitProperty
+      this.env,
+      // Stored unbound, bound lazily in visitProperty,
+      undefined,
+      this.sourceContext
     );
 
     registerExtension(node.receiverName, node.methodName, fn);
@@ -448,7 +454,9 @@ export class Interpreter extends AstVisitor<SantaiObject> {
         method.name,
         method.params,
         method.body,
-        this.env
+        this.env,
+        undefined,
+        this.sourceContext
       );
     });
 
@@ -529,7 +537,14 @@ export class Interpreter extends AstVisitor<SantaiObject> {
     const params: Parameter[] = node.params.map(
       (v) => new Parameter(v, undefined)
     );
-    return Factory.NewFunction("<aksi anonim>", params, node.body, this.env);
+    return Factory.NewFunction(
+      "<aksi anonim>",
+      params,
+      node.body,
+      this.env,
+      undefined,
+      this.sourceContext
+    );
   }
 
   override visitEmptyParentheses(_node: EmptyParentheses): SantaiObject {
@@ -1075,20 +1090,41 @@ export class Interpreter extends AstVisitor<SantaiObject> {
       }
     }
 
+    const callLoc = getLocationForNode(node);
+    const callerFilename = this.errorHandler.activeFilename;
+    const { line: callLine, column: callColumn } =
+      this.errorHandler.resolveLocation(callLoc);
+
     this.callStack.push({
       functionName: fn.name,
-      location: getLocationForNode(node),
+      location: callLoc,
+      filename: callerFilename,
+      line: callLine,
+      column: callColumn,
     });
 
-    try {
-      this.evaluateStatements(fn.body.statements(), fnEnv);
-      return Factory.Kosong;
-    } catch (signal) {
-      if (isReturnSignal(signal)) {
-        return signal.value;
+    const executeBody = (): SantaiObject => {
+      try {
+        this.evaluateStatements(fn.body.statements(), fnEnv);
+        return Factory.Kosong;
+      } catch (signal) {
+        if (isReturnSignal(signal)) {
+          return signal.value;
+        }
+        throw signal;
       }
+    };
 
-      throw signal;
+    try {
+      const sourceContext = fn.sourceContext;
+      if (!isUndefined(sourceContext)) {
+        return this.errorHandler.withContext(
+          sourceContext.characterStream,
+          sourceContext.filename,
+          executeBody
+        );
+      }
+      return executeBody();
     } finally {
       this.callStack.pop();
     }

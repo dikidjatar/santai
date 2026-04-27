@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: MIT
 
 import { AstNodeFactory, Statement } from "../ast/ast";
+import { SourceContext } from "../ast/sourceContext";
 import { MAX_ERRORS } from "../base/config";
 import { ErrorHandler } from "../base/errorHandler";
 import { ExitCode } from "../base/exitCode";
@@ -35,6 +36,7 @@ export class Pipeline {
   private readonly errorHandler: ErrorHandler;
   private readonly parser: Parser;
   private readonly interpreter: Interpreter;
+  private readonly sourceContext: SourceContext;
 
   private constructor(
     source: SourceFile,
@@ -55,7 +57,15 @@ export class Pipeline {
       .provide(Tokens.ModuleSystem, moduleSystem)
       .build();
 
-    this.interpreter = new Interpreter(this.errorHandler, container);
+    this.sourceContext = {
+      characterStream: this.characterStram,
+      filename: source.filepath,
+    };
+    this.interpreter = new Interpreter(
+      this.errorHandler,
+      container,
+      this.sourceContext
+    );
   }
 
   public getInterpreter(): Interpreter {

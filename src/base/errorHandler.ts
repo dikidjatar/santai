@@ -12,6 +12,7 @@ import {
   MessageTemplateString,
   Mood,
 } from "./messageTemplate";
+import { isUndefined } from "./types";
 
 const A = {
   reset: "\x1b[0m",
@@ -121,6 +122,12 @@ export interface DiagnosticLabel {
 export interface StackFrame {
   readonly functionName: string;
   readonly location: ScannerLocation;
+  /**
+   * Absolute path of the file this frame belongs to.
+   */
+  readonly filename?: string;
+  readonly line?: number;
+  readonly column?: number;
   /**
    * Optional additional notes for this frame.
    */
@@ -277,7 +284,7 @@ const pad = (w: number) => " ".repeat(w);
  */
 class DiagnosticRenderer {
   private readonly useColor: boolean;
-  private readonly index: SourceIndex;
+  readonly index: SourceIndex;
   private readonly filename: string;
 
   constructor(index: SourceIndex, filename: string) {
@@ -538,9 +545,19 @@ class DiagnosticRenderer {
       const num = total - i; // 1 = innermost (an error occurred)
       const isDeepest = num === 1;
 
-      const { line, column } = this.index.posToLineCol(frame.location.beginPos);
-      const loc = this.dim(`${this.filename}:${line}:${column}`);
-
+      // Prefer pre-resolved line/column + filename stored on the frame.
+      // These are set by the interpreter at push-time using the active context,
+      // so cross-file frames automatically carry the correct file info.
+      let line: number;
+      let column: number;
+      if (!isUndefined(frame.line) && !isUndefined(frame.column)) {
+        line = frame.line;
+        column = frame.column;
+      } else {
+        ({ line, column } = this.index.posToLineCol(frame.location.beginPos));
+      }
+      const frameFilename = frame.filename ?? this.filename;
+      const loc = this.dim(`${frameFilename}:${line}:${column}`);
       const numStr = String(num).padStart(3);
       const fnStr = `aksi ${frame.functionName}`.padEnd(20);
       const noteStr = frame.note ? this.dim(` — ${frame.note}`) : "";
@@ -606,10 +623,10 @@ export function formatMessage(
 }
 
 export class ErrorHandler {
-  private readonly _filename: string;
+  private _filename: string;
   private readonly _maxErrors: number;
   private readonly _output: NodeJS.WriteStream;
-  private readonly _renderer: DiagnosticRenderer;
+  private _renderer: DiagnosticRenderer;
   private _pendingErrors: Diagnostic[] = [];
 
   private _errorCount: number = 0;
@@ -624,6 +641,10 @@ export class ErrorHandler {
     return this._diagnostics;
   }
 
+  get activeFilename(): string {
+    return this._filename;
+  }
+
   constructor(
     sourceStream: CharacterStream,
     options: ErrorHandlerOptions = {}
@@ -633,6 +654,38 @@ export class ErrorHandler {
     this._maxErrors = options.maxErrors ?? 20;
     this._output = options.outputStream ?? process.stderr;
     this._renderer = new DiagnosticRenderer(index, this._filename);
+  }
+
+  /**
+   * Temporarily switch the renderer to `stream`/`filename` for the duration of
+   * `fn`, then restore the previous context.
+   *
+   * Call this before invoking a `SantaiFunction` that was defined in a
+   * different source file so that errors (and stack-frame locations) are
+   * reported against the correct file.
+   *
+   * @example
+   *   this.errorHandler.withContext(fn.sourceContext.stream, fn.sourceContext.filename, () =>
+   *     this.executeBody(fn, args)
+   *   );
+   */
+  withContext<T>(stream: CharacterStream, filename: string, fn: () => T): T {
+    const prevRenderer = this._renderer;
+    const prevFilename = this._filename;
+    const index = new SourceIndex(stream.getRawData());
+    this._renderer = new DiagnosticRenderer(index, filename);
+    this._filename = filename;
+    try {
+      return fn();
+    } finally {
+      this.flushPendingErrors();
+      this._renderer = prevRenderer;
+      this._filename = prevFilename;
+    }
+  }
+
+  resolveLocation(location: ScannerLocation): { line: number; column: number } {
+    return this._renderer.index.posToLineCol(location.beginPos);
   }
 
   hasErrors(): boolean {

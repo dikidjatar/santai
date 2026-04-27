@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: MIT
 
 import { Block, Parameter } from "../ast/ast";
+import { SourceContext } from "../ast/sourceContext";
 import { BugIndicatingError } from "../base/errors";
 import { MessageTemplate } from "../base/messageTemplate";
 import { isUndefined } from "../base/types";
@@ -320,7 +321,8 @@ export class SantaiFunction extends SantaiObject {
      * before executing body.
      * `undefined` for regular functions (not methods).
      */
-    readonly boundThis?: SantaiObject
+    readonly boundThis?: SantaiObject,
+    readonly sourceContext?: SourceContext
   ) {
     super(SantaiType.kFunction);
   }
@@ -984,9 +986,17 @@ export namespace Factory {
     parameters: readonly Parameter[],
     body: Block,
     closure: Environment,
-    boundThis?: SantaiObject | undefined
+    boundThis?: SantaiObject,
+    sourceContext?: SourceContext
   ): SantaiFunction {
-    return new SantaiFunction(name, parameters, body, closure, boundThis);
+    return new SantaiFunction(
+      name,
+      parameters,
+      body,
+      closure,
+      boundThis,
+      sourceContext
+    );
   }
 
   export function NewBuiltinFunction(
