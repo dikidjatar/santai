@@ -2,12 +2,12 @@
 // SPDX-License-Identifier: MIT
 
 import path from "path";
+import { ExitCode } from "../base/exitCode";
 import { Interpreter } from "../interpreter/interpreter";
 import { Factory, SantaiModule, SantaiObject } from "../objects/object";
 import { Pipeline } from "../runtime/pipeline";
 import { makeScriptContext, RuntimeContext } from "../runtime/runtimeContext";
 import { SourceFile } from "../runtime/sourceFile";
-import { ModuleLoadError } from "./module";
 
 export class ModuleRunner {
   /**
@@ -23,15 +23,7 @@ export class ModuleRunner {
     pipeline.run();
 
     if (pipeline.getErrorHandler().hasErrors()) {
-      throw new ModuleLoadError(
-        `Terjadi kesalahan saat memparsing modul '${source.filepath}'.`
-      );
-    }
-
-    if (pipeline.getErrorHandler().hasErrors()) {
-      throw new ModuleLoadError(
-        `Terjadi kesalahan saat menjalankan modul '${source.filepath}'.`
-      );
+      process.exit(ExitCode.SourceError);
     }
 
     // Extract exported namespace
