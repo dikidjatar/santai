@@ -48,6 +48,7 @@ export const enum MessageTemplate {
   kNotDefined,
   kObjectHasNoMember,
   kModuleNotFound,
+  kModuleExportNotFound,
   kPropertyNotFound,
 
   // RuntimeError
@@ -145,6 +146,7 @@ export const MessageTemplateString: Record<MessageTemplate, string> = {
   [MessageTemplate.kModuleLoadFailed]: "Gagal muat modul: %s",
   [MessageTemplate.kModuleNotFound]: "Modul '%s' tidak ditemukan",
   [MessageTemplate.kCircularImport]: "Impor melingkar terdeteksi: %s",
+  [MessageTemplate.kModuleExportNotFound]: "gak bisa impor '%s' dari '%s'.",
 
   // Control flow
   [MessageTemplate.kIllegalReturnStatement]:
@@ -240,5 +242,6 @@ export const MessageTemplateMood: Record<MessageTemplate, Mood> = {
   [MessageTemplate.kTernaryMissingAlternative]:    Mood.Bingung,
   [MessageTemplate.kModuleLoadFailed]:             Mood.Sedih,
   [MessageTemplate.kModuleNotFound]:               Mood.Sedih,
-  [MessageTemplate.kCircularImport]:               Mood.Panik
+  [MessageTemplate.kCircularImport]:               Mood.Panik,
+  [MessageTemplate.kModuleExportNotFound]:         Mood.Sedih
 };

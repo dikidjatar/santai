@@ -19,6 +19,7 @@ import {
   Expression,
   ExtensionFunctionDeclaration,
   ForInStatement,
+  FromImpoortStatement,
   FunctionDeclaration,
   FunctionLiteral,
   IfStatement,
@@ -26,6 +27,7 @@ import {
   ListLiteral,
   Literal,
   LiteralType,
+  ModulePath,
   Parameter,
   Property,
   ReturnStatement,
@@ -312,6 +314,8 @@ export class Interpreter extends AstVisitor<SantaiObject> {
         return this.visitThrowStatement(node);
       case node.isImportStatement():
         return this.visitImportStatement(node);
+      case node.isFromImpoortStatement():
+        return this.visitFromImportStatement(node);
       case node.isDeclarationList():
         return this.visitDeclarationList(node);
       case node.isAssignment():
@@ -709,15 +713,50 @@ export class Interpreter extends AstVisitor<SantaiObject> {
   }
 
   override visitImportStatement(node: ImportStatement): SantaiObject {
+    const localName: string = node.getLocalName();
+    const variable = new Variable(localName, VariableMode.kConst);
+
+    const module: SantaiModule = this.loadModule(node.modulePath, node);
+
+    if (!this.env.declare(variable, module)) {
+      this.reportAndThrow(node, MessageTemplate.kVarRedeclaration, localName);
+    }
+
+    return Factory.Kosong;
+  }
+
+  override visitFromImportStatement(node: FromImpoortStatement): SantaiObject {
+    const module: SantaiModule = this.loadModule(node.modulePath, node);
+    for (const spec of node.specifiers) {
+      const value: SantaiObject | undefined = module.getExport(spec.name);
+      if (isUndefined(value)) {
+        this.reportAndThrow(
+          makeLocation(spec.namePos, spec.namePos + spec.name.length),
+          MessageTemplate.kModuleExportNotFound,
+          spec.name,
+          module.moduleName
+        );
+      }
+
+      const localName = spec.alias ?? spec.name;
+      const variable = new Variable(localName, VariableMode.kConst);
+      if (!this.env.declare(variable, value)) {
+        this.reportAndThrow(node, MessageTemplate.kVarRedeclaration, localName);
+      }
+    }
+
+    return Factory.Kosong;
+  }
+
+  private loadModule(modulePath: ModulePath, node: AstNode): SantaiModule {
     const moduleSystem = this.serviceContainer.get(Tokens.ModuleSystem);
 
     const runtimeCtx = this.serviceContainer.get(Tokens.RuntimeContext);
     const fromFile = runtimeCtx.scriptPath;
 
-    let module: SantaiModule;
     try {
-      module = moduleSystem.import(
-        node.modulePath,
+      return moduleSystem.import(
+        modulePath,
         fromFile,
         runtimeCtx.moduleSearchPaths
       );
@@ -744,15 +783,6 @@ export class Interpreter extends AstVisitor<SantaiObject> {
 
       throw error;
     }
-
-    const localName: string = node.getLocalName();
-    const variable = new Variable(localName, VariableMode.kConst);
-
-    if (!this.env.declare(variable, module)) {
-      this.reportAndThrow(node, MessageTemplate.kVarRedeclaration, localName);
-    }
-
-    return Factory.Kosong;
   }
 
   override visitDeclarationList(node: DeclarationList): SantaiObject {

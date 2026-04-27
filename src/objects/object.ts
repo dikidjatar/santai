@@ -928,11 +928,15 @@ export class SantaiModule extends SantaiObject {
   override readonly typeName = "modul";
 
   constructor(
-    private readonly moduleName: string,
+    readonly moduleName: string,
     private readonly modulePath: string,
     private readonly exports: ReadonlyMap<string, SantaiObject>
   ) {
     super(SantaiType.kModule);
+  }
+
+  getExport(name: string): SantaiObject | undefined {
+    return this.exports.get(name);
   }
 
   override getProperty(name: string): SantaiObject | undefined {

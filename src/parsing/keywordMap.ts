@@ -29,6 +29,7 @@ const KEYWORD_SPECS: readonly KeywordSpec[] = [
   { canonical: "coba", token: TokenValue.kCoba },
   { canonical: "stop", token: TokenValue.kStop },
   { canonical: "dan", token: TokenValue.kDan },
+  { canonical: "dari", token: TokenValue.kDari },
   { canonical: "di", token: TokenValue.kDi, aliases: ["dalam"] },
   { canonical: "gak", token: TokenValue.kNot },
   { canonical: "gue", token: TokenValue.kGue },

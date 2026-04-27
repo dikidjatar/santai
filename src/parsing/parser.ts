@@ -8,6 +8,7 @@ import {
   ClassMethod,
   Declaration,
   Expression,
+  ImportSpecifier,
   ModulePath,
   Parameter,
   Statement,
@@ -267,6 +268,8 @@ export class Parser {
         return this.factory.emptyStatement();
       case TokenValue.kImpor:
         return this.parseImportStatement();
+      case TokenValue.kDari:
+        return this.parseFromImportStatement();
       default:
         return this.parseExpressionStatement();
     }
@@ -708,6 +711,72 @@ export class Parser {
 
     this.expectSemicolon();
     return this.factory.newImportStatement(modulePath, alias, position);
+  }
+
+  parseFromImportStatement(): Statement | undefined {
+    this.next();
+    const position = this.position();
+
+    const modulePath = this.parseModulePath();
+    if (this.errorHandler.hasErrors()) return undefined;
+
+    if (!this.check(TokenValue.kImpor)) {
+      this.reportUnexpectedTokenAt(this.scanner.peekLocation(), this.peek());
+      return undefined;
+    }
+
+    if (this.peek() !== TokenValue.kIdentifier) {
+      this.reportUnexpectedTokenAt(this.scanner.peekLocation(), this.peek());
+      return undefined;
+    }
+
+    const specifiers = this.parseImportSpecifierList();
+    if (!specifiers) return undefined;
+
+    this.expectSemicolon();
+    return this.factory.newFromImportStatement(
+      modulePath,
+      specifiers,
+      position
+    );
+  }
+
+  /**
+   * Parse a comma-separated list of import specifiers.
+   *
+   *   specifierList : specifier (',' specifier)* ;
+   *   specifier     : IDENTIFIER ('sebagai' IDENTIFIER)? ;
+   */
+  private parseImportSpecifierList(): ImportSpecifier[] | undefined {
+    const specifiers: ImportSpecifier[] = [];
+
+    do {
+      if (this.peek() !== TokenValue.kIdentifier) {
+        this.reportUnexpectedTokenAt(this.scanner.peekLocation(), this.peek());
+        return undefined;
+      }
+
+      const namePos = this.peekPosition();
+      this.next();
+      const name = this.currentLiteral();
+
+      let alias: string | undefined;
+      if (this.check(TokenValue.kSebagai)) {
+        if (this.peek() !== TokenValue.kIdentifier) {
+          this.reportUnexpectedTokenAt(
+            this.scanner.peekLocation(),
+            this.peek()
+          );
+          return undefined;
+        }
+        this.next();
+        alias = this.currentLiteral();
+      }
+
+      specifiers.push({ name, alias, namePos });
+    } while (this.check(TokenValue.kComma));
+
+    return specifiers;
   }
 
   private parseModulePath(): ModulePath {

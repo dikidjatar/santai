@@ -76,6 +76,7 @@ const TOKEN_LIST: TokenDef[] = [
   ["kLempar", "lempar", 0, true],
   ["kImpor", "impor", 0, true],
   ["kSebagai", "sebagai", 0, true],
+  ["kDari", "dari", 0, true],
   ["kIsi", "isi", 0, true],
 
   // Literals
@@ -165,6 +166,7 @@ export enum TokenValue {
   kLempar,
   kImpor,
   kSebagai,
+  kDari,
   kIsi,
 
   // Literals

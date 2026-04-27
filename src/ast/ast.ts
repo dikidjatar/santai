@@ -37,6 +37,7 @@ export const enum NodeType {
   kTryStatement,
   kThrowStatement,
   kImpoortStatement,
+  kFromImpoortStatement,
   // Expressions
   kAssignment,
   kListLiteral,
@@ -106,6 +107,9 @@ export abstract class AstNode {
   }
   isImportStatement(): this is ImportStatement {
     return this.nodeType === NodeType.kImpoortStatement;
+  }
+  isFromImpoortStatement(): this is FromImpoortStatement {
+    return this.nodeType === NodeType.kFromImpoortStatement;
   }
   isDeclarationList(): this is DeclarationList {
     return this.nodeType === NodeType.kDeclarationList;
@@ -524,6 +528,12 @@ export class ThrowStatement extends Statement {
   }
 }
 
+export interface ImportSpecifier {
+  readonly name: string;
+  readonly alias: string | undefined;
+  readonly namePos: number;
+}
+
 export interface ModulePath {
   readonly level: number;
   readonly parts: readonly string[];
@@ -546,6 +556,16 @@ export class ImportStatement extends Statement {
     const name: string = parts[parts.length - 1];
     assertDefined(name);
     return name;
+  }
+}
+
+export class FromImpoortStatement extends Statement {
+  constructor(
+    readonly modulePath: ModulePath,
+    readonly specifiers: readonly ImportSpecifier[],
+    position: number
+  ) {
+    super(NodeType.kFromImpoortStatement, position);
   }
 }
 
@@ -791,6 +811,14 @@ export class AstNodeFactory {
     return new ImportStatement(modulePath, alias, position);
   }
 
+  newFromImportStatement(
+    modulePath: ModulePath,
+    specifiers: readonly ImportSpecifier[],
+    position: number
+  ): FromImpoortStatement {
+    return new FromImpoortStatement(modulePath, specifiers, position);
+  }
+
   newAssignment(
     target: Expression,
     value: Expression,
@@ -894,6 +922,7 @@ export abstract class AstVisitor<R = void> {
   abstract visitTryStatement(node: TryStatement): R;
   abstract visitThrowStatement(node: ThrowStatement): R;
   abstract visitImportStatement(node: ImportStatement): R;
+  abstract visitFromImportStatement(node: FromImpoortStatement): R;
   abstract visitDeclarationList(node: DeclarationList): R;
   abstract visitAssignment(node: Assignment): R;
   abstract visitListLiteral(node: ListLiteral): R;
