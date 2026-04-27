@@ -1,0 +1,12 @@
+# Kumpulan Data Warna
+# Ditulis menggunakan bahasa pemrograman Santai
+# https://github.com/dikidjatar/santai
+
+# Warna-warna
+isi HIJAU   = "\033[92m"
+isi KUNING  = "\033[93m"
+isi CYAN    = "\033[96m"
+isi MAGENTA = "\033[95m"
+isi MERAH   = "\033[91m"
+isi PUTIH   = "\033[0m"
+isi ABU_ABU = "\033[90m" 

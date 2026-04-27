@@ -2,13 +2,13 @@
 # Ditulis menggunakan bahasa pemrograman Santai
 # https://github.com/dikidjatar/santai
 
-# Warna-warna
-isi H   = "\033[92m" # Hijau
-isi K   = "\033[93m" # Kuning
-isi MA  = "\033[95m" # Magenta
-isi M   = "\033[91m" # Merah
-isi A   = "\033[90m" # Abu-abu
-isi P   = "\033[0m"  # Putih
+dari .warna impor
+  HIJAU   sebagai H,
+  KUNING  sebagai K,
+  MAGENTA sebagai MA,
+  MERAH   sebagai M,
+  ABU_ABU sebagai A,
+  PUTIH   sebagai P
 
 isi Data = tipe(teks())
 
