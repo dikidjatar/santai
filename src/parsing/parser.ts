@@ -696,8 +696,18 @@ export class Parser {
       return undefined;
     }
 
+    let alias: string | undefined;
+    if (this.check(TokenValue.kSebagai)) {
+      if (this.peek() !== TokenValue.kIdentifier) {
+        this.reportUnexpectedToken(this.peek());
+        return undefined;
+      }
+      this.next();
+      alias = this.currentLiteral();
+    }
+
     this.expectSemicolon();
-    return this.factory.newImportStatement(modulePath, position);
+    return this.factory.newImportStatement(modulePath, alias, position);
   }
 
   private parseModulePath(): ModulePath {

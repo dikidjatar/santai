@@ -532,12 +532,16 @@ export interface ModulePath {
 export class ImportStatement extends Statement {
   constructor(
     readonly modulePath: ModulePath,
+    readonly alias: string | undefined,
     position: number
   ) {
     super(NodeType.kImpoortStatement, position);
   }
 
   getLocalName(): string {
+    if (!isUndefined(this.alias)) {
+      return this.alias;
+    }
     const { parts } = this.modulePath;
     const name: string = parts[parts.length - 1];
     assertDefined(name);
@@ -781,9 +785,10 @@ export class AstNodeFactory {
 
   newImportStatement(
     modulePath: ModulePath,
+    alias: string | undefined,
     position: number
   ): ImportStatement {
-    return new ImportStatement(modulePath, position);
+    return new ImportStatement(modulePath, alias, position);
   }
 
   newAssignment(
