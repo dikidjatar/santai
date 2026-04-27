@@ -42,7 +42,7 @@ const KEYWORD_SPECS: readonly KeywordSpec[] = [
   { canonical: "tangkap", token: TokenValue.kTangkap },
   { canonical: "tiap", token: TokenValue.kTiap, aliases: ["setiap"] },
   { canonical: "salah", token: TokenValue.kSalahLiteral },
-  { canonical: "sebagai", token: TokenValue.kSebagai },
+  { canonical: "sebagai", token: TokenValue.kSebagai, aliases: ["alias"] },
   { canonical: "skip", token: TokenValue.kSkip },
   { canonical: "titip", token: TokenValue.kTitip },
   {
