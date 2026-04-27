@@ -728,8 +728,6 @@ export class Parser {
     let specifiers: ImportSpecifier[] = [];
     let star: boolean = false;
 
-    console.log(Token.name(this.peek()));
-
     if (this.check(TokenValue.kMul)) {
       star = true;
     } else {
