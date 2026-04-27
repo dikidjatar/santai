@@ -563,6 +563,7 @@ export class FromImpoortStatement extends Statement {
   constructor(
     readonly modulePath: ModulePath,
     readonly specifiers: readonly ImportSpecifier[],
+    readonly star: boolean,
     position: number
   ) {
     super(NodeType.kFromImpoortStatement, position);
@@ -814,9 +815,10 @@ export class AstNodeFactory {
   newFromImportStatement(
     modulePath: ModulePath,
     specifiers: readonly ImportSpecifier[],
+    star: boolean,
     position: number
   ): FromImpoortStatement {
-    return new FromImpoortStatement(modulePath, specifiers, position);
+    return new FromImpoortStatement(modulePath, specifiers, star, position);
   }
 
   newAssignment(

@@ -727,21 +727,36 @@ export class Interpreter extends AstVisitor<SantaiObject> {
 
   override visitFromImportStatement(node: FromImpoortStatement): SantaiObject {
     const module: SantaiModule = this.loadModule(node.modulePath, node);
-    for (const spec of node.specifiers) {
-      const value: SantaiObject | undefined = module.getExport(spec.name);
-      if (isUndefined(value)) {
-        this.reportAndThrow(
-          makeLocation(spec.namePos, spec.namePos + spec.name.length),
-          MessageTemplate.kModuleExportNotFound,
-          spec.name,
-          module.moduleName
-        );
-      }
 
-      const localName = spec.alias ?? spec.name;
-      const variable = new Variable(localName, VariableMode.kConst);
-      if (!this.env.declare(variable, value)) {
-        this.reportAndThrow(node, MessageTemplate.kVarRedeclaration, localName);
+    if (node.star) {
+      const exports = module.getExports();
+      for (const [name, value] of exports) {
+        const variable = new Variable(name, VariableMode.kVar);
+        if (!this.env.declare(variable, value)) {
+          this.reportAndThrow(node, MessageTemplate.kVarRedeclaration, name);
+        }
+      }
+    } else {
+      for (const spec of node.specifiers) {
+        const value: SantaiObject | undefined = module.getExport(spec.name);
+        if (isUndefined(value)) {
+          this.reportAndThrow(
+            makeLocation(spec.namePos, spec.namePos + spec.name.length),
+            MessageTemplate.kModuleExportNotFound,
+            spec.name,
+            module.moduleName
+          );
+        }
+
+        const localName = spec.alias ?? spec.name;
+        const variable = new Variable(localName, VariableMode.kVar);
+        if (!this.env.declare(variable, value)) {
+          this.reportAndThrow(
+            node,
+            MessageTemplate.kVarRedeclaration,
+            localName
+          );
+        }
       }
     }
 

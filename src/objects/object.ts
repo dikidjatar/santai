@@ -939,6 +939,10 @@ export class SantaiModule extends SantaiObject {
     return this.exports.get(name);
   }
 
+  getExports(): ReadonlyMap<string, SantaiObject> {
+    return this.exports;
+  }
+
   override getProperty(name: string): SantaiObject | undefined {
     return this.exports.get(name);
   }

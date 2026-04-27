@@ -725,18 +725,24 @@ export class Parser {
       return undefined;
     }
 
-    if (this.peek() !== TokenValue.kIdentifier) {
-      this.reportUnexpectedTokenAt(this.scanner.peekLocation(), this.peek());
-      return undefined;
-    }
+    let specifiers: ImportSpecifier[] = [];
+    let star: boolean = false;
 
-    const specifiers = this.parseImportSpecifierList();
-    if (!specifiers) return undefined;
+    console.log(Token.name(this.peek()));
+
+    if (this.check(TokenValue.kMul)) {
+      star = true;
+    } else {
+      const list = this.parseImportSpecifierList();
+      if (!list) return undefined;
+      specifiers = list;
+    }
 
     this.expectSemicolon();
     return this.factory.newFromImportStatement(
       modulePath,
       specifiers,
+      star,
       position
     );
   }
