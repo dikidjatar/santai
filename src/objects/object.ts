@@ -943,11 +943,7 @@ export class SantaiModule extends SantaiObject {
     return this.exports;
   }
 
-  override getProperty(name: string): SantaiObject | undefined {
-    return this.exports.get(name);
-  }
-
-  override dir(): readonly string[] {
+  getNames(): string[] {
     return Array.from(this.exports.keys());
   }
 
