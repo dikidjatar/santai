@@ -209,6 +209,35 @@ Z = [
   [0, 0, 1, 1, 0, 1, 1, 0, 1, 1]
 ];
 
+isi peta_huruf = petain([
+  'a' ke A,
+  'b' ke B,
+  'c' ke C,
+  'd' ke D,
+  'e' ke E,
+  'f' ke F,
+  'g' ke G,
+  'h' ke H,
+  'i' ke I,
+  'j' ke J,
+  'k' ke K,
+  'l' ke L,
+  'm' ke M,
+  'n' ke N,
+  'o' ke O,
+  'p' ke P,
+  'q' ke Q,
+  'r' ke R,
+  's' ke S,
+  't' ke T,
+  'u' ke U,
+  'v' ke V,
+  'w' ke W,
+  'x' ke X,
+  'y' ke Y,
+  'z' ke Z
+])
+
 # Metode ekstensi untuk bantuan
 aksi daftar.itu_kosong(gue) { balikin panjang(gue) itu 0 }
 aksi daftar.ke(gue, indeks) { balikin gue[indeks] }
@@ -235,15 +264,25 @@ aksi gabung_huruf_matrix(daftar_matrix = [], jarak = 2) {
   balikin gabungan
 }
 
+aksi teks_ke_matrix(teks) {
+  isi daftar_kata = saring(teks.kecilin().pisahin(' '), teks -> teks != '')
+  isi teks_matrix = olah(daftar_kata, kata -> {
+    isi huruf_matrix = olah(kata, huruf ->  peta_huruf[huruf])
+    balikin gabung_huruf_matrix(saring(huruf_matrix, huruf -> huruf itu gak kosong))
+  })
+  balikin gabung_huruf_matrix(teks_matrix, jarak = 5)
+}
+
 # Konfirgurasi animasi
 isi lebar = 120, tinggi = 20
 isi jumlah_partikel   = 500
 isi karakter_partikel = '$'
 isi kecepatan_loop    = 1000
 
-isi teks_1      = gabung_huruf_matrix([S, A, N, T, A, I])
-isi teks_2      = gabung_huruf_matrix([B, R, O])
-isi teks_matrix = gabung_huruf_matrix([teks_1, teks_2], jarak = 5)
+isi teks_matrix = teks_ke_matrix(baca("{HIJAU}Masukan teks: {RESET}").rapiin())
+kalo panjang teks_matrix itu 0 {
+  sistem.keluar(0)
+}
 
 # Inisialisasi koordinat target
 isi koordinat_tujuan = []
