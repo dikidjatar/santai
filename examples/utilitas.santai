@@ -1,0 +1,7 @@
+# Utilitas
+# Ditulis menggunakan bahasa pemrograman Santai
+# https://github.com/dikidjatar/santai
+
+aksi Rp(jumlah) {
+  balikin "Rp {jumlah}.000"
+}

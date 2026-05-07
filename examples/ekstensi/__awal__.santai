@@ -1,0 +1,7 @@
+# Ekstensi
+# Ditulis menggunakan bahasa pemrograman Santai
+# https://github.com/dikidjatar/santai
+
+dari .angka  impor *
+dari .teks   impor *
+dari .daftar impor *

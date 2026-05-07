@@ -1,0 +1,7 @@
+# Ekstensi teks
+# Ditulis menggunakan bahasa pemrograman Santai
+# https://github.com/dikidjatar/santai
+
+aksi teks.cocok(gue, kata_kunci) {
+  balikin gue.kecilin() berisi kata_kunci.kecilin()
+}

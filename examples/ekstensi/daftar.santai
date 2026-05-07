@@ -1,0 +1,31 @@
+# Ekstensi daftar
+# Ditulis menggunakan bahasa pemrograman Santai
+# https://github.com/dikidjatar/santai
+
+aksi daftar.cari_semua(gue, _aksi) {
+  balikin saring(gue, _aksi)
+}
+
+aksi daftar.jumlah_total(gue, _aksi) {
+  titip total = 0
+  tiap item di gue {
+    total = total + _aksi(item)
+  }
+  balikin total
+}
+
+# Ekstensi daftar urut berdasarkan nilai
+aksi daftar.urut_oleh(gue, _aksi) {
+  # Bubble sort sederhana
+  isi n = panjang(gue)
+  tiap i di rentang(n) {
+    tiap j di rentang(n - i - 1) {
+      kalo _aksi(gue[j]) > _aksi(gue[j + 1]) {
+        isi temp = gue[j]
+        gue[j]     = gue[j + 1]
+        gue[j + 1] = temp
+      }
+    }
+  }
+  balikin gue
+}

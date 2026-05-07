@@ -1,0 +1,11 @@
+# Ekstensi angka
+# Ditulis menggunakan bahasa pemrograman Santai
+# https://github.com/dikidjatar/santai
+
+aksi angka.floor(gue) {
+  balikin matematika.floor(gue)
+}
+
+aksi angka.persen(gue, persen) {
+  balikin (gue * persen / 100).floor()
+}

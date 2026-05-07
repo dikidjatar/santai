@@ -1,0 +1,829 @@
+# Program Sistem Manajemen Kafe (Santai Kafe)
+# Ditulis menggunakan bahasa pemrograman Santai
+# https://github.com/dikidjatar/santai
+
+dari .warna impor *
+dari .utilitas impor Rp
+impor .ekstensi.angka
+impor .ekstensi.teks
+impor .ekstensi.daftar
+
+isi ABU = ABU_ABU
+isi GARIS   = "─"
+
+# Ekstensi teks rata tengah dengan padding
+aksi teks.tengah(gue, lebar) {
+  isi spasi = lebar - panjang(gue)
+  kalo spasi <= 0 balikin gue
+  isi kiri  = (spasi / 2).floor()
+  isi kanan = spasi - kiri
+  balikin " ".ulangin(kiri) + gue + " ".ulangin(kanan)
+}
+
+# Ekstensi teks rata kiri dengan padding
+aksi teks.kiri(gue, lebar) {
+  kalo panjang(gue) >= lebar balikin gue
+  balikin gue + " ".ulangin(lebar - panjang(gue))
+}
+
+gue MenuItem {
+  aksi __awal__(gue, id, nama, harga, kategori, waktu_masak = 10) {
+    gue.id          = id
+    gue.nama        = nama
+    gue.harga       = harga
+    gue.kategori    = kategori
+    gue.waktu_masak = waktu_masak
+    gue.tersedia    = benar
+    gue.terjual     = 0
+  }
+
+  aksi __kurangdari__(gue, lain) {
+    balikin gue.harga < lain.harga
+  }
+
+  aksi __tambah__(gue, lain) {
+    balikin petain([
+      'nama'  ke "{gue.nama} + {lain.nama}",
+      'harga' ke gue.harga + lain.harga
+    ])
+  }
+
+  aksi __teks__(gue) {
+    isi mark = HIJAU + "●" kalo gue.tersedia yaudah MERAH + "○"
+    balikin "{mark}{RESET} [{gue.id}] {gue.nama.kiri(20)} {Rp(gue.harga)}"
+  }
+
+  aksi __panjang__(gue) {
+    balikin gue.waktu_masak
+  }
+}
+
+gue ItemPesanan {
+  aksi __awal__(gue, menu_item, jumlah, catatan = kosong) {
+    gue.item     = menu_item
+    gue.jumlah   = jumlah
+    gue.catatan  = catatan
+    gue.subtotal = menu_item.harga * jumlah
+  }
+
+  aksi __teks__(gue) {
+    titip catatan_str = ''
+    kalo gue.catatan itu gak kosong
+        catatan_str = " {ABU}[{gue.catatan}]{RESET}"
+    balikin "  {gue.jumlah}x {gue.item.nama.kiri(18)} {Rp(gue.subtotal)}{catatan_str}"
+  }
+
+  aksi __lebihsama__(gue, lain) {
+    balikin gue.subtotal >= lain.subtotal
+  }
+}
+
+gue Pesanan {
+  aksi __awal__(gue, id, nomor_meja, nama_pelanggan = kosong) {
+    gue.id             = id
+    gue.nomor_meja     = nomor_meja
+    gue.nama_pelanggan = nama_pelanggan
+    gue.daftar_item    = []
+    gue.status         = 'antri'
+    gue.total          = 0
+    gue.diskon         = 0
+    gue.kode_promo     = kosong
+    gue.catatan_umum   = kosong
+  }
+
+  aksi tambah_item(gue, menu_item, jumlah, catatan = kosong) {
+    kalo jumlah <= 0 {
+      lempar Masalah("Jumlah harus lebih dari 0!", "MasalahInput")
+    }
+    kalo gak menu_item.tersedia {
+      lempar Masalah("{menu_item.nama} sedang tidak tersedia!", "MasalahStok")
+    }
+
+    # Cek apakah item sudah ada, tambahkan saja
+    isi ada = gue.daftar_item.cariin(i -> i.item.id itu menu_item.id)
+    kalo ada itu gak kosong {
+      ada.jumlah   = ada.jumlah + jumlah
+      ada.subtotal = ada.jumlah * menu_item.harga
+    } yaudah {
+      gue.daftar_item.tambah(ItemPesanan(menu_item, jumlah, catatan))
+    }
+
+    gue.hitung_total()
+    menu_item.terjual = menu_item.terjual + jumlah
+  }
+
+  aksi hapus_item(gue, id_menu) {
+    isi idx = kosong
+    tiap i di rentang(panjang(gue.daftar_item)) {
+      kalo gue.daftar_item[i].item.id itu id_menu {
+        idx = i
+        stop
+      }
+    }
+    kalo idx itu kosong {
+      lempar Masalah("Item tidak ditemukan di pesanan!", "MasalahItem")
+    }
+    isi item_dihapus = gue.daftar_item[idx]
+    item_dihapus.item.terjual = item_dihapus.item.terjual - item_dihapus.jumlah
+    gue.daftar_item.hapus_ke(idx)
+    gue.hitung_total()
+  }
+
+  aksi hitung_total(gue) {
+    gue.total = gue.daftar_item.jumlah_total(item -> item.subtotal)
+  }
+
+  aksi terapkan_diskon(gue, persen, kode) {
+    gue.diskon     = gue.total.persen(persen)
+    gue.kode_promo = kode
+  }
+
+  aksi total_bayar(gue) {
+    balikin gue.total - gue.diskon
+  }
+
+  aksi estimasi_waktu(gue) {
+    kalo panjang(gue.daftar_item) itu 0 balikin 0
+    balikin gue.daftar_item.jumlah_total(i -> panjang(i.item) * i.jumlah)
+  }
+
+  # Perbandingan pesanan berdasarkan total
+  aksi __lebihsama__(gue, lain) {
+    balikin gue.total >= lain.total
+  }
+
+  aksi __teks__(gue) {
+     balikin "Pesanan #{gue.id} | Meja {gue.nomor_meja} | {Rp(gue.total)}"
+  }
+}
+
+# Meja (Table Management)
+gue Meja {
+  aksi __awal__(gue, nomor, kapasitas, zona = "Umum") {
+    gue.nomor       = nomor
+    gue.kapasitas   = kapasitas
+    gue.zona        = zona
+    gue.status      = 'kosong'
+    gue.pesanan     = kosong
+  }
+
+  aksi duduki(gue, pesanan) {
+    kalo gue.status itu gak 'kosong' {
+      lempar Masalah("Meja {gue.nomor} sedang terisi!", "MasalahMeja")
+    }
+    gue.status  = 'terisi'
+    gue.pesanan = pesanan
+  }
+
+  aksi kosongkan(gue) {
+    gue.status  = 'kosong'
+    gue.pesanan = kosong
+  }
+
+  aksi warna_status(gue) {
+    kalo gue.status itu 'kosong'  balikin HIJAU
+    yaudah kalo gue.status itu 'terisi' balikin KUNING
+    yaudah balikin ABU
+  }
+
+  aksi __teks__(gue) {
+    isi w   = gue.warna_status()
+    isi ord = " | Pesanan #{gue.pesanan.id}" kalo gue.pesanan itu gak kosong yaudah ''
+    balikin "{w}Meja {gue.nomor}{RESET} ({gue.kapasitas} kursi, {gue.zona}){ord}"
+  }
+}
+
+# Antrian Dapur (Observer Pattern)
+gue AntrianDapur {
+  aksi __awal__(gue) {
+    gue.antrian   = []
+    gue.selesai   = []
+    gue.pendengar = []
+  }
+
+  aksi pantau(gue, fn) {
+    gue.pendengar.tambah(fn)
+  }
+
+  aksi kirim(gue, pesanan, event) {
+    tiap fn di gue.pendengar {
+      fn(pesanan, event)
+    }
+  }
+
+  aksi tambah(gue, pesanan) {
+    pesanan.status = 'antri'
+    gue.antrian.tambah(pesanan)
+    gue.kirim(pesanan, 'masuk')
+  }
+
+  aksi proses_berikut(gue) {
+    kalo panjang(gue.antrian) itu 0 balikin kosong
+    isi pesanan   = gue.antrian[0]
+    gue.antrian.hapus_ke(0)
+    pesanan.status = 'dimasak'
+    gue.kirim(pesanan, 'dimasak')
+    balikin pesanan
+  }
+
+  aksi selesaikan(gue, id_pesanan) {
+    isi indeks = kosong
+    tiap i di rentang(panjang(gue.antrian)) {
+      kalo gue.antrian[i].id itu id_pesanan {
+        indeks = i
+        stop
+      }
+    }
+    kalo indeks itu kosong {
+      lempar Masalah("Pesanan #{id_pesanan} tidak ada di antrian!")
+    }
+    isi pesanan   = gue.antrian[indeks]
+    pesanan.status = 'selesai'
+    gue.antrian.hapus_ke(indeks)
+    gue.selesai.tambah(pesanan)
+    gue.kirim(pesanan, 'selesai')
+    balikin pesanan
+  }
+
+  # Iterator kustom untuk antrian
+  aksi __iterasi__(gue) {
+    gue._indeks_iter = 0
+    balikin gue
+  }
+
+  aksi __lanjut__(gue) {
+    kalo gue._indeks_iter >= panjang(gue.antrian) stop
+    isi item = gue.antrian[gue._indeks_iter]
+    gue._indeks_iter = gue._indeks_iter + 1
+    balikin item
+  }
+}
+
+gue Promo {
+  aksi __awal__(gue, kode, nama, syarat, diskon, deskripsi = "") {
+    gue.kode       = kode
+    gue.nama       = nama
+    gue.syarat     = syarat    # aksi: total -> benar/salah
+    gue.diskon     = diskon    # persen
+    gue.deskripsi  = deskripsi
+    gue.aktif      = benar
+    gue.digunakan  = 0
+  }
+
+  aksi cek(gue, total) {
+    balikin gue.aktif dan gue.syarat(total)
+  }
+
+  aksi __teks__(gue) {
+    balikin "{KUNING}[{gue.kode}]{RESET} {gue.nama} - Diskon {gue.diskon}% | {gue.deskripsi}"
+  }
+}
+
+gue PromoEngine {
+  aksi __awal__(gue) {
+    gue.daftar = []
+  }
+
+  aksi tambah(gue, promo) {
+    gue.daftar.tambah(promo)
+  }
+
+  aksi cari_kode(gue, kode) {
+    balikin gue.daftar.cariin(p -> p.kode.kecilin() itu kode.kecilin())
+  }
+
+  # Cari promo terbaik yang berlaku (diskon terbesar)
+  aksi promo_terbaik(gue, total) {
+    isi berlaku = saring(gue.daftar, p -> p.cek(total))
+    kalo panjang(berlaku) itu 0 balikin kosong
+    # Ambil diskon terbesar
+    isi terbaik = berlaku[0]
+    tiap p di berlaku {
+      kalo p.diskon > terbaik.diskon {
+        terbaik = p
+      }
+    }
+    balikin terbaik
+  }
+
+  aksi tampilkan(gue) {
+    isi aktif = saring(gue.daftar, p -> p.aktif)
+    kalo panjang(aktif) itu 0 {
+      spil "  Tidak ada promo aktif."
+      balikin
+    }
+    tiap p di aktif {
+      spil "  {p}"
+    }
+  }
+}
+
+# Analitik & Laporan
+gue StatistikHarian {
+  aksi __awal__(gue) {
+    gue.total_pendapatan = 0
+    gue.total_pesanan    = 0
+    gue.total_diskon     = 0
+    gue.item_counter     = Peta()
+    gue.zona_pendapatan  = Peta()
+  }
+
+  aksi catat(gue, pesanan, zona = "Umum") {
+    gue.total_pendapatan = gue.total_pendapatan + pesanan.total_bayar()
+    gue.total_pesanan    = gue.total_pesanan + 1
+    gue.total_diskon     = gue.total_diskon + pesanan.disko
+
+    # Hitung per item
+    tiap item di pesanan.items {
+      isi key = item.item.nama
+      isi sekarang = gue.item_counter[key]
+      kalo sekarang itu kosong
+        gue.item_counter[key] = item.jumlah
+      yaudah
+        gue.item_counter[key] = sekarang + item.jumlah
+    }
+
+    # Hitung per zona
+    isi sekarang_zona = gue.zona_pendapatan[zona]
+    kalo sekarang_zona itu kosong
+      gue.zona_pendapatan[zona] = pesanan.total_bayar()
+    yaudah
+      gue.zona_pendapatan[zona] = sekarang_zona + pesanan.total_bayar()
+  }
+
+  aksi rata_per_pesanan(gue) {
+    kalo gue.total_pesanan itu 0 balikin 0
+    balikin (gue.total_pendapatan / gue.total_pesanan).lantai()
+  }
+}
+
+gue SantaiKafe {
+  aksi __awal__(gue, nama_kafe) {
+    gue.nama       = nama_kafe
+    gue.menu       = []
+    gue.meja       = []
+    gue.aktif      = []
+    gue.riwayat    = []
+    gue.dapur      = AntrianDapur()
+    gue.statistik  = StatistikHarian()
+    gue.promo_eng  = PromoEngine()
+    gue.id_counter = 1
+
+    # Setup notifikasi dapur via observer
+    gue.dapur.pantau((pesanan, event) -> {
+      kalo event itu 'masuk' {
+        spil "{ABU}  [DAPUR] #{pesanan.id} masuk antrian ({panjang(gue.dapur.antrian)} total){RESET}"
+      } yaudah kalo event itu 'selesai' {
+        spil "{HIJAU}  [DAPUR] Pesanan #{pesanan.id} siap disajikan!{RESET}"
+      }
+    })
+  }
+
+  # Init data menu
+  aksi init_menu(gue) {
+    # Makanan
+    gue.menu.tambah(MenuItem( 1, "Nasi Goreng Spesial",  35, "Makanan",  15))
+    gue.menu.tambah(MenuItem( 2, "Mie Ayam Bakso",       28, "Makanan",  12))
+    gue.menu.tambah(MenuItem( 3, "Ayam Bakar Madu",      52, "Makanan",  25))
+    gue.menu.tambah(MenuItem( 4, "Gado-Gado",            25, "Makanan",  10))
+    gue.menu.tambah(MenuItem( 5, "Soto Ayam Kampung",    32, "Makanan",  13))
+    gue.menu.tambah(MenuItem( 6, "Rawon Sapi",           45, "Makanan",  18))
+    gue.menu.tambah(MenuItem( 7, "Pecel Lele",           30, "Makanan",  15))
+
+    # Minuman
+    gue.menu.tambah(MenuItem( 8, "Kopi Hitam",           12, "Minuman",   5))
+    gue.menu.tambah(MenuItem( 9, "Kopi Susu Kekinian",   22, "Minuman",   7))
+    gue.menu.tambah(MenuItem(10, "Es Teh Manis",          8, "Minuman",   3))
+    gue.menu.tambah(MenuItem(11, "Jus Alpukat Susu",     28, "Minuman",   8))
+    gue.menu.tambah(MenuItem(12, "Es Jeruk Segar",       15, "Minuman",   5))
+    gue.menu.tambah(MenuItem(13, "Teh Tarik",            18, "Minuman",   6))
+
+    # Dessert
+    gue.menu.tambah(MenuItem(14, "Es Krim 2 Scoop",      22, "Dessert",   5))
+    gue.menu.tambah(MenuItem(15, "Pisang Goreng Keju",   18, "Dessert",  10))
+    gue.menu.tambah(MenuItem(16, "Puding Coklat Premium",25, "Dessert",   8))
+    gue.menu.tambah(MenuItem(17, "Martabak Mini",        35, "Dessert",  15))
+  }
+
+  # Init meja dengan zona
+  aksi init_meja(gue) {
+    tiap i di rentang(4) {
+      gue.meja.tambah(Meja(i + 1, 2, "Indoor"))
+    }
+    tiap i di rentang(4) {
+      gue.meja.tambah(Meja(i + 5, 4, "Indoor"))
+    }
+    tiap i di rentang(3) {
+      gue.meja.tambah(Meja(i + 9, 6, "Outdoor"))
+    }
+  }
+
+  # Init promo dengan higher-order functions
+  aksi init_promo(gue) {
+    gue.promo_eng.tambah(Promo(
+      "SANTAI10",
+      "Happy Hour",
+      total -> total >= 50,
+      10,
+      "Min. Rp 50.000 - Diskon 10%"
+    ))
+    gue.promo_eng.tambah(Promo(
+      "MAKAN2",
+      "Makan Bareng",
+      total -> total >= 100,
+      15,
+      "Min. Rp 100.000 - Diskon 15%"
+    ))
+    gue.promo_eng.tambah(Promo(
+      "PESTA20",
+      "Pesta Santai",
+      total -> total >= 200,
+      20,
+      "Min. Rp 200.000 - Diskon 20%!"
+    ))
+  }
+
+  # Operasi Meja
+
+  aksi cari_meja(gue, nomor) {
+    balikin gue.meja.cariin(m -> m.nomor itu nomor)
+  }
+
+  aksi meja_kosong(gue) {
+    balikin saring(gue.meja, m -> m.status itu 'kosong')
+  }
+
+  # Operasi menu
+
+  aksi cari_menu_id(gue, id) {
+    balikin gue.menu.cariin(item -> item.id itu id)
+  }
+
+  aksi cari_menu_nama(gue, kata) {
+    balikin gue.menu.cari_semua(item -> item.nama cocok kata)
+  }
+
+  aksi menu_by_kategori(gue, kategori) {
+    balikin gue.menu.cari_semua(item -> item.kategori itu kategori)
+  }
+
+  # Alur Pesanan
+
+  aksi buat_pesanan(gue, nomor_meja, nama_pelanggan = kosong) {
+    isi meja = gue.cari_meja(nomor_meja)
+    kalo meja itu kosong {
+      lempar Masalah("Meja {nomor_meja} tidak ditemukan!", "MasalahMeja")
+    }
+
+    isi pesanan = Pesanan(gue.id_counter, nomor_meja, nama_pelanggan)
+    gue.id_counter = gue.id_counter + 1
+
+    meja.duduki(pesanan)
+    gue.aktif.tambah(pesanan)
+    balikin pesanan
+  }
+
+  aksi tambah_ke_pesanan(gue, nomor_meja, id_menu, jumlah, catatan = kosong) {
+    isi meja = gue.cari_meja(nomor_meja)
+    kalo meja itu kosong atau meja.pesanan itu kosong {
+      lempar Masalah("Tidak ada pesanan aktif di meja {nomor_meja}!", "MasalahPesanan")
+    }
+    isi item = gue.cari_menu_id(id_menu)
+    kalo item itu kosong {
+      lempar Masalah("Menu ID {id_menu} tidak ditemukan!", "MasalahMenu")
+    }
+    meja.pesanan.tambah_item(item, jumlah, catatan)
+    balikin meja.pesanan
+  }
+
+  aksi kirim_dapur(gue, nomor_meja) {
+    isi meja = gue.cari_meja(nomor_meja)
+    kalo meja itu kosong atau meja.pesanan itu kosong {
+      lempar Masalah("Tidak ada pesanan aktif di meja {nomor_meja}!", "MasalahPesanan")
+    }
+    kalo panjang(meja.pesanan.items) itu 0 {
+      lempar Masalah("Pesanan masih kosong! Tambahkan item terlebih dahulu.", "MasalahPesanan")
+    }
+    gue.dapur.tambah(meja.pesanan)
+  }
+
+  aksi bayar_pesanan(gue, nomor_meja, kode_promo = kosong) {
+    isi meja = gue.cari_meja(nomor_meja)
+    kalo meja itu kosong atau meja.pesanan itu kosong {
+      lempar Masalah("Tidak ada pesanan aktif di meja {nomor_meja}!", "MasalahPesanan")
+    }
+
+    isi pesanan = meja.pesanan
+
+    # Terapkan promo
+    titip promo_aktif = kosong
+    kalo kode_promo itu gak kosong {
+      promo_aktif = gue.promo_eng.cari_kode(kode_promo)
+      kalo promo_aktif itu kosong {
+          lempar Masalah("Kode promo '{kode_promo}' tidak valid!", "MasalahPromo")
+      }
+      kalo gak promo_aktif.cek(pesanan.total) {
+          lempar Masalah("Syarat promo '{promo_aktif.nama}' tidak terpenuhi!", "MasalahPromo")
+      }
+    } yaudah {
+      # Cek promo otomatis terbaik
+      promo_aktif = gue.promo_eng.promo_terbaik(pesanan.total)
+    }
+
+    kalo promo_aktif itu gak kosong {
+      pesanan.terapkan_diskon(promo_aktif.diskon, promo_aktif.kode)
+      promo_aktif.digunakan = promo_aktif.digunakan + 1
+    }
+
+    pesanan.status = 'dibayar'
+    gue.statistik.catat(pesanan, meja.zona)
+    gue.riwayat.tambah(pesanan)
+    gue.aktif.hapus(pesanan)
+    meja.kosongkan()
+    balikin pesanan
+  }
+
+  # Tampilan UI
+
+  aksi garis(gue, karakter, panjang_garis) {
+    spil ABU + karakter.ulangin(panjang_garis) + RESET
+  }
+
+  aksi tampil_header(gue) {
+    isi lebar = 54
+    spil ""
+    spil CYAN + "╔" + "═".ulangin(lebar - 2) + "╗" + RESET
+    spil CYAN + "║" + RESET + TEBAL + " {gue.nama} ".tengah(lebar - 2) + RESET + CYAN + "║" + RESET
+    spil CYAN + "║" + RESET + " Versi {sistem.versi} - Bahasa Pemrograman Santai".tengah(lebar - 2) + CYAN + "║" + RESET
+    spil CYAN + "╚" + "═".ulangin(lebar - 2) + "╝" + RESET
+  }
+
+  aksi tampil_menu_makanan(gue) {
+    tiap kat di ["Makanan", "Minuman", "Dessert"] {
+      isi items = gue.menu_by_kategori(kat)
+      spil "\n  {KUNING}{TEBAL}{kat}{RESET}"
+      spil ABU + "  " + GARIS.ulangin(38) + RESET
+      tiap item di items {
+        spil "  {item}"
+      }
+    }
+  }
+
+  aksi tampil_denah(gue) {
+    spil "\n{TEBAL}  DENAH MEJA{RESET}"
+    tiap zona di ["Indoor", "Outdoor"] {
+      isi meja_zona = saring(gue.meja, m -> m.zona itu zona)
+      spil "\n  {KUNING}{zona}{RESET}"
+      tiap m di meja_zona {
+        spil "  {m}"
+      }
+    }
+  }
+
+  aksi tampil_struk(gue, pesanan) {
+    isi lebar = 46
+    spil ""
+    spil "  " + "═".ulangin(lebar)
+    spil "  " + TEBAL + "STRUK PEMBAYARAN".tengah(lebar) + RESET
+    spil "  " + "  SantaiKafe — Santai Makan, Santai Hati".tengah(lebar)
+    spil "  " + "─".ulangin(lebar)
+    spil "  Pesanan  : #{pesanan.id}"
+    spil "  Meja     : {pesanan.nomor_meja}"
+    kalo pesanan.nama_pelanggan itu gak kosong {
+      spil "  Pelanggan: {pesanan.nama_pelanggan}"
+    }
+    spil "  " + "─".ulangin(lebar)
+
+    tiap item di pesanan.items {
+      spil item
+    }
+
+    spil "  " + "─".ulangin(lebar)
+    spil "  Subtotal  : {Rp(pesanan.total)}"
+
+    kalo pesanan.diskon > 0 {
+      spil "  {HIJAU}Promo     : {pesanan.kode_promo} (-{Rp(pesanan.diskon)}){RESET}"
+    }
+
+    isi est = pesanan.estimasi_waktu()
+    spil "  Est. waktu: ~{est} menit"
+    spil "  " + "═".ulangin(lebar)
+    spil "  " + TEBAL + HIJAU + "TOTAL BAYAR: {Rp(pesanan.total_bayar())}".tengah(lebar) + RESET
+    spil "  " + "═".ulangin(lebar)
+    spil "  " + ABU + "Terima kasih sudah bersantai! 🙏".tengah(lebar) + RESET
+  }
+
+  aksi tampil_laporan(gue) {
+    isi s     = gue.statistik
+    isi lebar = 48
+
+    spil ""
+    spil MAGENTA + "  " + "═".ulangin(lebar) + RESET
+    spil MAGENTA + "  " + TEBAL + "📊 LAPORAN HARIAN".tengah(lebar) + RESET
+    spil MAGENTA + "  " + "═".ulangin(lebar) + RESET
+
+    spil "  Total Pesanan       : {TEBAL}{s.total_pesanan}{RESET}"
+    spil "  Total Pendapatan    : {TEBAL}{HIJAU}{Rp(s.total_pendapatan)}{RESET}"
+    spil "  Total Diskon Diberikan : {MERAH}{Rp(s.total_diskon)}{RESET}"
+    spil "  Rata-rata / Pesanan : {Rp(s.rata_per_pesanan())}"
+
+    spil "\n  {KUNING}Top Item Terjual:{RESET}"
+    spil "  " + "─".ulangin(lebar)
+
+    # Iterasi Peta untuk item terlaris (menggunakan iterator kustom di Peta)
+    tiap pasangan di s.item_counter {
+      spil "  {pasangan.id.kiri(22)} : {pasangan.nilai}x"
+    }
+
+    spil "\n  {KUNING}Pendapatan per Zona:{RESET}"
+    spil "  " + "─".ulangin(lebar)
+    tiap pasangan di s.zona_pendapatan {
+      spil "  {pasangan.id.kiri(22)} : {Rp(pasangan.nilai)}"
+    }
+
+    spil ""
+    spil "  {KUNING}Riwayat Pesanan (5 Terakhir):{RESET}"
+    spil "  " + "─".ulangin(lebar)
+    isi mulai = 0
+    kalo panjang(gue.riwayat) > 5
+      mulai = panjang(gue.riwayat) - 5
+    tiap i di mulai sampai panjang(gue.riwayat) {
+      isi p = gue.riwayat[i]
+      isi diskon_str = ''
+      kalo p.diskon > 0
+          " {HIJAU}[{p.kode_promo}]{RESET}"
+      spil "  #{p.id} Meja {p.nomor_meja} — {Rp(p.total_bayar())}{diskon_str}"
+    }
+
+    spil MAGENTA + "  " + "═".ulangin(lebar) + RESET
+  }
+
+  aksi tampil_antrian_dapur(gue) {
+    spil "\n{TEBAL}  ANTRIAN DAPUR{RESET}"
+    spil ABU + "  " + GARIS.ulangin(36) + RESET
+
+    kalo panjang(gue.dapur.antrian) itu 0 {
+      spil "  {ABU}Antrian kosong.{RESET}"
+      balikin
+    }
+
+    # Menggunakan custom iterator pada AntrianDapur
+    titip nomor = 1
+    tiap pesanan di gue.dapur {
+      spil "  {nomor}. Pesanan #{pesanan.id} — Meja {pesanan.nomor_meja} — {Rp(pesanan.total)}"
+      tiap item di pesanan.items {
+        spil "     • {item.jumlah}x {item.item.nama}"
+      }
+      nomor = nomor + 1
+    }
+  }
+}
+
+isi kafe = SantaiKafe("SANTAIKAFE")
+kafe.init_menu()
+kafe.init_meja()
+kafe.init_promo()
+
+aksi pisah(karakter = "─", panjang_garis = 50) {
+    spil ABU + "  " + karakter.ulangin(panjang_garis) + RESET
+}
+
+aksi info(pesan) {
+  spil "{CYAN}  ℹ {RESET}{pesan}"
+}
+
+aksi sukses(pesan) {
+  spil "{HIJAU}  ✓ {RESET}{pesan}"
+}
+
+aksi error(pesan) {
+  spil "{MERAH}  ✗ {RESET}{pesan}"
+}
+
+aksi peringatan(pesan) {
+  spil "{KUNING}  ⚠ {RESET}{pesan}"
+}
+
+aksi tampil_menu_utama {
+  kafe.tampil_header()
+  spil ""
+  spil "  {TEBAL}MENU UTAMA{RESET}"
+  pisah()
+  spil "  {KUNING}[1]{RESET} Lihat Menu & Harga"
+  spil "  {KUNING}[2]{RESET} Denah & Status Meja"
+  spil "  {KUNING}[3]{RESET} Buat Pesanan Baru"
+  spil "  {KUNING}[4]{RESET} Tambah Item ke Pesanan"
+  spil "  {KUNING}[5]{RESET} Hapus Item dari Pesanan"
+  spil "  {KUNING}[6]{RESET} Kirim ke Dapur"
+  spil "  {KUNING}[7]{RESET} Antrian Dapur"
+  spil "  {KUNING}[8]{RESET} Bayar & Cetak Struk"
+  spil "  {KUNING}[9]{RESET} Promo Aktif"
+  spil "  {KUNING}[10]{RESET} Laporan Harian"
+  spil "  {KUNING}[0]{RESET} Keluar"
+  pisah()
+  balikin baca("  ▶ Pilih menu: ").rapiin()
+}
+
+titip berjalan = benar
+mumpung berjalan {
+  coba {
+    isi pilihan = tampil_menu_utama()
+
+    kalo pilihan itu '1' {
+      # Lihat Menu
+      spil "\n{TEBAL}  MENU SANTAIKAFE{RESET}"
+      kafe.tampil_menu_makanan()
+    } yaudah kalo pilihan itu '2' {
+      # Denah Meja
+      kafe.tampil_denah()
+      isi _kosong = kafe.meja_kosong()
+      info "{panjang(_kosong)} dari {panjang(kafe.meja)} meja tersedia."
+    } yaudah kalo pilihan itu '3' {
+      # Buat Pesanan
+      kafe.tampil_denah()
+      isi nomor = angka(baca("  ▶ Nomor meja: "))
+      isi nama  = baca("  ▶ Nama pelanggan (Enter untuk skip): ").rapiin()
+      kalo panjang(nama) > 0
+      isi pesanan = kafe.buat_pesanan(
+        nomor,
+        nama
+      )
+      sukses "Pesanan #{pesanan.id} dibuat untuk Meja {nomor}!"
+      info "Silakan tambahkan item (menu 4), lalu kirim ke dapur (menu 6)."
+    } yaudah kalo pilihan itu '4' {
+      # Tambah Item
+      isi nomor = angka(baca("  ▶ Nomor meja: "))
+      kafe.tampil_menu_makanan()
+      isi id_menu = angka(baca("  ▶ ID menu: "))
+      isi jumlah  = angka(baca("  ▶ Jumlah: "))
+      isi catatan = baca("  ▶ Catatan (Enter untuk skip): ").rapiin()
+      isi pesanan = kafe.tambah_ke_pesanan(
+        nomor, id_menu, jumlah,
+        catatan
+      )
+      isi item = kafe.cari_menu_id(id_menu)
+      sukses "{jumlah}x {item.nama} ditambahkan! Total: {Rp(pesanan.total)}"
+    } yaudah kalo pilihan itu '5' {
+      # Hapus Item
+      isi nomor  = angka(baca("  ▶ Nomor meja: "))
+      isi meja   = kafe.cari_meja(nomor)
+      kalo meja itu kosong atau meja.pesanan itu kosong {
+        lempar Masalah("Tidak ada pesanan aktif di meja {nomor}!")
+      }
+      spil "\n  Item dalam pesanan:"
+      tiap item di meja.pesanan.items {
+        spil item
+      }
+      isi id_menu = angka(baca("  ▶ ID menu yang dihapus: "))
+      meja.pesanan.hapus_item(id_menu)
+      sukses "Item dihapus. Total baru: {Rp(meja.pesanan.total)}"
+    } yaudah kalo pilihan itu '6' {
+      # Kirim ke Dapur
+      isi nomor = angka(baca("  ▶ Nomor meja: "))
+      kafe.kirim_dapur(nomor)
+      sukses "Pesanan Meja {nomor} dikirim ke dapur!"
+    } yaudah kalo pilihan itu '7' {
+      # Antrian Dapur
+      kafe.tampil_antrian_dapur()
+    } yaudah kalo pilihan itu '8' {
+      # Bayar
+      isi nomor = angka(baca("  ▶ Nomor meja: "))
+      isi kode  = baca("  ▶ Kode promo (Enter untuk auto): ").rapiin()
+      isi pesanan = kafe.bayar_pesanan(
+        nomor,
+        kode
+      )
+      kafe.tampil_struk(pesanan)
+    } yaudah kalo pilihan itu '9' {
+      # Lihat Promo
+      spil "\n{TEBAL}  PROMO AKTIF{RESET}"
+      pisah()
+      kafe.promo_eng.tampilkan()
+    } yaudah kalo pilihan itu '10' {
+      # Laporan
+      kafe.tampil_laporan()
+    } yaudah kalo pilihan itu '0' {
+      sukses "Sampai jumpa! Terima kasih sudah bersantai ☕"
+      berjalan = salah
+    } yaudah {
+      peringatan "Menu '{pilihan}' tidak dikenal. Silakan coba lagi."
+    }
+  } tangkap err {
+    kalo err.nama itu 'MasalahInput'   atau
+         err.nama itu 'MasalahMenu'    atau
+         err.nama itu 'MasalahMeja'    atau
+         err.nama itu 'MasalahPesanan' atau
+         err.nama itu 'MasalahPromo'   atau
+         err.nama itu 'MasalahStok'
+    {
+      error err.pesan
+    } yaudah {
+      # Lempar kembali maalah yang tidak dikenal
+      lempar err
+    }
+  }
+
+  kalo berjalan {
+    baca("\n  [Enter untuk lanjut...]")
+  }
+}
