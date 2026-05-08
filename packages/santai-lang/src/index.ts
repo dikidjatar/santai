@@ -1,16 +1,23 @@
-#!/usr/bin/env node
-
 // Copyright (c) [2026] [Diki Djatar]
 // SPDX-License-Identifier: MIT
 
-import { runCli } from "@santai/cli";
-import { writeError, ExitCode } from "@santai/core";
+import { ExitCode } from "@santai/core";
+import { CliCommand, parseCliArgs } from "./args";
+import { cmdEval, cmdHelp, cmdRun, cmdVersion } from "./commands";
 
-process.exitCode = (() => {
-  try {
-    return runCli(process.argv);
-  } catch (err) {
-    writeError(err);
-    return ExitCode.UsageError;
+export function runCli(argv: string[]): ExitCode {
+  let command: CliCommand;
+
+  command = parseCliArgs(argv.slice(2));
+
+  switch (command.kind) {
+    case "help":
+      return cmdHelp();
+    case "version":
+      return cmdVersion();
+    case "eval":
+      return cmdEval(command.code, command.args);
+    case "run":
+      return cmdRun(command.file, command.args);
   }
-})();
+}

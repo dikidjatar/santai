@@ -1,17 +1,24 @@
 {
   "name": "santai-lang",
   "version": "1.0.0",
-  "description": "Bahasa pemrograman Santai dengan sintaks bahasa Indonesia",
-  "license": "MIT",
   "type": "commonjs",
+  "description": "Bahasa pemrograman Santai dengan sintaks dalam bahasa Indonesia",
+  "homepage": "https://github.com/dikidjatar/santai-lang#readme",
+  "bugs": {
+    "url": "https://github.com/dikidjatar/santai-lang/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dikidjatar/santai-lang.git"
+  },
+  "license": "MIT",
+  "author": "Diki Djatar",
   "main": "dist/index.js",
-  "types": "dist/index.d.ts",
   "bin": {
-    "santai": "dist/index.js"
+    "santai": "dist/cli.js"
   },
   "dependencies": {
-    "@santai/core": "1.0.0",
-    "@santai/cli": "1.0.0"
+    "@santai/core": "workspace:*"
   },
   "files": [
     "dist",
@@ -22,6 +29,9 @@
     "access": "public"
   },
   "scripts": {
-    "build": "tsc -p tsconfig.json"
+    "build": "tsc -p tsconfig.json",
+    "test": "jest",
+    "clean": "node ../../scripts/clean.mjs",
+    "start": "node dist/main.js"
   }
 }

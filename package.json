@@ -7,18 +7,17 @@
   "scripts": {
     "build": "tsc -b",
     "build:watch": "tsc -b -w --preserveWatchOutput",
-    "dev": "yarn build:watch",
     "clean": "node scripts/clean.mjs",
-    "test": "yarn workspaces run test",
     "typecheck": "tsc -b --pretty false",
-    "build:core": "yarn workspace @santai/core build",
-    "build:cli": "yarn workspace @santai/cli build",
-    "build:santai": "yarn workspace santai-lang build"
+    "test": "pnpm -r test",
+    "changeset": "changeset",
+    "version-packages": "changeset version",
+    "release": "pnpm build && pnpm publish -r --access public"
   },
   "devDependencies": {
+    "@changesets/cli": "^2.31.0",
     "@types/jest": "^30.0.0",
     "@types/node": "^25.5.0",
-    "esbuild": "^0.27.4",
     "jest": "^30.3.0",
     "ts-jest": "^29.4.6",
     "typescript": "^5.9.3"
