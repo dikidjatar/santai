@@ -22,7 +22,9 @@
   },
   "scripts": {
     "build": "tsc -p tsconfig.json",
+    "dev": "tsc -p tsconfig.json -w --preserveWatchOutput",
     "test": "jest",
-    "clean": "node ../../scripts/clean.mjs"
+    "clean": "node ../../scripts/clean.mjs",
+    "prepack": "pnpm build"
   }
 }

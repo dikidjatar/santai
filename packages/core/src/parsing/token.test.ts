@@ -6,7 +6,7 @@ import { Token, TokenValue } from "./token";
 describe("Token", () => {
   describe("TokenValue enum", () => {
     it("should have correct number of tokens", () => {
-      expect(TokenValue.kNumTokens).toBe(59);
+      expect(TokenValue.kNumTokens).toBe(62);
     });
   });
 

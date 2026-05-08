@@ -6,13 +6,15 @@
   ],
   "scripts": {
     "build": "tsc -b",
-    "build:watch": "tsc -b -w --preserveWatchOutput",
+    "dev": "tsc -b -w",
     "clean": "node scripts/clean.mjs",
-    "typecheck": "tsc -b --pretty false",
-    "test": "pnpm -r test",
+    "test": "pnpm -r --if-present test",
     "changeset": "changeset",
-    "version-packages": "changeset version",
-    "release": "pnpm build && pnpm publish -r --access public"
+    "release:version": "changeset version",
+    "publish:core": "pnpm --filter @santai/core publish --access public",
+    "publish:santai-lang": "pnpm --filter santai-lang publish --access public",
+    "publish:all": "pnpm publish:core && pnpm publish:santai-lang",
+    "release": "pnpm test && pnpm build && pnpm release:version"
   },
   "devDependencies": {
     "@changesets/cli": "^2.31.0",
