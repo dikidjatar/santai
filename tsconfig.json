@@ -1,24 +1,4 @@
 {
-  "compilerOptions": {
-    "rootDir": "./src",
-    "outDir": "./dist",
-    "module": "commonjs",
-    "strict": true,
-    "target": "esnext",
-    "sourceMap": true,
-    "declaration": true,
-    "declarationMap": true,
-    "noUnusedLocals": true,
-    "noImplicitReturns": true,
-    "noImplicitOverride": true,
-    "noUnusedParameters": true,
-    "noFallthroughCasesInSwitch": true,
-    "noPropertyAccessFromIndexSignature": true,
-    "noUncheckedSideEffectImports": true,
-    "skipLibCheck": true,
-    "esModuleInterop": true,
-    "useUnknownInCatchVariables": false,
-    "types": ["@types/node", "@types/jest"]
-  },
-  "include": ["src"]
+  "files": [],
+  "references": [{ "path": "./packages/core" }, { "path": "./packages/cli" }]
 }

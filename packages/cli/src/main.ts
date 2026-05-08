@@ -1,9 +1,9 @@
 // Copyright (c) [2026] [Diki Djatar]
 // SPDX-License-Identifier: MIT
 
-import { ExitCode } from "../base/exitCode";
-import { CliCommand, parseCliArgs } from "../cli/args";
-import { cmdEval, cmdHelp, cmdRun, cmdVersion } from "../cli/commands";
+import { ExitCode } from "@santai/core";
+import { CliCommand, parseCliArgs } from "./args";
+import { cmdHelp, cmdVersion, cmdEval, cmdRun } from "./commands";
 
 export function main(argv: string[]): ExitCode {
   let command: CliCommand;

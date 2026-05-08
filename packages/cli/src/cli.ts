@@ -1,9 +1,8 @@
 // Copyright (c) [2026] [Diki Djatar]
 // SPDX-License-Identifier: MIT
 
-import { ExitCode } from "./base/exitCode";
-import { writeError } from "./base/output";
-import { main } from "./main/main";
+import { writeError, ExitCode } from "@santai/core";
+import { main } from "./main";
 
 process.exitCode = (() => {
   try {

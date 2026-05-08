@@ -1,21 +1,31 @@
 // Copyright (c) [2026] [Diki Djatar]
 // SPDX-License-Identifier: MIT
 
-import { ExitCode } from "../base/exitCode";
-import * as meta from "../base/meta";
-import { writeLineToStdout, writeToStdout } from "../base/output";
-import { Pipeline } from "../runtime/pipeline";
-import { makeEvalContext, makeScriptContext } from "../runtime/runtimeContext";
-import { SourceFile } from "../runtime/sourceFile";
+import {
+  ExitCode,
+  writeToStdout,
+  LANG_NAME,
+  LANG_DESCRIPTION,
+  COPYRIGHT,
+  LICENSE,
+  LANG_HOMEPAGE,
+  LANG_EXT,
+  VERSION_FULL,
+  writeLineToStdout,
+  SourceFile,
+  makeEvalContext,
+  Pipeline,
+  makeScriptContext,
+} from "@santai/core";
 
 function printHelp(): void {
   writeToStdout(
-    `${meta.LANG_NAME} — ${meta.LANG_DESCRIPTION}\n` +
-      `${meta.COPYRIGHT} · Lisensi ${meta.LICENSE}\n` +
-      `${meta.LANG_HOMEPAGE}\n` +
+    `${LANG_NAME} — ${LANG_DESCRIPTION}\n` +
+      `${COPYRIGHT} · Lisensi ${LICENSE}\n` +
+      `${LANG_HOMEPAGE}\n` +
       `\n` +
       `Penggunaan:\n` +
-      `  santai <file${meta.LANG_EXT}>        Jalankan file sumber\n` +
+      `  santai <file${LANG_EXT}>        Jalankan file sumber\n` +
       `  santai -e "<kode>"          Evaluasi kode secara langsung\n` +
       `  santai --eval "<kode>"      Evaluasi kode secara langsung\n` +
       `  santai -h / --help          Tampilkan bantuan ini\n` +
@@ -31,7 +41,7 @@ function printHelp(): void {
 }
 
 function printVersion(): void {
-  writeLineToStdout(meta.VERSION_FULL);
+  writeLineToStdout(VERSION_FULL);
 }
 
 export function cmdHelp(): ExitCode {

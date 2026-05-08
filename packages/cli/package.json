@@ -1,0 +1,24 @@
+{
+  "name": "@santai/cli",
+  "version": "1.0.0",
+  "description": "CLI bahasa pemrograman Santai",
+  "license": "MIT",
+  "main": "dist/main.js",
+  "bin": {
+    "santai": "dist/cli.js"
+  },
+  "dependencies": {
+    "@santai/core": "1.0.0"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "jest",
+    "clean": "node ../../scripts/clean.mjs",
+    "start": "node dist/main.js"
+  }
+}

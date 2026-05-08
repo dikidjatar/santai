@@ -2,6 +2,11 @@
 /dist
 /node_modules
 /testing
+/coverage
+
+/packages/*/dist
+/packages/*/*.tsbuildinfo
 
 # files
+*.tsbuildinfo
 yarn.lock
