@@ -15,7 +15,7 @@
   "author": "Diki Djatar",
   "main": "dist/index.js",
   "bin": {
-    "santai": "dist/cli.js"
+    "santai": "dist/index.js"
   },
   "dependencies": {
     "@santai/core": "workspace:*"
