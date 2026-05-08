@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 // Copyright (c) [2026] [Diki Djatar]
 // SPDX-License-Identifier: MIT
 
