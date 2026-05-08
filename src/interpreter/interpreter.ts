@@ -1162,7 +1162,10 @@ export class Interpreter extends AstVisitor<SantaiObject> {
 
     try {
       const sourceContext = fn.sourceContext;
-      if (!isUndefined(sourceContext)) {
+      const isCrossFile =
+        !isUndefined(sourceContext) &&
+        sourceContext.filename !== callerFilename;
+      if (isCrossFile) {
         return this.errorHandler.withContext(
           sourceContext.characterStream,
           sourceContext.filename,
