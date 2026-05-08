@@ -3,9 +3,9 @@
 
 import { ExitCode } from "@santai/core";
 import { CliCommand, parseCliArgs } from "./args";
-import { cmdHelp, cmdVersion, cmdEval, cmdRun } from "./commands";
+import { cmdEval, cmdHelp, cmdRun, cmdVersion } from "./commands";
 
-export function main(argv: string[]): ExitCode {
+export function runCli(argv: string[]): ExitCode {
   let command: CliCommand;
 
   command = parseCliArgs(argv.slice(2));

@@ -1,7 +1,8 @@
 {
   "name": "@santai/core",
   "version": "1.0.0",
-  "description": "Inti bahasa pemrograman Santai",
+  "description": "core runtime Santai language",
+  "type": "commonjs",
   "license": "MIT",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -16,6 +17,9 @@
     "README.md",
     "LICENSE"
   ],
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "test": "jest",

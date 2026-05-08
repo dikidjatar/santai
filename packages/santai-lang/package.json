@@ -1,0 +1,27 @@
+{
+  "name": "santai-lang",
+  "version": "1.0.0",
+  "description": "Bahasa pemrograman Santai dengan sintaks bahasa Indonesia",
+  "license": "MIT",
+  "type": "commonjs",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "bin": {
+    "santai": "dist/index.js"
+  },
+  "dependencies": {
+    "@santai/core": "1.0.0",
+    "@santai/cli": "1.0.0"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json"
+  }
+}

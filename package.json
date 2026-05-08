@@ -10,8 +10,10 @@
     "dev": "yarn build:watch",
     "clean": "node scripts/clean.mjs",
     "test": "yarn workspaces run test",
-    "test:watch": "yarn workspaces run test --watch",
-    "typecheck": "tsc -b --pretty false"
+    "typecheck": "tsc -b --pretty false",
+    "build:core": "yarn workspace @santai/core build",
+    "build:cli": "yarn workspace @santai/cli build",
+    "build:santai": "yarn workspace santai-lang build"
   },
   "devDependencies": {
     "@types/jest": "^30.0.0",
