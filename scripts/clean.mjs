@@ -16,4 +16,4 @@ for (const target of targets) {
   }
 }
 
-console.log("Clean selesai.");
+console.log("Clean completed.");
