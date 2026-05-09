@@ -11,7 +11,7 @@
     "test": "pnpm -r --if-present test",
     "changeset": "changeset",
     "release:version": "changeset version",
-    "publish:core": "pnpm --filter @santai/core publish --access public",
+    "publish:core": "pnpm --filter @dikidjatar/santai-core publish --access public",
     "publish:santai-lang": "pnpm --filter santai-lang publish --access public",
     "publish:all": "pnpm publish:core && pnpm publish:santai-lang",
     "release": "pnpm test && pnpm build && pnpm release:version"
