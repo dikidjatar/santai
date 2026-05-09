@@ -4,7 +4,7 @@
 // SPDX-License-Identifier: MIT
 
 import { ExitCode, writeError } from "@dikidjatar/santai-core";
-import { runCli } from "./cli";
+import { runCli } from "./cli/cli";
 
 process.exitCode = (() => {
   try {
