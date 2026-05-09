@@ -1,7 +1,7 @@
 // Copyright (c) [2026] [Diki Djatar]
 // SPDX-License-Identifier: MIT
 
-import { ExitCode } from "@santai/core";
+import { ExitCode } from "@dikidjatar/santai-core";
 import { CliCommand, parseCliArgs } from "./args";
 import { cmdEval, cmdHelp, cmdRun, cmdVersion } from "./commands";
 

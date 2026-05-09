@@ -31,7 +31,7 @@ importers:
 
   packages/santai-lang:
     dependencies:
-      '@santai/core':
+      '@dikidjatar/santai-core':
         specifier: workspace:*
         version: link:../core
 

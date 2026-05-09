@@ -10,8 +10,8 @@
     "declarationMap": true,
     "rootDir": "./",
     "paths": {
-      "@santai/core": ["./packages/core/src/index.ts"],
-      "@santai/core/*": ["./packages/core/src/*"]
+      "@dikidjatar/santai-core": ["./packages/core/src/index.ts"],
+      "@dikidjatar/santai-core/*": ["./packages/core/src/*"]
     },
     "noUnusedLocals": true,
     "noImplicitReturns": true,

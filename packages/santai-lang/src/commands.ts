@@ -16,7 +16,7 @@ import {
   makeEvalContext,
   Pipeline,
   makeScriptContext,
-} from "@santai/core";
+} from "@dikidjatar/santai-core";
 
 function printHelp(): void {
   writeToStdout(

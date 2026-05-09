@@ -18,7 +18,7 @@
     "santai": "dist/index.js"
   },
   "dependencies": {
-    "@santai/core": "workspace:*"
+    "@dikidjatar/santai-core": "workspace:*"
   },
   "files": [
     "dist",
