@@ -1,7 +1,13 @@
 // Copyright (c) [2026] [Diki Djatar]
 // SPDX-License-Identifier: MIT
 
-import { ExitCode, SourceFile } from "@dikidjatar/santai-core";
+import {
+  ExitCode,
+  LANG_DESCRIPTION,
+  SourceFile,
+  VERSION_FULL,
+  writeLineToStdout,
+} from "@dikidjatar/santai-core";
 import repl from "repl";
 import {
   IReplPipeline,
@@ -9,6 +15,12 @@ import {
   ReplEvalResult,
   ReplSessionOptions,
 } from "./repl";
+
+function printWelcome(): void {
+  writeLineToStdout(VERSION_FULL);
+  writeLineToStdout(LANG_DESCRIPTION);
+  writeLineToStdout("Ketik '.help' untuk bantuan atau '.exit' untuk keluar");
+}
 
 export class ReplSession implements IReplSession {
   private server!: repl.REPLServer;
@@ -22,11 +34,15 @@ export class ReplSession implements IReplSession {
   }
 
   start(): void {
+    printWelcome();
     this.server = repl.start({
       prompt: this.prompt,
       eval: this.eval.bind(this),
       ignoreUndefined: true,
       useGlobal: false,
+    });
+    this.server.on("exit", () => {
+      writeLineToStdout("Bye!");
     });
   }
 
