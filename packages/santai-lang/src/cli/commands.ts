@@ -16,7 +16,11 @@ import {
   makeEvalContext,
   Pipeline,
   makeScriptContext,
+  RuntimeContext,
+  makeReplContext,
 } from "@dikidjatar/santai-core";
+import { ReplSession } from "../repl/replSession";
+import { ReplPipeline } from "../repl/replPipeline";
 
 function printHelp(): void {
   writeToStdout(
@@ -64,4 +68,12 @@ export function cmdRun(filepath: string, args: readonly string[]): ExitCode {
   const source = SourceFile.fromFile(filepath);
   const runtimeCtx = makeScriptContext(filepath, args);
   return Pipeline.from(source, runtimeCtx).run().exitCode;
+}
+
+export function cmdRepl(): ExitCode {
+  const runtimeContext: RuntimeContext = makeReplContext();
+  const replPipeline: ReplPipeline = new ReplPipeline(runtimeContext);
+  const repl: ReplSession = new ReplSession(replPipeline);
+  repl.start();
+  return ExitCode.Success;
 }

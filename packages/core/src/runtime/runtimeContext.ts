@@ -72,3 +72,13 @@ export function makeEvalContext(args: readonly string[] = []): RuntimeContext {
     moduleSearchPaths: resolveSantaiPath(),
   };
 }
+
+export function makeReplContext(): RuntimeContext {
+  return {
+    node: process.execPath,
+    execPath: "",
+    scriptPath: "<repl>",
+    args: [],
+    moduleSearchPaths: resolveSantaiPath(),
+  };
+}

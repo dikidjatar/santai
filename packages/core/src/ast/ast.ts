@@ -13,9 +13,9 @@
  * - A visitor pattern interface for AST traversal
  */
 
-import { TokenValue } from "../parsing/token";
 import { assert, assertDefined } from "../base/asserts";
 import { isUndefined } from "../base/types";
+import { TokenValue } from "../parsing/token";
 import { Variable, VariableMode } from "./variable";
 
 export const enum NodeType {
@@ -62,6 +62,9 @@ export abstract class AstNode {
   get position(): number {
     return this._position;
   }
+
+  abstract isExpression(): boolean;
+  abstract isStatement(): boolean;
 
   isVariableDeclaration(): this is VariableDeclaration {
     return this.nodeType === NodeType.kVariableDeclaration;
@@ -152,9 +155,23 @@ export abstract class AstNode {
   }
 }
 
-export abstract class Statement extends AstNode {}
+export abstract class Statement extends AstNode {
+  override isStatement(): boolean {
+    return true;
+  }
+  override isExpression(): boolean {
+    return false;
+  }
+}
 
-export abstract class Expression extends AstNode {}
+export abstract class Expression extends AstNode {
+  override isStatement(): boolean {
+    return false;
+  }
+  override isExpression(): boolean {
+    return true;
+  }
+}
 
 export const enum LiteralType {
   kString,

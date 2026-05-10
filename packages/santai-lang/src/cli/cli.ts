@@ -3,7 +3,7 @@
 
 import { ExitCode } from "@dikidjatar/santai-core";
 import { CliCommand, parseCliArgs } from "./args";
-import { cmdEval, cmdHelp, cmdRun, cmdVersion } from "./commands";
+import { cmdEval, cmdHelp, cmdRepl, cmdRun, cmdVersion } from "./commands";
 
 export function runCli(argv: string[]): ExitCode {
   let command: CliCommand;
@@ -19,5 +19,7 @@ export function runCli(argv: string[]): ExitCode {
       return cmdEval(command.code, command.args);
     case "run":
       return cmdRun(command.file, command.args);
+    case "repl":
+      return cmdRepl();
   }
 }

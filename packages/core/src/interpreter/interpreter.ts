@@ -190,15 +190,23 @@ export class Interpreter extends AstVisitor<SantaiObject> {
   private readonly callStack: StackFrame[] = [];
 
   constructor(
-    private readonly errorHandler: ErrorHandler,
+    private errorHandler: ErrorHandler,
     private readonly serviceContainer: ServiceContainer,
-    private readonly sourceContext: SourceContext
+    private sourceContext: SourceContext
   ) {
     super();
     this.builtinEnv = new Environment();
     this.moduleEnv = new Environment(this.builtinEnv);
     this.env = this.moduleEnv;
     this.registerBuiltinsGlobals();
+  }
+
+  public setErrorHandler(errorHandler: ErrorHandler): void {
+    this.errorHandler = errorHandler;
+  }
+
+  public setSourceContext(sourceContext: SourceContext): void {
+    this.sourceContext = sourceContext;
   }
 
   private registerBuiltinsGlobals(): void {
@@ -213,33 +221,47 @@ export class Interpreter extends AstVisitor<SantaiObject> {
     try {
       this.evaluateStatements(program.statements(), this.env);
     } catch (error) {
-      if (isReturnSignal(error)) {
-        this.errorHandler.reportErrorAt(
-          getLocationForNode(error.node),
-          MessageTemplate.kIllegalReturnStatement
-        );
-      } else if (isBreakSignal(error)) {
-        this.errorHandler.reportErrorAt(
-          getLocationForNode(error.node),
-          MessageTemplate.kIllegalBreakStatement
-        );
-      } else if (isContinueSignal(error)) {
-        this.errorHandler.reportErrorAt(
-          getLocationForNode(error.node),
-          MessageTemplate.kIllegalContinueStatement
-        );
-      } else if (isThrowSignal(error)) {
-        const message = coerceToString(
-          this.makeCallSite(error.node),
-          error.value
-        );
-        const location = makeLocation(error.node.position, error.node.position);
-        this.errorHandler.reportError(location, message, "dilempar disini");
-      } else if (isRuntimeErrorSignal(error)) {
-        this.errorHandler.flushPendingErrors();
-      } else {
-        throw error;
-      }
+      this.handleTopLevelError(error);
+    }
+  }
+
+  executeExpression(expression: Expression): SantaiObject {
+    try {
+      assert(expression.isExpression());
+      return this.evaluate(expression);
+    } catch (error) {
+      this.handleTopLevelError(error);
+      return Factory.Kosong;
+    }
+  }
+
+  private handleTopLevelError(error: unknown): void {
+    if (isReturnSignal(error)) {
+      this.errorHandler.reportErrorAt(
+        getLocationForNode(error.node),
+        MessageTemplate.kIllegalReturnStatement
+      );
+    } else if (isBreakSignal(error)) {
+      this.errorHandler.reportErrorAt(
+        getLocationForNode(error.node),
+        MessageTemplate.kIllegalBreakStatement
+      );
+    } else if (isContinueSignal(error)) {
+      this.errorHandler.reportErrorAt(
+        getLocationForNode(error.node),
+        MessageTemplate.kIllegalContinueStatement
+      );
+    } else if (isThrowSignal(error)) {
+      const message = coerceToString(
+        this.makeCallSite(error.node),
+        error.value
+      );
+      const location = makeLocation(error.node.position, error.node.position);
+      this.errorHandler.reportError(location, message, "dilempar disini");
+    } else if (isRuntimeErrorSignal(error)) {
+      this.errorHandler.flushPendingErrors();
+    } else {
+      throw error;
     }
   }
 

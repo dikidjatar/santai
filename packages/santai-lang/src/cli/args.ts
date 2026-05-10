@@ -13,7 +13,8 @@ export type CliCommand =
       readonly args: readonly string[];
     }
   | { readonly kind: "help" }
-  | { readonly kind: "version" };
+  | { readonly kind: "version" }
+  | { readonly kind: "repl" };
 
 /**
  * @param argv - process argument without first two elements
@@ -23,7 +24,7 @@ export type CliCommand =
  */
 export function parseCliArgs(argv: readonly string[]): CliCommand {
   if (argv.length === 0) {
-    return { kind: "help" };
+    return { kind: "repl" };
   }
 
   const [flag, ...rest] = argv;
@@ -36,6 +37,10 @@ export function parseCliArgs(argv: readonly string[]): CliCommand {
     case "-v":
     case "--version":
       return { kind: "version" };
+
+    case "-r":
+    case "--repl":
+      return { kind: "repl" };
 
     case "-e":
     case "--eval": {
