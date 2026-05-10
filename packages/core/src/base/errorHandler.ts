@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: MIT
 
 import { CharacterStream, ScannerLocation } from "../parsing/scanner";
+import { Color } from "../utils/colors";
 import { decode } from "../utils/decode";
 import { isInRange } from "../utils/utils";
 import * as config from "./config";
@@ -13,21 +14,6 @@ import {
   Mood,
 } from "./messageTemplate";
 import { isUndefined } from "./types";
-
-const A = {
-  reset: "\x1b[0m",
-  bold: "\x1b[1m",
-  dim: "\x1b[2m",
-  // Text color
-  gray: "\x1b[90m",
-  blue: "\x1b[94m",
-  green: "\x1b[92m",
-  yellow: "\x1b[93m",
-  red: "\x1b[91m",
-  magenta: "\x1b[95m",
-  cyan: "\x1b[96m",
-  white: "\x1b[97m",
-} as const;
 
 export type ErrorTypeName =
   | "MasalahSintaks"
@@ -79,21 +65,36 @@ interface MoodStyle {
 }
 
 const MOOD_STYLE: Record<Mood, MoodStyle> = {
-  [Mood.Marah]: { emoji: "😤", ansi: A.red, label: "error", gutter: A.red },
-  [Mood.Sedih]: { emoji: "😢", ansi: A.blue, label: "error", gutter: A.blue },
+  [Mood.Marah]: {
+    emoji: "😤",
+    ansi: Color.red,
+    label: "error",
+    gutter: Color.red,
+  },
+  [Mood.Sedih]: {
+    emoji: "😢",
+    ansi: Color.blue,
+    label: "error",
+    gutter: Color.blue,
+  },
   [Mood.Panik]: {
     emoji: "😱",
-    ansi: A.magenta,
+    ansi: Color.magenta,
     label: "error",
-    gutter: A.magenta,
+    gutter: Color.magenta,
   },
   [Mood.Bingung]: {
     emoji: "🤔",
-    ansi: A.yellow,
+    ansi: Color.yellow,
     label: "error",
-    gutter: A.yellow,
+    gutter: Color.yellow,
   },
-  [Mood.Gila]: { emoji: "🤪", ansi: A.cyan, label: "error", gutter: A.cyan },
+  [Mood.Gila]: {
+    emoji: "🤪",
+    ansi: Color.cyan,
+    label: "error",
+    gutter: Color.cyan,
+  },
 };
 
 const enum Severity {
@@ -294,23 +295,23 @@ class DiagnosticRenderer {
   }
 
   private c(code: string, text: string): string {
-    return this.useColor ? `${code}${text}${A.reset}` : text;
+    return this.useColor ? `${code}${text}${Color.reset}` : text;
   }
 
   private bold(t: string) {
-    return this.c(A.bold, t);
+    return this.c(Color.bold, t);
   }
   private dim(t: string) {
-    return this.c(A.dim, t);
+    return this.c(Color.dim, t);
   }
   private gray(t: string) {
-    return this.c(A.gray, t);
+    return this.c(Color.gray, t);
   }
   private green(t: string) {
-    return this.c(A.green, t);
+    return this.c(Color.green, t);
   }
   private blue(t: string) {
-    return this.c(A.blue, t);
+    return this.c(Color.blue, t);
   }
   private moodC(mood: Mood, text: string): string {
     return this.c(MOOD_STYLE[mood].ansi, text);
@@ -327,14 +328,14 @@ class DiagnosticRenderer {
   private lineGutter(lineNo: number, w: number, gutterColor: string): string {
     const num = String(lineNo).padStart(w);
     return this.useColor
-      ? `${A.gray}${num}${A.reset} ${gutterColor}│${A.reset} `
+      ? `${Color.gray}${num}${Color.reset} ${gutterColor}│${Color.reset} `
       : `${num} │ `;
   }
 
   /** `    │ ` (no number) */
   private emptyGutter(w: number, gutterColor: string): string {
     return this.useColor
-      ? `${pad(w)} ${gutterColor}│${A.reset} `
+      ? `${pad(w)} ${gutterColor}│${Color.reset} `
       : `${pad(w)} │ `;
   }
 
@@ -406,7 +407,7 @@ class DiagnosticRenderer {
     const width = this.gutterWidth(line + 2);
     const ptr = this.bold(`${this.filename}:${line}:${column}`);
 
-    const arrow = this.useColor ? `${style.ansi}┌─${A.reset}` : "┌─";
+    const arrow = this.useColor ? `${style.ansi}┌─${Color.reset}` : "┌─";
 
     out.push(`${pad(width)} ${arrow} ${ptr}`);
   }
@@ -493,11 +494,11 @@ class DiagnosticRenderer {
     const col = column - 1;
     const marker = "^".repeat(Math.max(length, 1));
     const message = label.message
-      ? ` ${this.useColor ? `${style.ansi}${label.message}${A.reset}` : label.message}`
+      ? ` ${this.useColor ? `${style.ansi}${label.message}${Color.reset}` : label.message}`
       : "";
 
     const underline = this.useColor
-      ? `${style.ansi}${marker}${A.reset}`
+      ? `${style.ansi}${marker}${Color.reset}`
       : marker;
 
     out.push(
@@ -570,7 +571,7 @@ class DiagnosticRenderer {
 
       const arrow = isDeepest
         ? this.useColor
-          ? `${style.ansi}→${A.reset}`
+          ? `${style.ansi}→${Color.reset}`
           : "→"
         : " ";
 
