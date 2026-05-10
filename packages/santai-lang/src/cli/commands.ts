@@ -3,33 +3,27 @@
 
 import {
   ExitCode,
-  writeToStdout,
-  LANG_NAME,
-  LANG_DESCRIPTION,
-  COPYRIGHT,
-  LICENSE,
-  LANG_HOMEPAGE,
-  LANG_EXT,
-  VERSION_FULL,
-  writeLineToStdout,
+  Pipeline,
+  RuntimeContext,
   SourceFile,
   makeEvalContext,
-  Pipeline,
-  makeScriptContext,
-  RuntimeContext,
   makeReplContext,
+  makeScriptContext,
+  meta,
+  writeLineToStdout,
+  writeToStdout,
 } from "@dikidjatar/santai-core";
-import { ReplSession } from "../repl/replSession";
 import { ReplPipeline } from "../repl/replPipeline";
+import { ReplSession } from "../repl/replSession";
 
 function printHelp(): void {
   writeToStdout(
-    `${LANG_NAME} — ${LANG_DESCRIPTION}\n` +
-      `${COPYRIGHT} · Lisensi ${LICENSE}\n` +
-      `${LANG_HOMEPAGE}\n` +
+    `${meta.LANG_NAME} — ${meta.LANG_DESCRIPTION}\n` +
+      `${meta.COPYRIGHT} · Lisensi ${meta.LICENSE}\n` +
+      `${meta.LANG_HOMEPAGE}\n` +
       `\n` +
       `Penggunaan:\n` +
-      `  santai <file${LANG_EXT}>        Jalankan file sumber\n` +
+      `  santai <file${meta.LANG_EXT}>        Jalankan file sumber\n` +
       `  santai -e "<kode>"          Evaluasi kode secara langsung\n` +
       `  santai --eval "<kode>"      Evaluasi kode secara langsung\n` +
       `  santai -h / --help          Tampilkan bantuan ini\n` +
@@ -45,7 +39,7 @@ function printHelp(): void {
 }
 
 function printVersion(): void {
-  writeLineToStdout(VERSION_FULL);
+  writeLineToStdout(meta.VERSION_FULL);
 }
 
 export function cmdHelp(): ExitCode {

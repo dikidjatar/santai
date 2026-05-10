@@ -5,12 +5,12 @@ import {
   AstNodeFactory,
   Block,
   CharacterStream,
+  config,
   ErrorHandler,
   ExitCode,
   Factory,
   Interpreter,
   isEmpty,
-  MAX_ERRORS,
   ModuleSystem,
   Parser,
   RuntimeContext,
@@ -55,7 +55,7 @@ export class ReplPipeline implements IReplPipeline {
     const characterStream = new CharacterStream(0, source.buffer);
     const errorHandler = new ErrorHandler(characterStream, {
       filename: source.filepath,
-      maxErrors: MAX_ERRORS,
+      maxErrors: config.MAX_ERRORS,
     });
     const scanner: Scanner = new Scanner(characterStream);
     const parser: Parser = new Parser(scanner, this.factory, errorHandler);

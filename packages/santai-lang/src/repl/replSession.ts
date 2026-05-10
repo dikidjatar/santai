@@ -4,10 +4,9 @@
 import {
   ExitCode,
   isUndefinedOrNull,
-  LANG_DESCRIPTION,
+  meta,
   SantaiObject,
   SourceFile,
-  VERSION_FULL,
   writeLineToStdout,
 } from "@dikidjatar/santai-core";
 import repl from "repl";
@@ -19,8 +18,8 @@ import {
 } from "./repl";
 
 function printWelcome(): void {
-  writeLineToStdout(VERSION_FULL);
-  writeLineToStdout(LANG_DESCRIPTION);
+  writeLineToStdout(meta.VERSION_FULL);
+  writeLineToStdout(meta.LANG_DESCRIPTION);
   writeLineToStdout("Ketik '.help' untuk bantuan atau '.exit' untuk keluar");
 }
 
