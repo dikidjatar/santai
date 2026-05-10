@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: MIT
 
 import {
+  CallSite,
   ExitCode,
   Interpreter,
   SantaiObject,
@@ -9,8 +10,8 @@ import {
 } from "@dikidjatar/santai-core";
 
 export interface ReplEvalResult {
-  readonly exitCode: ExitCode;
   readonly value: SantaiObject;
+  readonly callsite?: CallSite;
 }
 
 export interface IRepl {

@@ -271,7 +271,7 @@ export class Interpreter extends AstVisitor<SantaiObject> {
    * `this`) and is discarded after the call completes.  There is no
    * reference-counting or manual clean-up needed.
    */
-  private makeCallSite(node: AstNode): CallSite {
+  makeCallSite(node: AstNode): CallSite {
     return {
       invoke: (fn: SantaiObject, args: SantaiObject[]): SantaiObject => {
         const directArgs: DirectArg[] = args.map((v) => ({

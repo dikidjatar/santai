@@ -7,7 +7,6 @@ import {
   CharacterStream,
   config,
   ErrorHandler,
-  ExitCode,
   Factory,
   Interpreter,
   isEmpty,
@@ -68,23 +67,19 @@ export class ReplPipeline implements IReplPipeline {
 
     const statements: Statement[] = this.parse(parser);
     if (errorHandler.hasErrors()) {
-      return { exitCode: ExitCode.SourceError, value: Factory.Kosong };
+      return { value: Factory.Kosong };
     }
 
     if (isEmpty(statements)) {
-      return { exitCode: ExitCode.Success, value: Factory.Kosong };
+      return { value: Factory.Kosong };
     }
 
     const program: Block = this.factory.newBlock();
     program.initializeStatements(statements);
+    const callsite = this.interpreter.makeCallSite(program);
     const value = this.interpreter.execute(program);
 
-    return {
-      exitCode: errorHandler.hasErrors()
-        ? ExitCode.RuntimeError
-        : ExitCode.Success,
-      value,
-    };
+    return { value, callsite };
   }
 
   private parse(parser: Parser): Statement[] {

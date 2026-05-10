@@ -2,14 +2,10 @@
 // SPDX-License-Identifier: MIT
 
 import {
-  ExitCode,
-  green,
-  isUndefinedOrNull,
+  isUndefined,
   meta,
-  SantaiObject,
   SourceFile,
   writeLineToStdout,
-  yellow,
 } from "@dikidjatar/santai-core";
 import repl from "repl";
 import {
@@ -18,6 +14,7 @@ import {
   ReplEvalResult,
   ReplSessionOptions,
 } from "./repl";
+import { ReplFormatter } from "./replFormatter";
 
 function printWelcome(): void {
   writeLineToStdout(meta.VERSION_FULL);
@@ -27,12 +24,14 @@ function printWelcome(): void {
 
 export class ReplSession implements IReplSession {
   private server!: repl.REPLServer;
+  private formatter: ReplFormatter;
   private prompt: string;
 
   constructor(
     private readonly pipeline: IReplPipeline,
     options?: ReplSessionOptions
   ) {
+    this.formatter = new ReplFormatter();
     this.prompt = options?.prompt ?? ">>> ";
   }
 
@@ -43,29 +42,7 @@ export class ReplSession implements IReplSession {
       eval: this.eval.bind(this),
       ignoreUndefined: true,
       useGlobal: false,
-      writer: (obj) => {
-        if (isUndefinedOrNull(obj)) {
-          return "";
-        }
-
-        if (!(obj instanceof SantaiObject)) {
-          return String(obj);
-        }
-
-        if (obj.isString()) {
-          return `'${green(obj.value)}'`;
-        }
-
-        if (obj.isNumber()) {
-          return green(obj.value.toString());
-        }
-
-        if (obj.isBoolean()) {
-          return yellow(obj.value ? "benar" : "salah");
-        }
-
-        return obj.inspect();
-      },
+      writer: (obj) => this.formatter.format(obj),
     });
     this.server.on("exit", () => {
       writeLineToStdout("Bye!");
@@ -80,15 +57,12 @@ export class ReplSession implements IReplSession {
   ): void {
     const source: SourceFile = SourceFile.fromString(code, "<repl>");
     const result: ReplEvalResult = this.pipeline.eval(source);
-    if (result.exitCode !== ExitCode.Success) {
-      return cb(null, undefined);
-    }
 
-    if (result.value.isKosong()) {
+    if (isUndefined(result.callsite) || result.value.isKosong()) {
       return cb(null, undefined);
     }
 
     //TODO: handle and format value
-    cb(null, result.value);
+    cb(null, result);
   }
 }

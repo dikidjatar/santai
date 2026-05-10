@@ -18,6 +18,7 @@ export * from "./base/types";
 export { Interpreter } from "./interpreter/interpreter";
 export { ModuleSystem } from "./modules/moduleSystem";
 export * from "./objects/object";
+export { coerceToString } from "./objects/protocol";
 export { Parser } from "./parsing/parser";
 export {
   CharacterStream,
