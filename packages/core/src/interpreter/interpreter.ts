@@ -217,18 +217,13 @@ export class Interpreter extends AstVisitor<SantaiObject> {
     }
   }
 
-  execute(program: Block): void {
+  /**
+   * Executes program
+   * @returns the results of the last statement
+   */
+  execute(program: Block): SantaiObject {
     try {
-      this.evaluateStatements(program.statements(), this.env);
-    } catch (error) {
-      this.handleTopLevelError(error);
-    }
-  }
-
-  executeExpression(expression: Expression): SantaiObject {
-    try {
-      assert(expression.isExpression());
-      return this.evaluate(expression);
+      return this.evaluateStatements(program.statements(), this.env);
     } catch (error) {
       this.handleTopLevelError(error);
       return Factory.Kosong;
@@ -1343,17 +1338,21 @@ export class Interpreter extends AstVisitor<SantaiObject> {
   private evaluateStatements(
     statements: readonly Statement[],
     env: Environment
-  ): void {
+  ): SantaiObject {
     const previousEnv = this.env;
     this.env = env;
 
+    let result: SantaiObject = Factory.Kosong;
+
     try {
       for (const statement of statements) {
-        this.evaluate(statement);
+        result = this.evaluate(statement);
       }
     } finally {
       this.env = previousEnv;
     }
+
+    return result;
   }
 
   /**

@@ -14,7 +14,6 @@ import {
   ModuleSystem,
   Parser,
   RuntimeContext,
-  SantaiObject,
   Scanner,
   ServiceContainer,
   SourceContext,
@@ -76,26 +75,15 @@ export class ReplPipeline implements IReplPipeline {
       return { exitCode: ExitCode.Success, value: Factory.Kosong };
     }
 
-    if (statements.length === 1 && statements[0].isExpression()) {
-      const value: SantaiObject = this.interpreter.executeExpression(
-        statements[0]
-      );
-      return {
-        exitCode: errorHandler.hasErrors()
-          ? ExitCode.RuntimeError
-          : ExitCode.Success,
-        value,
-      };
-    }
-
     const program: Block = this.factory.newBlock();
     program.initializeStatements(statements);
-    this.interpreter.execute(program);
+    const value = this.interpreter.execute(program);
+
     return {
       exitCode: errorHandler.hasErrors()
         ? ExitCode.RuntimeError
         : ExitCode.Success,
-      value: Factory.Kosong,
+      value,
     };
   }
 
