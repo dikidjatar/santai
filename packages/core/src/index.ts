@@ -39,3 +39,4 @@ export {
 } from "./runtime/serviceContainer";
 export { SourceFile } from "./runtime/sourceFile";
 export { ServiceToken, Tokens } from "./runtime/tokens";
+export * from "./utils/colors";

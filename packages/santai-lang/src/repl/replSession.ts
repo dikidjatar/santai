@@ -3,11 +3,13 @@
 
 import {
   ExitCode,
+  green,
   isUndefinedOrNull,
   meta,
   SantaiObject,
   SourceFile,
   writeLineToStdout,
+  yellow,
 } from "@dikidjatar/santai-core";
 import repl from "repl";
 import {
@@ -22,21 +24,6 @@ function printWelcome(): void {
   writeLineToStdout(meta.LANG_DESCRIPTION);
   writeLineToStdout("Ketik '.help' untuk bantuan atau '.exit' untuk keluar");
 }
-
-const C = {
-  reset: "\x1b[0m",
-  bold: "\x1b[1m",
-  dim: "\x1b[2m",
-  // Text color
-  gray: "\x1b[90m",
-  blue: "\x1b[94m",
-  green: "\x1b[92m",
-  yellow: "\x1b[93m",
-  red: "\x1b[91m",
-  magenta: "\x1b[95m",
-  cyan: "\x1b[96m",
-  white: "\x1b[97m",
-} as const;
 
 export class ReplSession implements IReplSession {
   private server!: repl.REPLServer;
@@ -66,15 +53,15 @@ export class ReplSession implements IReplSession {
         }
 
         if (obj.isString()) {
-          return `${C.green}'${obj.value}'${C.reset}`;
+          return `'${green(obj.value)}'`;
         }
 
         if (obj.isNumber()) {
-          return `${C.green}${obj.value}${C.reset}`;
+          return green(obj.value.toString());
         }
 
         if (obj.isBoolean()) {
-          return `${C.yellow}${obj.value ? "benar" : "salah"}${C.reset}`;
+          return yellow(obj.value ? "benar" : "salah");
         }
 
         return obj.inspect();
