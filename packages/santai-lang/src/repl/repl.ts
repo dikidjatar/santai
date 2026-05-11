@@ -21,6 +21,7 @@ export interface IRepl {
 export interface IReplPipeline {
   eval(source: SourceFile): ReplEvalResult;
   getInterpreter(): Interpreter;
+  isCodeIncomplete(source: SourceFile): boolean;
 }
 
 export interface ReplSessionOptions {

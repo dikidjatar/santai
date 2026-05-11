@@ -56,13 +56,17 @@ export class ReplSession implements IReplSession {
     cb: (err: Error | null, result?: unknown) => void
   ): void {
     const source: SourceFile = SourceFile.fromString(code, "<repl>");
+
+    if (this.pipeline.isCodeIncomplete(source)) {
+      return cb(new repl.Recoverable(new Error("incompleted code.")));
+    }
+
     const result: ReplEvalResult = this.pipeline.eval(source);
 
     if (isUndefined(result.callsite) || result.value.isKosong()) {
       return cb(null, undefined);
     }
 
-    //TODO: handle and format value
     cb(null, result);
   }
 }

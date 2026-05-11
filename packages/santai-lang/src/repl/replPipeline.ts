@@ -51,6 +51,57 @@ export class ReplPipeline implements IReplPipeline {
     );
   }
 
+  isCodeIncomplete(source: SourceFile): boolean {
+    const characterStream = new CharacterStream(0, source.buffer);
+    const scanner: Scanner = new Scanner(characterStream);
+
+    let balanceBrace: number = 0;
+    let balanceParen: number = 0;
+    let balanceBracket: number = 0;
+    let lastToken: TokenValue = TokenValue.kEos;
+
+    while (true) {
+      const token = scanner.next();
+      if (token === TokenValue.kEos) break;
+
+      lastToken = token;
+
+      switch (token) {
+        case TokenValue.kLeftBrace:
+          balanceBrace++;
+          break;
+        case TokenValue.kRightBrace:
+          balanceBrace--;
+          break;
+        case TokenValue.kLeftParen:
+          balanceParen++;
+          break;
+        case TokenValue.kRightParen:
+          balanceParen--;
+          break;
+        case TokenValue.kLeftBracket:
+          balanceBracket++;
+          break;
+        case TokenValue.kRightBracket:
+          balanceBracket--;
+          break;
+      }
+    }
+
+    if (balanceBrace > 0 || balanceParen > 0 || balanceBracket > 0) {
+      return true;
+    }
+
+    const isIncompleteTail = [
+      TokenValue.kAssign,
+      TokenValue.kAdd,
+      TokenValue.kSub,
+      TokenValue.kMul,
+      TokenValue.kDiv,
+    ].includes(lastToken);
+    return isIncompleteTail;
+  }
+
   public eval(source: SourceFile): ReplEvalResult {
     const characterStream = new CharacterStream(0, source.buffer);
     const errorHandler = new ErrorHandler(characterStream, {
