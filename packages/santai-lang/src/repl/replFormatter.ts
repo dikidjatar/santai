@@ -30,7 +30,12 @@ function formatList(callsite: CallSite, list: SantaiList): string {
 
 export class ReplFormatter {
   public format(obj: ReplEvalResult | undefined | null): string {
-    if (isUndefinedOrNull(obj)) return "";
+    if (
+      isUndefinedOrNull(obj) ||
+      isUndefinedOrNull(obj.callsite) ||
+      isUndefinedOrNull(obj.value)
+    )
+      return "";
     return formatValue(obj.callsite!, obj.value);
   }
 }
