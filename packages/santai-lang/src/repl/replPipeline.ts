@@ -10,6 +10,7 @@ import {
   Factory,
   Interpreter,
   isEmpty,
+  isParseAbortError,
   ModuleSystem,
   Parser,
   RuntimeContext,
@@ -85,15 +86,21 @@ export class ReplPipeline implements IReplPipeline {
   private parse(parser: Parser): Statement[] {
     const statements: Statement[] = [];
 
-    while (parser.peek() !== TokenValue.kEos) {
-      const statement = parser.parseStatement();
+    try {
+      while (parser.peek() !== TokenValue.kEos) {
+        const statement = parser.parseStatement();
 
-      if (parser.errorHandler.hasErrors() || !statement) {
-        break;
+        if (parser.errorHandler.hasErrors() || !statement) {
+          break;
+        }
+
+        if (!statement.isEmptyStatement()) {
+          statements.push(statement);
+        }
       }
-
-      if (!statement.isEmptyStatement()) {
-        statements.push(statement);
+    } catch (error) {
+      if (!isParseAbortError(error)) {
+        throw error;
       }
     }
 

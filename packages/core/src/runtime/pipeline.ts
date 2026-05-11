@@ -8,7 +8,7 @@ import { ErrorHandler } from "../base/errorHandler";
 import { ExitCode } from "../base/exitCode";
 import { Interpreter } from "../interpreter/interpreter";
 import { ModuleSystem } from "../modules/moduleSystem";
-import { Parser } from "../parsing/parser";
+import { isParseAbortError, Parser } from "../parsing/parser";
 import { CharacterStream, Scanner } from "../parsing/scanner";
 import { TokenValue } from "../parsing/token";
 import { RuntimeContext } from "./runtimeContext";
@@ -108,15 +108,21 @@ export class Pipeline {
   private parse(): Statement[] {
     const statements: Statement[] = [];
 
-    while (this.parser.peek() !== TokenValue.kEos) {
-      const statement = this.parser.parseStatement();
+    try {
+      while (this.parser.peek() !== TokenValue.kEos) {
+        const statement = this.parser.parseStatement();
 
-      if (this.parser.errorHandler.hasErrors() || !statement) {
-        break;
+        if (this.parser.errorHandler.hasErrors() || !statement) {
+          break;
+        }
+
+        if (!statement.isEmptyStatement()) {
+          statements.push(statement);
+        }
       }
-
-      if (!statement.isEmptyStatement()) {
-        statements.push(statement);
+    } catch (error) {
+      if (!isParseAbortError(error)) {
+        throw error;
       }
     }
 

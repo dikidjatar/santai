@@ -103,6 +103,21 @@ interface ClassParseContext {
   readonly position: number;
 }
 
+/**
+ * Thrown by the Parser after the first error is printed.
+ * Stops parsing immediately without cascade errors.
+ */
+export class ParseAbortError extends Error {
+  constructor() {
+    super("parse aborted");
+    this.name = "ParseAbortError";
+  }
+}
+
+export function isParseAbortError(error: unknown): boolean {
+  return error instanceof ParseAbortError;
+}
+
 export class Parser {
   private accept_IN = true;
 
@@ -182,6 +197,7 @@ export class Parser {
     ...args: any[]
   ): void {
     this.errorHandler.reportErrorAt(location, message, ...args);
+    throw new ParseAbortError();
   }
 
   reportUnexpectedTokenAt(
