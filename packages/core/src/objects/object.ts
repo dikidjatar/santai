@@ -879,8 +879,25 @@ export class SantaiMap extends SantaiObject {
     }
   }
 
-  getValue(id: string): SantaiPair | undefined {
+  getPair(id: string): SantaiPair | undefined {
     return this._data.get(id);
+  }
+
+  getValue<T extends SantaiObject>(id: string, defaultValue: T): T;
+  getValue<T extends SantaiObject>(
+    id: string,
+    defaultValue?: SantaiObject
+  ): T | undefined;
+  getValue<T extends SantaiObject>(
+    id: string,
+    defaultValue?: SantaiObject
+  ): T | undefined {
+    const pair = this._data.get(id);
+    if (isUndefined(pair)) {
+      return defaultValue as T | undefined;
+    }
+
+    return pair.value as T;
   }
 
   setValue(id: string, value: SantaiPair): void {

@@ -69,7 +69,7 @@ const Peta__panjang__: MethodArg = [
 const Peta__ambil__: MethodArg = [
   SpecialName.__ambil__,
   method.map((self, id) => {
-    const pair = self.getValue(getId(id));
+    const pair = self.getPair(getId(id));
     return pair ? pair.value : Factory.Kosong;
   }),
   undefined,
@@ -88,7 +88,7 @@ const Peta__atur__: MethodArg = [
 const Peta_ambilin: MethodArg = [
   "ambilin",
   method.map((self, id) => {
-    const pair = self.getValue(getId(id));
+    const pair = self.getPair(getId(id));
     return pair ? pair.value : Factory.Kosong;
   }),
   undefined,
