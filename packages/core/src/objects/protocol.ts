@@ -16,6 +16,23 @@ export type SpecialMethodCheckReturnValue =
   | ((value: SantaiObject) => string | undefined)
   | undefined;
 
+export function callObjectMethod<T extends SantaiObject>(
+  callsite: CallSite,
+  object: SantaiObject,
+  methodName: string,
+  args: SantaiObject[] = []
+): T {
+  const method = object.getProperty(methodName);
+  if (isUndefined(method)) {
+    return callsite.throw(
+      MessageTemplate.kObjectHasNoMember,
+      object.typeName,
+      methodName
+    );
+  }
+  return callsite.invoke(method, args) as T;
+}
+
 /**
  * Invokes a special method with validation of its return value.
  *
